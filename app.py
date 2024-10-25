@@ -473,7 +473,9 @@ def record_vr_task():
 
                 else:
                     return jsonify({'message': 'All tasks completed.'}), 400
-
+                
+                delete_recording_file(RECORDING_FILE)
+                
                 return jsonify({'message': 'Recording stopped.', 'task_id': task_id}), 200
 
     except Exception as e:
