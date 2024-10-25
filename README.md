@@ -10,6 +10,9 @@
 * Boto3
 
 **Installation**
+
+*Please note that all installation will soon be handled with PyInstaller.
+
 Install Flask: 
 
     pip install flask
