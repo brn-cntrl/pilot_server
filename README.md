@@ -6,7 +6,8 @@
 * Flask
 * Pyaudio (for handling audio device)
 * Portaudio 
-* vosk (fgor transcription)
+* Audonnx (SER model to TBD)
+* Boto3
 
 **Installation**
 Install Flask: 
@@ -39,7 +40,6 @@ You should see the following result in Terminal:
     * Restarting with watchdog (fsevents)
     * Debugger is active!
     * Debugger PIN: 122-354-517
-Please note that the SER model prints information to the terminal when it loads, so you might need to scroll up to find this section.
 
 * On Mac, CMD+click on the listed http address and the server will launch a webpage in your default browser
 * To shutdown the server in the browser, click "Shutdown Server"
@@ -52,32 +52,19 @@ Please note that the SER model prints information to the terminal when it loads,
 
 **Install Dependencies**
 
-* Install PyTorch and additional libraries with:
+* Install Audonnx with:
 
-        pip install torch, torchvision, torchaudio
+        pip install audonnx
 
 * Install SpeechRecognition for Python with: 
 
         pip install SpeechRecognition
 
-* Install SpeechBrain with:
-        pip install speechbrain
 
-**NOTE** The first time the server is run on the local machine, it will automatically download the model for speechbrain. This process might take a considerable amount of time and can be monitored in the terminal. Please wait until the model has finished downloading before running the tests. The model can be replaced by altering the source variable in this function:
-    
-    def get_ser_model():
-        return EncoderClassifier.from_hparams(
-            source="speechbrain/spkrec-ecapa-voxceleb",
-            savedir="pretrained_models"
-    )
+**NOTE** The classifier used for SER is included in this repository. The use of the classifier and audonnx is likely to change once a more accurate SER classifier is identified.
 
-More information can be found by visiting:
 
-    https://speechbrain.readthedocs.io/en/0.5.7/API/speechbrain.pretrained.interfaces.html
-
-### AWS Requester
-This is the script that downloads Empatica data from the Amazon Cloud server
-
+### AWS Client 
 **Installation**
 
 Install the AWS SDK with: 
@@ -92,18 +79,34 @@ Install the AWS CLI with:
 
     sudo installer -pkg ./AWSCLIV2.pkg -target /
 
-
 **Instructions**
 
 **Setup AWS Credentials**
 
 * In terminal, run: aws configure
-* Enter the AWS access key (Found on Empatica Care)
-* Enter the AWS secret access key (Found on Empatica Care)
+* Enter the AWS access key (to be provided)
+* Enter the AWS secret access key (to be provided)
 * Enter the default region name (us-west-2)
 * Leave default output as None
 
-**Notes**
 
-* The AWS Requester retrieves the most recently created data file from the Empatica AWS cloud server and appends the name of the participant to the data filename. The participant information form must be submitted before downloading the data or the script will not run.
-* Run the Empatica session and be sure to end the session before pressing the download button.
+### Classes
+
+**Subject**
+
+The susbject.py class handles all subject data collected during the experiment
+
+**AWS Handler**
+
+The aws_handler.py class manages the uploading of subject data to the XR lab's AWS server.
+
+**Recording Manager**
+
+The recording_manager.py class handles all recording threads and audio input settings.
+
+**Test Manager**
+
+The test_manager.py class handles all testing procedures. The test questions are stored in external JSON files:
+    SER_questions.json
+    task_1_data.json
+    task_2_data.json

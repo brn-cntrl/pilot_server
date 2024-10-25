@@ -848,6 +848,7 @@ def get_audio_devices():
 
 def set_device():
     global device_index
+    global recording_manager
     data = request.get_json()
     print(f'Received data: {data}')  # Debugging statement
 
@@ -858,6 +859,7 @@ def set_device():
             info = p.get_device_info_by_index(device_index)
             if info:
                 device_index = info['index']
+                recording_manager.set_device(info['index'])
                 p.terminate()
                 print(f'Device index set to: {device_index}')
                 return jsonify({'message': 'Device index set.'})

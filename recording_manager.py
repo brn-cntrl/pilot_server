@@ -85,15 +85,7 @@ class RecordingManager():
     
     def get_audio_devices(self):
         return self.audio_devices
-
-    ##################################################################
-    ## SETTERS
-    ##################################################################
-    def set_device():
-        pass
-
-
-    ##################################################################
+    
     ## System call to get audio devices
     def fetch_audio_devices(self):
         p = pyaudio.PyAudio()
@@ -103,4 +95,12 @@ class RecordingManager():
         
         p.terminate()
         return audio_devices
+
+    ##################################################################
+    ## SETTERS
+    ##################################################################
+    def set_device(self, index):
+        self.device_index = index
+        print(f"Device set to {self.audio_devices[index]['name']}")
+
     ##################################################################
