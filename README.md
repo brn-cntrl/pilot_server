@@ -95,6 +95,8 @@ Install the AWS CLI with:
 
 ### Classes
 
+**Please note that at the moment all variables for handling data shared between functions are in global scope. The following classes will encapsulate these variables and clean up the global namespace, but they are currently under construction**
+
 **Subject**
 
 The susbject.py class handles all subject data collected during the experiment

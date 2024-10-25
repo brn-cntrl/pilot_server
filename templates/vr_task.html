@@ -13,12 +13,14 @@
     <h1>VR Tasks</h1>
     <button class="VRTaskButton">Begin VR Task 1</button><br>
     <div class="testModule" style="display:none" disabled>
-        <button id="taskID1" class="VRRecord">Start Recording</button><br>
+        <button id="taskID1" class="VRRecord">Start Recording</button><br><br>
+        <p id="status1" style="display:none">Please wait...</p>
     </div><br>
 
     <button class="VRTaskButton">Begin VR Task 2</button><br>
     <div class="testModule" style="display:none" disabled>
-        <button id="taskID2" class="VRRecord">Start Recording</button><br>
+        <button id="taskID2" class="VRRecord">Start Recording</button><br><br>
+        <p id="status2" style="display:none">Please wait...</p>
     </div>
 
     <script>
@@ -60,7 +62,16 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data.message);
-                console.log(data.task_id);
+                if (data.message == 'Recording started and stream is active.' && action == 'start' && taskID == 'taskID1'){
+                    document.getElementById('status1').style.display = 'block';
+                    document.getElementById('status1').innerHTML = 'Recording started and stream is active.';
+                } else if (data.message == 'Recording started and stream is active.' && action == 'start' && taskID == 'taskID2'){
+                    document.getElementById('status2').style.display = 'block';
+                    document.getElementById('status2').innerHTML = 'Recording started and stream is active.';
+                } else if (data.message == 'Recording stopped.'){
+                    document.getElementById('status1').style.display = 'none';
+                    document.getElementById('status2').style.display = 'none';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);

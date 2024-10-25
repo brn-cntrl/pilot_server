@@ -431,6 +431,7 @@ def submit():
 def record_vr_task():
     global subject_data, subject
     global recording_manager
+    global stream_is_active
 
     try:
         data = request.get_json()
@@ -439,7 +440,10 @@ def record_vr_task():
 
         if action == 'start':
             record_audio()
-            return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200
+            while not stream_is_active:
+                time.sleep(2)
+                # stream_is_active = recording_manager.get_stream_is_active()
+            return jsonify({'message': 'Recording started and stream is active.', 'task_id': task_id}), 200
         
         elif action == 'stop':
             stop_recording()
@@ -712,6 +716,20 @@ def get_wav_as_np(filename):
         print("Couldn't locate an audio file.")
         return None
 
+def get_audio_duration(file_path):
+    with wave.open(file_path, 'rb') as wf:
+        frames = wf.getnframes()          
+        rate = wf.getframerate()          
+        duration = frames / float(rate)   
+    return duration
+
+def delete_recording_file(file_path):
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
 # Necessary for SER task
 def normalize_audio(audio):
     audio_array = audio / np.max(np.abs(audio))
@@ -743,14 +761,18 @@ def transcribe_vr_audio(start_time, task_id):
     # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
     recording_start_time = datetime.datetime.fromisoformat(start_time)
     recognizer = sr.Recognizer()
-    vr_transcriptions = []
-
+    vr_transcriptions = []  
+    
     with sr.AudioFile(RECORDING_FILE) as source:
         try:
-            duration = source.DURATION
+            duration = get_audio_duration(RECORDING_FILE)
             chunk_duration = 5
             current_time = 0
 
+            if chunk_duration > duration:
+                print(f"Error: Chunk duration ({chunk_duration} seconds) exceeds audio file duration ({duration} seconds).")
+                return []
+        
             while current_time < duration:
                 audio_chunk = recognizer.record(source, duration=chunk_duration, offset=current_time)
                 try:
@@ -772,7 +794,7 @@ def transcribe_vr_audio(start_time, task_id):
                     current_time += chunk_duration
 
                 except sr.UnknownValueError:
-                    print("Google Speech Recognition could not understand the audio  at{current_time:.2f}.")
+                    print(f"Google Speech Recognition could not understand the audio  at{current_time:.2f}.")
                     current_time += chunk_duration
                 except sr.RequestError as e:
                     print(f"Error with the recognition service: {e}")
@@ -782,10 +804,11 @@ def transcribe_vr_audio(start_time, task_id):
         
         except Exception as e:
             print(f"An error occurred: {str(e)}")
-            return None
+            return []
     
 ################################################
-#################### SER #######################
+## SER 
+################################################
 def set_aud_model(app):
     if is_folder_empty(app, 'model'):
         url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
@@ -839,6 +862,8 @@ def predict_emotion(audio_chunk):
     prediction = CLF.predict(hidden_states_df)
 
     return prediction[0]
+
+################################################
 
 def get_audio_devices():
     audio_devices = fetch_audio_devices()
