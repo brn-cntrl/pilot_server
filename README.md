@@ -9,9 +9,9 @@
 * Audonnx (SER model to TBD)
 * Boto3
 
-**Installation**
+**Please note** that all installation will soon be handled with PyInstaller. Currently, there are a number of files and folders missing from this repository, which are necessary for proper operation but which slow things down for git. I will upload these when they are needed or otherwise provide them through GDrive.
 
-*Please note that all installation will soon be handled with PyInstaller.
+**Installation**
 
 Install Flask: 
 
