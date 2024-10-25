@@ -1,0 +1,326 @@
+[
+    {
+        "question": "1059 - 13",
+        "answer": ["1046", "one thousand forty-six", "One Thousand Forty-Six"]
+    },
+    {
+        "question": "1046 - 13",
+        "answer": ["1033", "one thousand thirty-three", "One Thousand Thirty-Three"]
+    },
+    {
+        "question": "1033 - 13",
+        "answer": ["1020", "one thousand twenty", "One Thousand Twenty"]
+    },
+    {
+        "question": "1020 - 13",
+        "answer": ["1007", "one thousand seven", "One Thousand Seven"]
+    },
+    {
+        "question": "1007 - 13",
+        "answer": ["994", "nine hundred ninety-four", "Nine Hundred Ninety-Four"]
+    },
+    {
+        "question": "994 - 13",
+        "answer": ["981", "nine hundred eighty-one", "Nine Hundred Eighty-One"]
+    },
+    {
+        "question": "981 - 13",
+        "answer": ["968", "nine hundred sixty-eight", "Nine Hundred Sixty-Eight"]
+    },
+    {
+        "question": "968 - 13",
+        "answer": ["955", "nine hundred fifty-five", "Nine Hundred Fifty-Five"]
+    },
+    {
+        "question": "955 - 13",
+        "answer": ["942", "nine hundred forty-two", "Nine Hundred Forty-Two"]
+    },
+    {
+        "question": "942 - 13",
+        "answer": ["929", "nine hundred twenty-nine", "Nine Hundred Twenty-Nine"]
+    },
+    {
+        "question": "929 - 13",
+        "answer": ["916", "nine hundred sixteen", "Nine Hundred Sixteen"]
+    },
+    {
+        "question": "916 - 13",
+        "answer": ["903", "nine hundred three", "Nine Hundred Three"]
+    },
+    {
+        "question": "903 - 13",
+        "answer": ["890", "eight hundred ninety", "Eight Hundred Ninety"]
+    },
+    {
+        "question": "890 - 13",
+        "answer": ["877", "eight hundred seventy-seven", "Eight Hundred Seventy-Seven"]
+    },
+    {
+        "question": "877 - 13",
+        "answer": ["864", "eight hundred sixty-four", "Eight Hundred Sixty-Four"]
+    },
+    {
+        "question": "864 - 13",
+        "answer": ["851", "eight hundred fifty-one", "Eight Hundred Fifty-One"]
+    },
+    {
+        "question": "851 - 13",
+        "answer": ["838", "eight hundred thirty-eight", "Eight Hundred Thirty-Eight"]
+    },
+    {
+        "question": "838 - 13",
+        "answer": ["825", "eight hundred twenty-five", "Eight Hundred Twenty-Five"]
+    },
+    {
+        "question": "825 - 13",
+        "answer": ["812", "eight hundred twelve", "Eight Hundred Twelve"]
+    },
+    {
+        "question": "812 - 13",
+        "answer": ["799", "seven hundred ninety-nine", "Seven Hundred Ninety-Nine"]
+    },
+    {
+        "question": "799 - 13",
+        "answer": ["786", "seven hundred eighty-six", "Seven Hundred Eighty-Six"]
+    },
+    {
+        "question": "786 - 13",
+        "answer": ["773", "seven hundred seventy-three", "Seven Hundred Seventy-Three"]
+    },
+    {
+        "question": "773 - 13",
+        "answer": ["760", "seven hundred sixty", "Seven Hundred Sixty"]
+    },
+    {
+        "question": "760 - 13",
+        "answer": ["747", "seven hundred forty-seven", "Seven Hundred Forty-Seven"]
+    },
+    {
+        "question": "747 - 13",
+        "answer": ["734", "seven hundred thirty-four", "Seven Hundred Thirty-Four"]
+    },
+    {
+        "question": "734 - 13",
+        "answer": ["721", "seven hundred twenty-one", "Seven Hundred Twenty-One"]
+    },
+    {
+        "question": "721 - 13",
+        "answer": ["708", "seven hundred eight", "Seven Hundred Eight"]
+    },
+    {
+        "question": "708 - 13",
+        "answer": ["695", "six hundred ninety-five", "Six Hundred Ninety-Five"]
+    },
+    {
+        "question": "695 - 13",
+        "answer": ["682", "six hundred eighty-two", "Six Hundred Eighty-Two"]
+    },
+    {
+        "question": "682 - 13",
+        "answer": ["669", "six hundred sixty-nine", "Six Hundred Sixty-Nine"]
+    },
+    {
+        "question": "669 - 13",
+        "answer": ["656", "six hundred fifty-six", "Six Hundred Fifty-Six"]
+    },
+    {
+        "question": "656 - 13",
+        "answer": ["643", "six hundred forty-three", "Six Hundred Forty-Three"]
+    },
+    {
+        "question": "643 - 13",
+        "answer": ["630", "six hundred thirty", "Six Hundred Thirty"]
+    },
+    {
+        "question": "630 - 13",
+        "answer": ["617", "six hundred seventeen", "Six Hundred Seventeen"]
+    },
+    {
+        "question": "617 - 13",
+        "answer": ["604", "six hundred four", "Six Hundred Four"]
+    },
+    {
+        "question": "604 - 13",
+        "answer": ["591", "five hundred ninety-one", "Five Hundred Ninety-One"]
+    },
+    {
+        "question": "591 - 13",
+        "answer": ["578", "five hundred seventy-eight", "Five Hundred Seventy-Eight"]
+    },
+    {
+        "question": "578 - 13",
+        "answer": ["565", "five hundred sixty-five", "Five Hundred Sixty-Five"]
+    },
+    {
+        "question": "565 - 13",
+        "answer": ["552", "five hundred fifty-two", "Five Hundred Fifty-Two"]
+    },
+    {
+        "question": "552 - 13",
+        "answer": ["539", "five hundred thirty-nine", "Five Hundred Thirty-Nine"]
+    },
+    {
+        "question": "539 - 13",
+        "answer": ["526", "five hundred twenty-six", "Five Hundred Twenty-Six"]
+    },
+    {
+        "question": "526 - 13",
+        "answer": ["513", "five hundred thirteen", "Five Hundred Thirteen"]
+    },
+    {
+        "question": "513 - 13",
+        "answer": ["500", "five hundred", "Five Hundred"]
+    },
+    {
+        "question": "500 - 13",
+        "answer": ["487", "four hundred eighty-seven", "Four Hundred Eighty-Seven"]
+    },
+    {
+        "question": "487 - 13",
+        "answer": ["474", "four hundred seventy-four", "Four Hundred Seventy-Four"]
+    },
+    {
+        "question": "474 - 13",
+        "answer": ["461", "four hundred sixty-one", "Four Hundred Sixty-One"]
+    },
+    {
+        "question": "461 - 13",
+        "answer": ["448", "four hundred forty-eight", "Four Hundred Forty-Eight"]
+    },
+    {
+        "question": "448 - 13",
+        "answer": ["435", "four hundred thirty-five", "Four Hundred Thirty-Five"]
+    },
+    {
+        "question": "435 - 13",
+        "answer": ["422", "four hundred twenty-two", "Four Hundred Twenty-Two"]
+    },
+    {
+        "question": "422 - 13",
+        "answer": ["409", "four hundred nine", "Four Hundred Nine"]
+    },
+    {
+        "question": "409 - 13",
+        "answer": ["396", "three hundred ninety-six", "Three Hundred Ninety-Six"]
+    },
+    {
+        "question": "396 - 13",
+        "answer": ["383", "three hundred eighty-three", "Three Hundred Eighty-Three"]
+    },
+    {
+        "question": "383 - 13",
+        "answer": ["370", "three hundred seventy", "Three Hundred Seventy"]
+    },
+    {
+        "question": "370 - 13",
+        "answer": ["357", "three hundred fifty-seven", "Three Hundred Fifty-Seven"]
+    },
+    {
+        "question": "357 - 13",
+        "answer": ["344", "three hundred forty-four", "Three Hundred Forty-Four"]
+    },
+    {
+        "question": "344 - 13",
+        "answer": ["331", "three hundred thirty-one", "Three Hundred Thirty-One"]
+    },
+    {
+        "question": "331 - 13",
+        "answer": ["318", "three hundred eighteen", "Three Hundred Eighteen"]
+    },
+    {
+        "question": "318 - 13",
+        "answer": ["305", "three hundred five", "Three Hundred Five"]
+    },
+    {
+        "question": "305 - 13",
+        "answer": ["292", "two hundred ninety-two", "Two Hundred Ninety-Two"]
+    },
+    {
+        "question": "292 - 13",
+        "answer": ["279", "two hundred seventy-nine", "Two Hundred Seventy-Nine"]
+    },
+    {
+        "question": "279 - 13",
+        "answer": ["266", "two hundred sixty-six", "Two Hundred Sixty-Six"]
+    },
+    {
+        "question": "266 - 13",
+        "answer": ["253", "two hundred fifty-three", "Two Hundred Fifty-Three"]
+    },
+    {
+        "question": "253 - 13",
+        "answer": ["240", "two hundred forty", "Two Hundred Forty"]
+    },
+    {
+        "question": "240 - 13",
+        "answer": ["227", "two hundred twenty-seven", "Two Hundred Twenty-Seven"]
+    },
+    {
+        "question": "227 - 13",
+        "answer": ["214", "two hundred fourteen", "Two Hundred Fourteen"]
+    },
+    {
+        "question": "214 - 13",
+        "answer": ["201", "two hundred one", "Two Hundred One"]
+    },
+    {
+        "question": "201 - 13",
+        "answer": ["188", "one hundred eighty-eight", "One Hundred Eighty-Eight"]
+    },
+    {
+        "question": "188 - 13",
+        "answer": ["175", "one hundred seventy-five", "One Hundred Seventy-Five"]
+    },
+    {
+        "question": "175 - 13",
+        "answer": ["162", "one hundred sixty-two", "One Hundred Sixty-Two"]
+    },
+    {
+        "question": "162 - 13",
+        "answer": ["149", "one hundred forty-nine", "One Hundred Forty-Nine"]
+    },
+    {
+        "question": "149 - 13",
+        "answer": ["136", "one hundred thirty-six", "One Hundred Thirty-Six"]
+    },
+    {
+        "question": "136 - 13",
+        "answer": ["123", "one hundred twenty-three", "One Hundred Twenty-Three"]
+    },
+    {
+        "question": "123 - 13",
+        "answer": ["110", "one hundred ten", "One Hundred Ten"]
+    },
+    {
+        "question": "110 - 13",
+        "answer": ["97", "ninety-seven", "Ninety-Seven"]
+    },
+    {
+        "question": "97 - 13",
+        "answer": ["84", "eighty-four", "Eighty-Four"]
+    },
+    {
+        "question": "84 - 13",
+        "answer": ["71", "seventy-one", "Seventy-One"]
+    },
+    {
+        "question": "71 - 13",
+        "answer": ["58", "fifty-eight", "Fifty-Eight"]
+    },
+    {
+        "question": "58 - 13",
+        "answer": ["45", "forty-five", "Forty-Five"]
+    },
+    {
+        "question": "45 - 13",
+        "answer": ["32", "thirty-two", "Thirty-Two"]
+    },
+    {
+        "question": "32 - 13",
+        "answer": ["19", "nineteen", "Nineteen"]
+    },
+    {
+        "question": "19 - 13",
+        "answer": ["6", "six", "Six"]
+    }
+]

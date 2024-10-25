@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exit Survey</title>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="testModule">
+        <h1>Exit Survey</h1>
+        <p>The purpose of this exit survey is to gather information about your experience today and  Please answer each question honestly based on your personal experience. Thank you.</p><br>
+        <p><span class="required">*</span>Required</p>
+        <form action="exit_survey" id="exitForm">
+            <h3>What do you think was the main purpose of the study?<span class="required">*</span></h3>
+            <label for="purpose">
+                <input type="text" id="main_purpose" name="purpose"><br><br>
+            </label>
+            <h2>Background Information</h2>
+            <h3>How often do you spend time in nature (e.g., parks, forests, gardens)?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="time_in_nature" value="Daily" required>Daily
+            </label><br>
+            <label>
+                <input type="radio" name="time_in_nature" value="Weekly" required>Weekly
+            </label><br>
+            <label>
+                <input type="radio" name="time_in_nature" value="Monthly" required>Monthly
+            </label><br>
+            <label>
+                <input type="radio" name="time_in_nature" value="Rarely" required>Rarely
+            </label><br>
+            <label>
+                <input type="radio" name="time_in_nature" value="Never" required>Never
+            </label><br><br>
+            
+            <h3>Do you have access to green spaces or gardens where you live?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="access_gardens" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="access_gardens" value="No" required>No
+            </label><br><br>
+
+            <h3>How much do you enjoy spending time in natural environments (e.g., parks, forests)?<span class="required">*</span></h3>
+            <label></label>
+                <input type="radio" name="enjoy_time_natural" value="Strongly Enjoy" required>Strongly Enjoy
+            </label><br>
+            <label>
+                <input type="radio" name="enjoy_time_natural" value="Enjoy" required>Enjoy
+            </label><br>
+            <label>
+                <input type="radio" name="enjoy_time_natural" value="Neutral" required>Neutral
+            </label><br>
+            <label>
+                <input type="radio" name="enjoy_time_natural" value="Dislike" required>Dislike
+            </label><br>
+            <label>
+                <input type="radio" name="enjoy_time_natural" value="Strongly Dislike" required>Strongly Dislike
+            </label><br><br>
+
+            <h3>Do you have a preference for natural environments, such as forests or parks, over urban environments, like cities or buildings?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="environment_preference" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="environment_preference" value="No" required>No
+            </label><br><br>
+
+            <h3>Does your work or study environment have natural elements (e.g., plants, wood interiors)?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="natural_elements" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="natural_elements" value="No" required>No
+            </label><br><br>
+
+            <h3>How much do you prefer interiors that incorporate natural elements (e.g., wood, plants)?<span class="required">*</span></h3>
+            <label></label>
+                <input type="radio" name="interior_preference" value="Strongly Prefer" required>Strongly Prefer
+            </label><br>
+            <label>
+                <input type="radio" name="interior_preference" value="Somewhat Prefer" required>Somewhat Prefer
+            </label><br>
+            <label>
+                <input type="radio" name="interior_preference" value="Neutral" required>Neutral
+            </label><br>
+            <label>
+                <input type="radio" name="interior_preference" value="Dislike" required>Dislike
+            </label><br>
+            <label>
+                <input type="radio" name="interior_preference" value="Strongly Dislike" required>Strongly Dislike
+            </label><br><br>
+
+            <h3>Did you find the instructions in the surveys you completed during this study clear and easy to follow? If not, please explain.<span class="required">*</span></h3>
+            <label>
+                <input type="text" id="instructions" name="instructions">
+            </label><br><br>
+            <h3>Were there any points during the experiment where you felt unsure of what was expected of you? If so, please explain.<span class="required">*</span></h3>
+            <label>
+                <input type="text" id="expectations" name="expectations">
+            </label><br><br>
+            <h3>Is there any other feedback you would like to share about your experience during the study?</h3>
+            <label>
+                <input type="text" id="feedback" name="feedback">
+            </label><br><br>
+
+            <input type="submit" value="Submit"><br><br>
+        </form>
+        </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('exitForm');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); 
+
+                const formData = new FormData(form); 
+
+                fetch('/submit_exit', { 
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcription Test</title>
+</head>
+
+<body>
+    <h2>Transcription</h2>
+    <label for="audioDevices">Select Audio Input Device:</label>
+    <select id="audioDevices" onchange="setDevice()"></select><br><br>
+
+    <button id="transcribe">Run Transcription / SER</button>
+    <button type="button" onclick="stopTranscription()">Stop Transcription / SER</button><br><br>
+</body>
+
+<script>
+    function stopTranscription() {
+        fetch('/stop_transcription', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+                console.log(data.message);
+        })
+        .catch(error => alert('Error:' + error));
+    }
+    
+    document.getElementById('transcribe').addEventListener('click', function() {
+        fetch('/transcribe', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+                console.log(data);
+        })
+        .catch(error => alert('Error:' + error));
+    });
+    
+    function fetchAudioDevices(){
+        fetch('/audio_devices')
+        .then(response => response.json())
+        .then(data => {
+                const audioDevicesDropdown = document.getElementById('audioDevices');
+                data.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.index;
+                    option.text = device.name;
+                    audioDevicesDropdown.appendChild(option);
+                });
+
+                // Handle for only one device
+                if(data.length === 1){
+                    setDevice();
+                }
+        })
+        .catch(error => alert('Error:' + error));
+    }
+
+    function setDevice() {
+        const audioDevices = document.getElementById('audioDevices');
+        const selectedDeviceIndex = audioDevices.value;
+        console.log('Selected Device Index:');
+        console.log(selectedDeviceIndex);
+        fetch('/set_device', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({device_index: selectedDeviceIndex})
+        })
+        .then(response => response.json())
+        .then(data => {
+                console.log(data.message);
+        })
+        .catch(error => alert('Error:' + error));
+    }
+
+    window.onload = fetchAudioDevices;
+</script>

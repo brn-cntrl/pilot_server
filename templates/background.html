@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Survey</title>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="testModule">
+        <h1>Background Information</h1>
+        <p>The following responses you provide are confidential, and all information will be used only for research purposes. Please respond to each question honestly.</p>
+        <p><span class="required">*</span>Required</p>
+        <form action="submit_background" id="backgroundForm">
+            <h3>Did you rush here or have you had a caffeinated drink recently? <span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="rush_caffeine" value="Yes" required> Yes
+            </label><br>
+            <label>
+                <input type="radio" name="rush_caffeine" value="No" required> No
+            </label><br><br>
+
+            <label for="caffeine_details">If yes, what did you have and when? <span class="required">*</span></label><br><br>
+            <input type="text" id="caffeine_details" name="caffeine_details"><br><br>
+
+            <h3>Are you thirsty or hungry?</h3>
+            <label>
+                <input type="radio" name="thirst_hunger" value="Thirsty" required> Thirsty
+            </label><br>
+            <label>
+                <input type="radio" name="thirst_hunger" value="Hungry" required> Hungry
+            </label><br>
+            <label>
+                <input type="radio" name="thirst_hunger" value="Both" required> Both
+            </label><br>
+            <label>
+                <input type="radio" name="thirst_hunger" value="Neither" required> Neither
+            </label><br><br>
+
+            <h3>What do you think your normal heart rate is? Is it elevated right now for any reason?<span class="required">*</span></h3>
+            <label for="heart_rate">
+            <input type="text" id="heart_rate" name="heart_rate" required>
+            </label><br><br>
+
+            <h3>Do you have any underlying neurological or neuropsychological conditions?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="neurological_conditions" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="neurological_conditions" value="No" required>No
+            </label><br><br>
+
+            <label for="neurological_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
+            <input type="text" id="neurological_description" name="neurological_description" required><br><br>
+
+            <h3>Do you have any scars or tattoos on your non-dominant wrist?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="scars_tattoos" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="scars_tattoos" value="No" required>No
+            </label><br><br>
+
+            <h3>Do you have any health conditions that might prevent you from using virtual reality equipment, such as severe motion sickness, epilepsy, or any other condition that could be triggered by VR?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="vr_conditions" value="Yes" required>Yes
+            </label><br>
+            <label>
+                <input type="radio" name="vr_conditions" value="No" required>No
+            </label><br><br>
+
+            <label for="vr_condition_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
+            <input type="text" id="vr_condition_description" name="vr_condition_description" required><br><br>
+
+            <h3>Do you require glasses to participate in the experiment?<span class="required">*</span></h3>
+            <label>
+                <input type="radio" name="glasses" value="Yes, I'll be wearing glasses" required> Yes, I'll be wearing glasses
+            </label><br>
+            <label>
+                <input type="radio" name="glasses" value="Yes, I'll be wearing contacts" required> Yes, I'll be wearing contacts
+            </label><br>
+            <label>
+                <input type="radio" name="glasses" value="No" required> No
+            </label><br><br>
+
+            <input type="submit" value="Submit"><br><br>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('backgroundForm');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); 
+
+                const formData = new FormData(form); 
+
+                fetch('/submit_background', { 
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

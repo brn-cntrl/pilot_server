@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment Scripts</title>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Experiment</h1>
+    <h2>Pre-Test</h2>
+
+    <button id="beginExperimentButton">Surveys</button><br>
+    <div class="testModule" id="surveysDiv" style="display: none">
+        <h2>Surveys and Participant Information</h2>
+        <p>Before performing the tasks, please click on the links in order and fill out the following forms and surveys.</p><br>
+        
+        <button id="participantInfoButton">Participant Information</button><br>
+        <div class="innerModule" id="participantInfoDiv" style="display:none;">
+            <form action="/submit" method="POST" id="nameForm">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required><br><br>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required><br><br>
+                <button type="submit" id="submitButton">Submit Information</button>
+            </form>
+            <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
+            <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
+        </div><br>
+        <button id="introSurveyButton">Intro Survey</button><br><br>
+        <div class="innerModule" id="introDiv" style="display:none;" disabled>
+            <p>Please fill out the following information if applicable:</p>
+            <form action="/submit_intro_questions" id="introForm" method="POST">
+                <label for="PID">PID:<span class="required">*</span></label>
+                <input type="text" id="PID" name="PID" required><br><br>
+                <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
+                <input type="text" id="class" name="class" required><br><br>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+
+        <button id="consentFormButton">Consent Form</button><br><br>
+        <button id="demographicSurveyButton">Demographic Survey</button><br><br>
+        <button id="backgroundInfoButton">Background Information</button><br><br>
+        <button id="pss4_button">Stress Baseline Survey</button><br><br>
+    </div><br>
+
+    <button id="testAudioButton">Test Audio</button><br>
+    <div class="testModule" id="testAudioDiv" style="display:none;">
+        <p>Please select your audio input or microphone.</p>
+        <label for="audioDevices">Select Audio Input Device:</label><br>
+        <select id="audioDevices" onchange="setDevice()"></select>
+        <p>Press "Record" and follow the instructions</p>
+        <button id="testAudio">Record</button>
+        <p id="audioStatusMessage"></p>
+    </div> <br>
+
+    <button id="emotionBaselineButton">Emotion Baseline</button><br>
+    <div class="testModule" id="emotionBaselineDiv" style="display:none;">
+        <ul></ul>
+            <li>Press "Begin"</li>
+            <li>Read the first question when it appears</li>
+            <li>Speak your answer aloud</li>
+            <li>Press "Submit" to register your answer and receive the next question</li>
+        </ul> <br>
+        <button id="beginSERButton">Begin</button>
+        <p id="questionContainer" style="display:none;" disabled></p>
+        <p id="status" style="display:none;" disabled></p>
+        <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
+    </div><br>
+
+    <!-- <div id="qr-code-container">
+        {% if qr_code_url %}
+            <h2>Empatica Session QR Code:</h2>
+            <img src="{{ qr_code_url }}" alt="QR Code">
+        {% endif %}
+    </div><br> -->
+
+    <h2>Experimental Tasks</h2>
+    <button id="tasksButton">Begin Tasks</button><br>
+    <div class="testModule" id="tasksDiv" style="display:none;">
+        <h2>Experimental Tasks</h2>
+        <button id="firstStressTask">First Stressor Task</button><br><br>
+        <button id="firstVRTask">First VR Task</button><br><br>
+        <button id="breakButton">Take Break</button><br><br>
+        <button id="secondStressTask">Second Stressor Task</button><br><br>
+        <button id="secondVRTask">Second VR Task / Control</button><br><br>
+        <button id="breakButton">Take a Break</button>
+    </div><br>
+
+    <h2>Post-Test</h2>
+    <button id="exitSurveyButton">Exit Survey</button><br><br>
+    <button id="uploadSubjectData">Upload Experiment Data</button><br><br>
+
+    <h2>Shutdown</h2>
+    <button id="shutdownButton">Shutdown Server</button>
+    <script src="/static/js/scripts.js"></script>
+    <script>
+        document.getElementById('nameForm').addEventListener('submit', function(event) {
+            event.preventDefault(); 
+            const formData = new FormData(this);
+            const notification1 = document.getElementById('notification');
+            const errorNotification1 = document.getElementById('errorNotification');
+
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email')
+            };
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData).toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                notification1.style.display = 'block';
+                errorNotification1.style.display = 'none';
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                notification1.style.display = 'none';
+                errorNotification1.style.display = 'block';
+                console.error('Error:', error);
+            });
+        });
+
+        document.getElementById('beginExperimentButton').addEventListener('click', function() {
+            toggleVis('surveysDiv');
+        });
+
+        document.getElementById('introSurveyButton').addEventListener('click', function() {
+            toggleVis('introDiv');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('introForm');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); 
+
+                const formData = new FormData(form); 
+
+                fetch('/submit_intro_data', { 
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+
+        document.getElementById('backgroundInfoButton').addEventListener('click', function() {
+            window.open('/background', '_blank');
+        });
+
+        document.getElementById('pss4_button').addEventListener('click', function() {
+            window.open('/pss4', '_blank');
+        });
+
+        document.getElementById('demographicSurveyButton').addEventListener('click', function(){
+            window.open('/demographic_survey', '_blank');
+        });
+
+        document.getElementById('exitSurveyButton').addEventListener('click', function() {
+            window.open('/exit_survey', '_blank');
+        });
+
+        document.getElementById('testAudioButton').addEventListener('click', function() {
+            toggleVis('testAudioDiv');
+        });
+
+        document.getElementById('participantInfoButton').addEventListener('click', function() {
+            toggleVis('participantInfoDiv');
+        });
+
+        document.getElementById('emotionBaselineButton').addEventListener('click', function() {
+           toggleVis('emotionBaselineDiv');
+        });
+
+        document.getElementById('tasksButton').addEventListener('click', function(){
+            toggleVis('tasksDiv');
+        });
+
+        document.getElementById('testAudio').addEventListener('click', async function() {
+            let button = document.getElementById('testAudio');
+            let statusMessage = document.getElementById('audioStatusMessage');
+            
+            if (button.innerText === 'Record') {
+                startRecording()
+                .then(() => {
+                    let checkInterval = setInterval(() => {
+                        let streamActive = checkActiveStream();  
+                        if(streamActive) {
+                            console.log('Stream is active');
+                            statusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
+                            button.innerText = 'Stop';
+                            clearInterval(checkInterval); 
+                        } else {
+                            console.log('Stream is not active');
+                            statusMessage.innerText = "Please wait...";
+                        }
+                    }, 2000);
+                })
+            }
+            else if (button.innerText === 'Stop') {
+                try {
+                    const response = await fetch('/test_audio', { method: 'POST' });
+                    const data = await response.json();
+                    statusMessage.innerText = `I got: ${data.result}`;
+                } catch (error) {
+                    console.error('Error:', error);
+                    statusMessage.innerText = "Error occurred during recording or transcription.";
+                } finally {
+                    button.innerText = 'Record';
+                }
+            }
+        });
+        
+        document.getElementById('beginSERButton').addEventListener('click', function(){
+            document.getElementById('beginSERButton').disabled = true;
+            document.getElementById('questionContainer').style.display = 'block';
+            document.getElementById('questionContainer').disabled = false;
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('status').disabled = false;
+            document.getElementById('submitAnswer').style.display = 'block';
+            document.getElementById('submitAnswer').disabled = false;
+
+            // Start recording audio stream
+            startRecording()
+                .then(() => {
+                    let statusMessage = document.getElementById('status');
+                    let checkInterval = setInterval(() => {
+                        let streamActive = checkActiveStream();  
+                        if (streamActive) {
+                            console.log('Stream is active');
+                            clearInterval(checkInterval); 
+                        } else {
+                            console.log('Stream is not active');
+                            statusMessage.innerText = "Please wait...";
+                        }
+                    }, 2000);
+                })
+                .catch(error => {
+                    console.error('Error starting audio stream:', error);
+                    alert('Error starting audio stream: ' + error);
+                });
+
+                console.log('Fetching SER question...');
+                fetch('/get_ser_question', { method: 'GET' })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Received data:', data);
+                        let q = data.question;
+                        document.getElementById('questionContainer').innerText = q;
+                        if (q === 'SER task completed.') {
+                            stopRecording();
+                            document.getElementById('submitAnswer').disabled = true;
+                            document.getElementById('submitAnswer').style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting SER question:', error);
+                        alert('Error getting SER question: ' + error);
+                    });
+            });
+
+            document.getElementById('submitAnswer').addEventListener('click', function() {
+                // First, submit the SER answer via POST
+                fetch("/process_ser_answer", {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data); // Log the full response data
+                    if (data.status === 'error') {
+                        document.getElementById("status").innerHTML = data.message;
+                        document.getElementById("status").style.display = "block";
+                        document.getElementById("status").disabled = false;
+                    } else {
+                        document.getElementById("status").innerHTML = data.message;
+                        document.getElementById("status").style.display = "block";
+                        document.getElementById("status").disabled = false;
+
+                        // Ensure recording starts only after answer is processed
+                        return startRecording();
+                    }
+                })
+                .then(() => {
+                    let statusMessage = document.getElementById('status');
+                    let checkInterval = setInterval(() => {
+                        let streamActive = checkActiveStream();  
+                        if (streamActive) {
+                            console.log('Stream is active');
+                            clearInterval(checkInterval); 
+                        } else {
+                            console.log('Stream is not active');
+                            statusMessage.innerText = "Please wait...";
+                        }
+                    }, 2000);
+
+                    // Fetch the next question only after recording has started successfully
+                    return fetch('/get_ser_question', { method: 'GET' });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    let q = data.question;
+                    document.getElementById('questionContainer').innerText = q;
+
+                    if (q === 'SER task completed.') {
+                        stopRecording();
+                        document.getElementById('submitAnswer').disabled = true;
+                        document.getElementById('submitAnswer').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById("status").innerHTML = "Error occurred while processing the answer.";
+                    document.getElementById("status").style.display = "block";
+                    document.getElementById("status").disabled = false;
+                });
+            });
+
+
+        let vrWin;
+
+        document.getElementById('firstVRTask').addEventListener('click', function() {
+            vrWin = window.open('/vr_task', '_blank');
+            if (vrWin) {
+                vrWin.focus();
+            } else {
+                alert('Please allow popups for this website');
+            }
+        });
+
+        document.getElementById('secondVRTask').addEventListener('click', function() {
+            vrWin = window.open('/vr_task', '_blank');
+            if (vrWin) {
+                vrWin.focus();
+            } else {
+                alert('Please allow popups for this website');
+            }
+        });
+
+        let breakWin;
+        document.getElementById('breakButton').addEventListener('click', function() {
+            breakWin = window.open('/break_page', '_blank');
+            if (breakWin) {
+                breakWin.focus();
+            } else {
+                alert('Please allow popups for this website');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            console.log('Fetching audio devices...');
+            fetchAudioDevices();
+            const audioDevicesDropdown = document.getElementById('audioDevices');
+            audioDevicesDropdown.addEventListener('change', setDevice);
+
+            const shutdownButton = document.getElementById('shutdownButton');
+            shutdownButton.addEventListener('click', shutdownServer);
+        });
+
+        document.getElementById('firstStressTask').addEventListener('click', function() {
+            window.open('/test_page', '_blank');
+        });
+        
+        document.getElementById('uploadSubjectData').addEventListener('click', function() {
+            fetch('/upload_subject_data', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

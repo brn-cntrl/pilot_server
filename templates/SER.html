@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</head>
+<body>
+    <h1>Speech Emotion Recognition</h1>
+    <button id="beginSERbutton">Begin SER</button>
+    <div class="testModule" id="SERQuestions" style="display:none" disabled>
+        <h2>Instructions</h2>
+        <ul>
+            <li>Press "Begin"</li>
+            <li>Read the first question when it appears</li>
+            <li>Speak your answer aloud</li>
+            <li>Press "Submit" to register your answer and receive the next question</li>
+        </ul>
+        <button id="beginSER">Begin</button>
+        <p id="questionContainer" style="display:none;" disabled></p>
+        <p id="status" style="display:none;" disabled></p>
+
+        <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
+    </div>
+
+    <script>
+        document.getElementById("beginSER").addEventListener("click", function() {
+            startRecording();
+            let checkInterval = setInterval(() => {
+                if (checkActiveStream()){
+                    const question = getSERQuestion()
+                        
+                    document.getElementById("questionContainer").innerHTML = question;
+                    document.getElementById("questionContainer").style.display = "block";
+                    document.getElementById("questionContainer").disabled = false;
+                    document.getElementById("beginSER").disabled = true;
+                    document.getElementById("submitAnswer").style.display = "block";
+                    document.getElementById("submitAnswer").disabled = false;
+                       
+                    clearInterval(checkInterval);
+                } else {
+                    document.getElementById("questionContainer").innerHTML ="Waiting for recording to start...";
+                    document.getElementById("questionContainer").style.display = "block";
+                    document.getElementById("questionContainer").disabled = false;
+                }
+            }, 2000);
+        });
+
+        document.getElementById("submitAnswer").addEventListener("click", function() {
+            submitSERAnswer();
+        });
+
+    </script>
+</body>
+</html>

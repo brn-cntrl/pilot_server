@@ -1,0 +1,19 @@
+body h1, body h2{
+    font-family: sans-serif;
+    font-weight: 400;
+}
+
+.testModule {
+  background-color: rgb(218, 218, 218);
+  padding: 20px;
+}
+
+.required {
+    color: red;
+}
+
+.innerModule {
+    background-color: rgb(231, 231, 231);
+    padding: 20px;
+    margin-bottom: 20px;
+}
