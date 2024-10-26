@@ -96,9 +96,7 @@ def get_ser_question():
     except Exception as e:
         print(f"Error in get_ser_question: {e}") 
         return jsonify({'status': 'error', 'message': str(e)}), 400
-
-
-# Route for SER test
+    
 def process_ser_answer():
     global RECORDING_FILE
     global current_ser_question_index
@@ -431,24 +429,33 @@ def submit():
 def record_vr_task():
     global subject_data, subject
     global recording_manager
-    global stream_is_active
+    global stream_is_active, stop_event
 
     try:
         data = request.get_json()
-        task_id = data.get('taskId')
+        task_id = data.get('task_id')
         action = data.get('action')
-
+        # Debug statement
+        print(f"Received task_id: {task_id}, action: {action}")
+        
         if action == 'start':
             record_audio()
-            while not stream_is_active:
+            max_attempts = 10
+            attempts = 0
+            while not stream_is_active and attempts < max_attempts:
                 time.sleep(2)
+                attempts += 1
                 # stream_is_active = recording_manager.get_stream_is_active()
             return jsonify({'message': 'Recording started and stream is active.', 'task_id': task_id}), 200
+        if not stream_is_active:
+            return jsonify({'message': 'Recording could not be started.'}), 400
         
         elif action == 'stop':
             stop_recording()
             # stop_event = recording_manager.get_stop_event()
-            if stop_event.is_set():
+            if not stop_event or not stop_event.is_set():
+                return jsonify({'message': 'Error stopping recording.'}), 400
+            else:
                 ts = get_timestamp()
                 vr_transcript = transcribe_vr_audio(ts, task_id)
 
@@ -475,7 +482,7 @@ def record_vr_task():
                     return jsonify({'message': 'All tasks completed.'}), 400
                 
                 delete_recording_file(RECORDING_FILE)
-                
+
                 return jsonify({'message': 'Recording stopped.', 'task_id': task_id}), 200
 
     except Exception as e:
@@ -526,11 +533,11 @@ def exit_survey():
 ##################################################################
 ## Helper Functions 
 ##################################################################
-def record_timestamps(timestamps):  # For use in thread
-    while not stop_event.is_set():
-        timestamps.append(datetime.datetime.now().isoformat())
-        time.sleep(10)
-
+# def record_timestamps(timestamps):  # For use in thread
+#     while not stop_event.is_set():
+#         timestamps.append(datetime.datetime.now().isoformat())
+#         time.sleep(10)
+        
 def set_timestamp(t):   
     global timestamp
     timestamp = t
@@ -598,13 +605,6 @@ def get_available_id(filename='available_ids.txt'):
 def shutdown_server():
     pid= os.getpid()
     os.kill(pid, signal.SIGINT)
-
-def find_qr_image(unique_id, base_dir='QR Codes'):
-    for root, dirs, files in os.walk(base_dir):
-        for file in files:
-            if file.startswith(unique_id) and file.endswith('.png'):
-                return os.path.join(root, file)
-    return None
 
 def prime_test():
     
@@ -701,6 +701,10 @@ def record_thread():
     print(f"Recording stopped, saved to {RECORDING_FILE}")
 
 def get_wav_as_np(filename):
+    """
+    This function loads the entire wav file stored in tmp and returns it as a 
+    normalized numpy array.
+    """
     try:
         with wave.open(filename, 'rb') as wf:
             num_channels = wf.getnchannels()
@@ -717,6 +721,49 @@ def get_wav_as_np(filename):
     except Exception as e:
         print("Couldn't locate an audio file.")
         return None
+    
+def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
+    """
+    This function returns the section of audio specified by the offset and 
+    duration parameters as a normalized numpy array. This is necessary for the
+    current SER classifier and is subject to change.
+    """
+    try:
+        with wave.open(filename, 'rb') as wf:
+            num_channels = wf.getnchannels()
+            original_sample_rate = wf.getframerate()
+            start_frame = int(offset * original_sample_rate)
+            num_frames = int(duration * original_sample_rate) if duration else wf.getnframes() - start_frame
+
+            wf.setpos(start_frame)
+            signal = wf.readframes(num_frames)
+            signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
+            signal = signal / np.iinfo(np.int16).max  
+
+            # Convert stereo to mono by averaging channels
+            if num_channels == 2:
+                signal = signal.reshape(-1, 2).mean(axis=1)
+
+            # If the original sample rate differs, resample to target sample rate
+            if original_sample_rate != sample_rate:
+                signal = resample_audio(signal, original_sample_rate, sample_rate)
+
+            return signal
+        
+    except Exception as e:
+        print(f"An error occurred while processing the audio: {e}")
+        return None
+
+def resample_audio(signal, original_sample_rate, target_sample_rate):
+    """
+    Resamples the signal to match the target sample rate using linear interpolation.
+    """
+    ratio = target_sample_rate / original_sample_rate
+    resampled_length = int(len(signal) * ratio)
+    resampled_signal = np.interp(
+        np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
+    )
+    return resampled_signal
 
 def get_audio_duration(file_path):
     with wave.open(file_path, 'rb') as wf:
@@ -729,8 +776,15 @@ def delete_recording_file(file_path):
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
+            print(f"File '{file_path}' deleted successfully.")
+        else:
+            print(f"File '{file_path}' does not exist.")
+    except PermissionError:
+        print(f"Permission denied: Unable to delete file '{file_path}'. Check file permissions.")
+    except FileNotFoundError:
+        print(f"File not found: '{file_path}' might have already been deleted.")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
 
 # Necessary for SER task
 def normalize_audio(audio):
@@ -758,8 +812,13 @@ def transcribe_audio():
             return f"Could not request results from Google Speech Recognition service; {e}"
 
 def transcribe_vr_audio(start_time, task_id):
+    """ 
+    This function transcribes the audio file in chunks of 5 seconds and returns a list of
+    transcriptions with timestamps and SER values in json format.
+    """
     global RECORDING_FILE
     global recording_manager
+
     # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
     recording_start_time = datetime.datetime.fromisoformat(start_time)
     recognizer = sr.Recognizer()
@@ -768,6 +827,8 @@ def transcribe_vr_audio(start_time, task_id):
     with sr.AudioFile(RECORDING_FILE) as source:
         try:
             duration = get_audio_duration(RECORDING_FILE)
+            print(f"Audio duration: {duration}")
+
             chunk_duration = 5
             current_time = 0
 
@@ -775,13 +836,17 @@ def transcribe_vr_audio(start_time, task_id):
                 print(f"Error: Chunk duration ({chunk_duration} seconds) exceeds audio file duration ({duration} seconds).")
                 return []
         
-            while current_time < duration:
-                audio_chunk = recognizer.record(source, duration=chunk_duration, offset=current_time)
+            while current_time + chunk_duration <= duration:
+                print(f"Transcribing from offset {current_time} seconds...") 
                 try:
+                    remaining_time = duration - current_time
+                    chunk_time = min(chunk_duration, remaining_time)
+                    audio_chunk = recognizer.record(source, duration=chunk_time, offset=current_time)
                     recognized_text = recognizer.recognize_google(audio_chunk)
-                    sig = get_wav_as_np(RECORDING_FILE)
-                    normed_sig = normalize_audio(sig)
-                    emotion = predict_emotion(normed_sig)
+                    sig = get_audio_chunk_as_np(RECORDING_FILE, offset=current_time, duration=chunk_duration)
+                    # sig = recording_manager.get_audio_chunk_as_np(current_time, chunk_duration)
+                    # normed_sig = normalize_audio(sig)
+                    emotion = predict_emotion(sig)
                     real_timestamp = recording_start_time + datetime.timedelta(seconds=current_time)
                     real_timestamp_iso = real_timestamp.isoformat()
 
@@ -801,7 +866,7 @@ def transcribe_vr_audio(start_time, task_id):
                 except sr.RequestError as e:
                     print(f"Error with the recognition service: {e}")
                     break
-
+                
             return vr_transcriptions
         
         except Exception as e:

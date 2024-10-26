@@ -2,6 +2,9 @@ import threading
 import datetime
 import pyaudio
 import wave
+import time
+import numpy as np
+import os
 
 class RecordingManager():
     def __init__(self): 
@@ -67,6 +70,80 @@ class RecordingManager():
             wf.writeframes(b''.join(frames))
 
         print(f"Recording stopped, saved to {self.recording_file}")
+
+    def get_audio_chunk_as_np(self, offset=0, duration=None, sample_rate=16000):
+        """
+        This function returns the section of audio specified by the offset and 
+        duration parameters as a normalized numpy array. This is necessary for the
+        current SER classifier and is subject to change.
+        """
+        try:
+            with wave.open(self.recording_file, 'rb') as wf:
+                num_channels = wf.getnchannels()
+                original_sample_rate = wf.getframerate()
+                start_frame = int(offset * original_sample_rate)
+                num_frames = int(duration * original_sample_rate) if duration else wf.getnframes() - start_frame
+
+                wf.setpos(start_frame)
+                signal = wf.readframes(num_frames)
+                signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
+                signal = signal / np.iinfo(np.int16).max  
+
+                # Convert stereo to mono by averaging channels
+                if num_channels == 2:
+                    signal = signal.reshape(-1, 2).mean(axis=1)
+
+                # If the original sample rate differs, resample to target sample rate
+                if original_sample_rate != sample_rate:
+                    signal = self.resample_audio(signal, original_sample_rate, sample_rate)
+
+                return signal
+            
+        except Exception as e:
+            print(f"An error occurred while processing the audio: {e}")
+            return None
+
+    def resample_audio(signal, original_sample_rate, target_sample_rate):
+        """
+        Resamples the signal to match the target sample rate using linear interpolation.
+        """
+        ratio = target_sample_rate / original_sample_rate
+        resampled_length = int(len(signal) * ratio)
+        resampled_signal = np.interp(
+            np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
+        )
+        return resampled_signal
+
+    def get_audio_duration(self):
+        with wave.open(self.recording_file, 'rb') as wf:
+            frames = wf.getnframes()          
+            rate = wf.getframerate()          
+            duration = frames / float(rate)   
+        return duration
+
+    def delete_recording_file(self):
+        try:
+            if os.path.exists(self.recording_file):
+                os.remove(self.recording_file)
+                print(f"File '{self.recording_file}' deleted successfully.")
+            else:
+                print(f"File '{self.recording_file}' does not exist.")
+        except PermissionError:
+            print(f"Permission denied: Unable to delete file '{self.recording_file}'. Check file permissions.")
+        except FileNotFoundError:
+            print(f"File not found: '{self.recording_file}' might have already been deleted.")
+        except Exception as e:
+            print(f"An error occurred while trying to delete the file '{self.recording_file}': {str(e)}")
+
+    # Necessary for SER task
+    def normalize_audio(self, audio):
+        audio_array = audio / np.max(np.abs(audio))
+        return audio_array
+
+    def record_timestamps(self, timestamps):  # For use in thread
+        while not self.stop_event.is_set():
+            timestamps.append(datetime.datetime.now().isoformat())
+            time.sleep(10)
 
     ##################################################################
     ## GETTERS
