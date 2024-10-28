@@ -8,3 +8,5 @@
 /model/model.onnx
 /cache/*
 /static/videos/*
+/EmotiBitSoftware-MacOS/
+config.txt
