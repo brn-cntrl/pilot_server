@@ -13,6 +13,7 @@ class RecordingManager():
         self.recording_thread = None
         self.stream_is_active = False
         self.recording_file = "tmp/recording.wav"
+        self.audio_save_folder = "audio_files"
         self.device_index = 0
         self.audio_devices = self.fetch_audio_devices()
 
@@ -135,6 +136,19 @@ class RecordingManager():
         except Exception as e:
             print(f"An error occurred while trying to delete the file '{self.recording_file}': {str(e)}")
 
+    def save_audio_file(self, filename):
+        try:
+            os.makedirs(self.audio_save_folder, exist_ok=True)
+            new_filename = os.path.join(self.audio_save_folder, filename)
+            os.rename(self.recording_file, new_filename)
+            print(f"File '{filename}' saved successfully.")
+        except PermissionError:
+            print(f"Permission denied: Unable to save file '{filename}'. Check file permissions.")
+        except FileNotFoundError:
+            print(f"File not found: '{self.recording_file}' might have already been deleted.")
+        except Exception as e:
+            print(f"An error occurred while trying to save the file '{filename}': {str(e)}")
+            
     # Necessary for SER task
     def normalize_audio(self, audio):
         audio_array = audio / np.max(np.abs(audio))

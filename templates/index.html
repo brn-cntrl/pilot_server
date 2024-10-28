@@ -70,6 +70,12 @@
         <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
     </div><br>
 
+    <button id="biometricBaselineButton">Biometrics Baseline</button>
+    <div class="testModule" id="biometricBaselineDiv" style="display:none;">
+        <button id="startBiometricBaseline">Begin</button>
+        <p id="biometricStatusMessage"></p>
+    </div><br>
+
     <!-- <div id="qr-code-container">
         {% if qr_code_url %}
             <h2>Empatica Session QR Code:</h2>
@@ -344,6 +350,29 @@
                 });
             });
 
+        document.getElementById('biometricBaselineButton').addEventListener('click', function() {
+            toggleVis('biometricBaselineDiv');
+        });
+
+        document.getElementById("startBiometricBaseline").addEventListener("click", function() {
+            fetch("/start_biometric_baseline", {
+                method: "POST"
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                document.getElementById('biometricStatusMessage').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
+            });
+        });
 
         let vrWin;
 

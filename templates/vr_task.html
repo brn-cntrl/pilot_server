@@ -51,6 +51,30 @@
         
         function VRRecording(button, action){
             const taskID = button.id;
+            statusId1 = document.getElementById("status1");
+            statusId2 = document.getElementById("status2");
+            startRecording();
+            let checkInterval = setInterval(() => {
+                if (checkActiveStream()) {
+                    console.log("Stream is active.");
+                    if (taskID == 'taskID1'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = 'Recording stream active.';
+                    } else if (taskID == 'taskID2'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = 'Recording stream active.';
+                    }
+                    clearInterval(checkInterval); // Stop checking once stream is active
+                } else {
+                    if(taskID == 'taskID1'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
+                    } else if (taskID == 'taskID2'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
+                    }
+                }
+            }, 2000); 
 
             fetch('/record_vr_task', {
                 method: 'POST',
@@ -68,7 +92,9 @@
                 } else if (data.message == 'Recording started and stream is active.' && action == 'start' && taskID == 'taskID2'){
                     document.getElementById('status2').style.display = 'block';
                     document.getElementById('status2').innerHTML = 'Recording started and stream is active.';
-                } else if (data.message == 'Recording stopped.'){
+                } 
+                
+                if (data.message == 'Recording stopped.'){
                     document.getElementById('status1').style.display = 'none';
                     document.getElementById('status2').style.display = 'none';
                 }

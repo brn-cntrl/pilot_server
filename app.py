@@ -21,6 +21,7 @@ import audonnx
 from subject import Subject
 from recording_manager import RecordingManager
 from test_manager import TestManager
+from emotibit_streamer import EmotiBitStreamer
 
 ##################################################################
 ## Globals 
@@ -29,6 +30,7 @@ participant_name = " "
 unique_id = None
 device_index = 0
 RECORDING_FILE = 'tmp/recording.wav'
+AUDIO_SAVE_FOLDER = 'audio_files'
 recording_process = None
 current_question_index = 0
 current_ser_question_index = 0
@@ -41,11 +43,12 @@ stream_is_active = None
 TASK_QUESTIONS_1 = None
 TASK_QUESTIONS_2 = None
 SER_QUESTIONS = None
-
+PORT_NUMBER = 8000
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject = Subject() 
 recording_manager = RecordingManager() 
 test_manager = TestManager()
+emotibit_streamer = EmotiBitStreamer(PORT_NUMBER)
 
 subject_data = {
     'ID': None,
@@ -78,6 +81,20 @@ app = Flask(__name__)
 ##################################################################
 ## Routes 
 ##################################################################
+def get_biometrics_baseline():
+    global emotibit_streamer
+
+    try:
+        emotibit_streamer.start()
+        
+        emotibit_streamer.collect_eda()
+        time.sleep(10)  # Collect data for 10 seconds
+        data = emotibit_streamer.eda_handler()
+        return jsonify({'status': 'success', 'data': data}), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+    
 def get_ser_question():
     global current_ser_question_index, ser_questions
     
@@ -212,7 +229,8 @@ def submit_answer():
 
         if check_answer(transcription, correct_answer):
             result = 'correct'
-            current_question_index += 1
+        
+        current_question_index += 1
 
         return jsonify({'status': 'Answer submitted.', 'result': result})
     
@@ -437,18 +455,21 @@ def record_vr_task():
         action = data.get('action')
         # Debug statement
         print(f"Received task_id: {task_id}, action: {action}")
-        
+        current_time_unix = int(time.time())
+
         if action == 'start':
-            record_audio()
-            max_attempts = 10
-            attempts = 0
-            while not stream_is_active and attempts < max_attempts:
-                time.sleep(2)
-                attempts += 1
-                # stream_is_active = recording_manager.get_stream_is_active()
-            return jsonify({'message': 'Recording started and stream is active.', 'task_id': task_id}), 200
-        if not stream_is_active:
-            return jsonify({'message': 'Recording could not be started.'}), 400
+            # max_attempts = 10
+            # attempts = 0
+            # # Check for active stream and break after 10 attempts
+            # while not stream_is_active and attempts < max_attempts:
+            #     time.sleep(2)
+            #     attempts += 1
+            #     # stream_is_active = recording_manager.get_stream_is_active()
+            
+            return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200
+        
+        # if not stream_is_active:
+        #     return jsonify({'message': 'Recording could not be started.'}), 400
         
         elif action == 'stop':
             stop_recording()
@@ -456,31 +477,34 @@ def record_vr_task():
             if not stop_event or not stop_event.is_set():
                 return jsonify({'message': 'Error stopping recording.'}), 400
             else:
-                ts = get_timestamp()
-                vr_transcript = transcribe_vr_audio(ts, task_id)
+                # ts = get_timestamp()
+                # vr_transcript = transcribe_vr_audio(ts, task_id)
+                vr_transcript = process_audio_segments(current_time_unix)
 
                 if task_id == 'taskID1':
                     subject_data['VR_Transcriptions_1'] = vr_transcript # TODO: Delete after subject class is implemented
-                    if subject:
-                        subject.set_vr_transcriptions_1(vr_transcript)
-                        # Debugging statement
-                        print(subject.get_vr_transcriptions_1())
-                    else:
-                        print("Create instance of Subject class first.")
+                    # if subject:
+                    #     subject.set_vr_transcriptions_1(vr_transcript)
+                    #     # Debugging statement
+                    #     print(subject.get_vr_transcriptions_1())
+                    # else:
+                    #     print("Create instance of Subject class first.")
 
                 elif task_id == 'taskID2':
                     subject_data['VR_Transcriptions_2'] = vr_transcript # TODO: Delete after subject class is implemented
-
-                    if subject:
-                        subject.set_vr_transcriptions_2(vr_transcript)
-                        # Debugging statement
-                        print(subject.get_vr_transcriptions_2())
-                    else:
-                        print("Create instance of Subject class first.")
+                    # if subject:
+                    #     subject.set_vr_transcriptions_2(vr_transcript)
+                    #     # Debugging statement
+                    #     print(subject.get_vr_transcriptions_2())
+                    # else:
+                    #     print("Create instance of Subject class first.")
 
                 else:
                     return jsonify({'message': 'All tasks completed.'}), 400
                 
+                # Debugging statement
+                print(f"subject vr transcripts 1: {subject_data['VR_Transcriptions_1']}")
+
                 delete_recording_file(RECORDING_FILE)
 
                 return jsonify({'message': 'Recording stopped.', 'task_id': task_id}), 200
@@ -791,6 +815,67 @@ def normalize_audio(audio):
     audio_array = audio / np.max(np.abs(audio))
     return audio_array
 
+def process_audio_segments(ts):
+    """
+    This function processes the audio segments in 20.
+    -second chunks and returns a list of transcriptions
+    with timestamps and SER values in JSON object format.
+    """
+    global RECORDING_FILE
+    global recording_manager
+    initial_timestamp = ts
+    recognizer = sr.Recognizer()
+    audio_segments = []
+
+    with wave.open(RECORDING_FILE, 'rb') as wf:
+        sample_rate = wf.getframerate()
+        channels = wf.getnchannels()
+        total_frames = wf.getnframes()
+        duration = total_frames / float(sample_rate)
+
+        segment_duration = 20
+        segment_frames = int(segment_duration * sample_rate)
+        total_segments = int(duration // segment_duration)
+
+        for i in range(total_segments + 1): # Include last segment if remainder exists
+            start_time = initial_timestamp + i * segment_duration
+            iso_timestamp = datetime.datetime.fromtimestamp(start_time).isoformat()
+            wf.setpos(i * segment_frames)
+
+            frames = wf.readframes(segment_frames)
+            if(len(frames) == 0):
+                break # EOF
+
+            temp_file = f"tmp/temp_segment_{i}.wav"
+            with wave.open(temp_file, 'wb') as wf_temp:
+                wf_temp.setnchannels(channels)
+                wf_temp.setsampwidth(wf.getsampwidth())
+                wf_temp.setframerate(sample_rate)
+                wf_temp.writeframes(frames)
+
+            with sr.AudioFile(temp_file) as source:
+                audio_data = recognizer.record(source)
+                try:
+                    recognized_text = recognizer.recognize_google(audio_data)
+                    sig = get_wav_as_np(temp_file)
+                    emotion = predict_emotion(sig)
+
+                    transcription_data = {
+                        'timestamp': iso_timestamp,
+                        'recognized_text': recognized_text,
+                        'emotion': emotion
+                    }
+
+                    audio_segments.append(transcription_data)
+                except sr.UnknownValueError:
+                    print(f"Google Speech Recognition could not understand the audio at {start_time:.2f}.")
+                except sr.RequestError as e:
+                    print(f"Error with the recognition service: {e}")
+
+                os.remove(temp_file)
+
+    return audio_segments
+
 ##################################################################
 ## Speech Recognition 
 ##################################################################
@@ -811,67 +896,67 @@ def transcribe_audio():
         except sr.RequestError as e:
             return f"Could not request results from Google Speech Recognition service; {e}"
 
-def transcribe_vr_audio(start_time, task_id):
-    """ 
-    This function transcribes the audio file in chunks of 5 seconds and returns a list of
-    transcriptions with timestamps and SER values in json format.
-    """
-    global RECORDING_FILE
-    global recording_manager
+# def transcribe_vr_audio(start_time, task_id):
+#     """ 
+#     This function transcribes the audio file in chunks of 5 seconds and returns a list of
+#     transcriptions with timestamps and SER values in json format.
+#     """
+#     global RECORDING_FILE
+#     global recording_manager
 
-    # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
-    recording_start_time = datetime.datetime.fromisoformat(start_time)
-    recognizer = sr.Recognizer()
-    vr_transcriptions = []  
+#     # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
+#     recording_start_time = datetime.datetime.fromisoformat(start_time)
+#     recognizer = sr.Recognizer()
+#     vr_transcriptions = []  
     
-    with sr.AudioFile(RECORDING_FILE) as source:
-        try:
-            duration = get_audio_duration(RECORDING_FILE)
-            print(f"Audio duration: {duration}")
+#     with sr.AudioFile(RECORDING_FILE) as source:
+#         try:
+#             duration = get_audio_duration(RECORDING_FILE)
+#             print(f"Audio duration: {duration}")
 
-            chunk_duration = 5
-            current_time = 0
+#             chunk_duration = 5
+#             current_time = 0
 
-            if chunk_duration > duration:
-                print(f"Error: Chunk duration ({chunk_duration} seconds) exceeds audio file duration ({duration} seconds).")
-                return []
+#             if chunk_duration > duration:
+#                 print(f"Error: Chunk duration ({chunk_duration} seconds) exceeds audio file duration ({duration} seconds).")
+#                 return []
         
-            while current_time + chunk_duration <= duration:
-                print(f"Transcribing from offset {current_time} seconds...") 
-                try:
-                    remaining_time = duration - current_time
-                    chunk_time = min(chunk_duration, remaining_time)
-                    audio_chunk = recognizer.record(source, duration=chunk_time, offset=current_time)
-                    recognized_text = recognizer.recognize_google(audio_chunk)
-                    sig = get_audio_chunk_as_np(RECORDING_FILE, offset=current_time, duration=chunk_duration)
-                    # sig = recording_manager.get_audio_chunk_as_np(current_time, chunk_duration)
-                    # normed_sig = normalize_audio(sig)
-                    emotion = predict_emotion(sig)
-                    real_timestamp = recording_start_time + datetime.timedelta(seconds=current_time)
-                    real_timestamp_iso = real_timestamp.isoformat()
+#             while current_time + chunk_duration <= duration:
+#                 print(f"Transcribing from offset {current_time} seconds...") 
+#                 try:
+#                     remaining_time = duration - current_time
+#                     chunk_time = min(chunk_duration, remaining_time)
+#                     audio_chunk = recognizer.record(source, duration=chunk_time, offset=current_time)
+#                     recognized_text = recognizer.recognize_google(audio_chunk)
+#                     sig = get_audio_chunk_as_np(RECORDING_FILE, offset=current_time, duration=chunk_duration)
+#                     # sig = recording_manager.get_audio_chunk_as_np(current_time, chunk_duration)
+#                     # normed_sig = normalize_audio(sig)
+#                     emotion = predict_emotion(sig)
+#                     real_timestamp = recording_start_time + datetime.timedelta(seconds=current_time)
+#                     real_timestamp_iso = real_timestamp.isoformat()
 
-                    transcription_data = {
-                        'taskID': task_id,
-                        'timestamp': real_timestamp_iso,
-                        'recognized_text': recognized_text,
-                        'emotion': emotion
-                    }
+#                     transcription_data = {
+#                         'taskID': task_id,
+#                         'timestamp': real_timestamp_iso,
+#                         'recognized_text': recognized_text,
+#                         'emotion': emotion
+#                     }
 
-                    vr_transcriptions.append(transcription_data)
-                    current_time += chunk_duration
+#                     vr_transcriptions.append(transcription_data)
+#                     current_time += chunk_duration
 
-                except sr.UnknownValueError:
-                    print(f"Google Speech Recognition could not understand the audio  at{current_time:.2f}.")
-                    current_time += chunk_duration
-                except sr.RequestError as e:
-                    print(f"Error with the recognition service: {e}")
-                    break
+#                 except sr.UnknownValueError:
+#                     print(f"Google Speech Recognition could not understand the audio  at{current_time:.2f}.")
+#                     current_time += chunk_duration
+#                 except sr.RequestError as e:
+#                     print(f"Error with the recognition service: {e}")
+#                     break
                 
-            return vr_transcriptions
+#             return vr_transcriptions
         
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return []
+#         except Exception as e:
+#             print(f"An error occurred: {str(e)}")
+#             return []
     
 ################################################
 ## SER 
@@ -1007,7 +1092,11 @@ app.add_url_rule('/submit_background', 'submit_background', submit_background, m
 app.add_url_rule('/submit_exit', 'submit_exit', submit_exit, methods=['POST'])
 app.add_url_rule('/submit_demographics', 'submit_demographics', submit_demographics, methods=['POST'])
 app.add_url_rule('/submit_intro_data', 'submit_intro_data', submit_intro_data, methods=['POST'])
+app.add_url_rule('/get_biometrics_baseline', 'get_biometrics_baseline', get_biometrics_baseline, methods=['POST'])
 
+######################################################
+# Main Loop
+######################################################
 if __name__ == '__main__':
     # Suppress warnings for now
     warnings.filterwarnings("ignore")
@@ -1023,4 +1112,4 @@ if __name__ == '__main__':
     AUDONNX_MODEL = set_aud_model(app)
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 
-    app.run(port=8000,debug=True)
+    app.run(port=PORT_NUMBER,debug=True)

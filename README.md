@@ -8,6 +8,7 @@
 * Portaudio 
 * Audonnx (SER model to TBD)
 * Boto3
+* Python OSC
 
 **Please note** that all installation will soon be handled with PyInstaller. Currently, there are a number of files and folders missing from this repository, which are necessary for proper operation but which slow things down for git. I will upload these when they are needed or otherwise provide them through GDrive.
 
@@ -27,6 +28,48 @@ Install pyaudio with:
     pip install pyaudio
 
 **NOTE:** The best way to install Pyaudio and Portaudio on Mac is with HomeBrew. 
+
+### Transcription and SER
+
+**Install Dependencies**
+
+* Install Audonnx with:
+
+        pip install audonnx
+
+* Install SpeechRecognition for Python with: 
+
+        pip install SpeechRecognition
+
+**NOTE** The classifier used for SER is included in this repository. The use of the classifier and audonnx is likely to change once a more accurate SER classifier is identified.
+
+* Install Python-OSC with:
+        
+        pip install python-osc
+
+
+### AWS Client 
+**Installation**
+
+Install the AWS SDK with: 
+
+    pip install boto3
+
+Download the the AWS CLI package with: 
+
+    curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+
+Install the AWS CLI with: 
+
+    sudo installer -pkg ./AWSCLIV2.pkg -target /
+
+**Setup AWS Credentials**
+
+* In terminal, run: aws configure
+* Enter the AWS access key (to be provided)
+* Enter the AWS secret access key (to be provided)
+* Enter the default region name (us-west-2)
+* Leave default output as None
 
 **Instructions for server**
 
@@ -49,50 +92,6 @@ You should see the following result in Terminal:
 * To shutdown in terminal, run "ctrl+c"
 
 **NOTE:** DO NOT remove the any of the html pages from the templates folder. This is where Flask will always look for them. Your home http address may vary.
-
-
-### Transcription and SER
-
-**Install Dependencies**
-
-* Install Audonnx with:
-
-        pip install audonnx
-
-* Install SpeechRecognition for Python with: 
-
-        pip install SpeechRecognition
-
-
-**NOTE** The classifier used for SER is included in this repository. The use of the classifier and audonnx is likely to change once a more accurate SER classifier is identified.
-
-
-### AWS Client 
-**Installation**
-
-Install the AWS SDK with: 
-
-    pip install boto3
-
-Download the the AWS CLI package with: 
-
-    curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-
-Install the AWS CLI with: 
-
-    sudo installer -pkg ./AWSCLIV2.pkg -target /
-
-**Instructions**
-
-**Setup AWS Credentials**
-
-* In terminal, run: aws configure
-* Enter the AWS access key (to be provided)
-* Enter the AWS secret access key (to be provided)
-* Enter the default region name (us-west-2)
-* Leave default output as None
-
-
 ### Classes
 
 **Please note that at the moment all variables for handling data shared between functions are in global scope. The following classes will encapsulate these variables and clean up the global namespace, but they are currently under construction**
