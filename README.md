@@ -112,7 +112,9 @@ The recording_manager.py class handles all recording threads and audio input set
 
 The test_manager.py class handles all testing procedures. The test questions are stored in external JSON files:
     SER_questions.json
+
     task_1_data.json
+    
     task_2_data.json
 
 **EmotiBit Streamer**
