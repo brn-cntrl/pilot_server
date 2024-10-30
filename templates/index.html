@@ -76,13 +76,6 @@
         <p id="biometricStatusMessage"></p>
     </div><br>
 
-    <!-- <div id="qr-code-container">
-        {% if qr_code_url %}
-            <h2>Empatica Session QR Code:</h2>
-            <img src="{{ qr_code_url }}" alt="QR Code">
-        {% endif %}
-    </div><br> -->
-
     <h2>Experimental Tasks</h2>
     <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
@@ -355,7 +348,7 @@
         });
 
         document.getElementById("startBiometricBaseline").addEventListener("click", function() {
-            fetch("/start_biometric_baseline", {
+            fetch("/get_biometric_baseline", {
                 method: "POST"
             })
             .then(response => {
@@ -365,7 +358,7 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Received data:', data);
+                console.log('Received data:', data.data);
                 document.getElementById('biometricStatusMessage').innerText = data.message;
             })
             .catch(error => {
@@ -381,7 +374,7 @@
             if (vrWin) {
                 vrWin.focus();
             } else {
-                alert('Please allow popups for this website');
+                alert('Please allow popups');
             }
         });
 
@@ -390,7 +383,7 @@
             if (vrWin) {
                 vrWin.focus();
             } else {
-                alert('Please allow popups for this website');
+                alert('Please allow popups');
             }
         });
 

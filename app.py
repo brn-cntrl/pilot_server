@@ -1,7 +1,7 @@
-
 from flask import Flask, request, jsonify, render_template, redirect, send_file
 import warnings
 import threading
+from threading import Thread
 import boto3
 import joblib
 import os
@@ -38,18 +38,22 @@ current_test_number = 1
 stop_event = threading.Event()
 recording_started_event = threading.Event()
 recording_thread = None
+# emotibit_thread = None
 timestamp = None
 stream_is_active = None
 TASK_QUESTIONS_1 = None
 TASK_QUESTIONS_2 = None
 SER_QUESTIONS = None
 PORT_NUMBER = 8000
+EMOTIBIT_PORT_NUMBER = 9005
+
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject = Subject() 
 recording_manager = RecordingManager() 
 test_manager = TestManager()
-emotibit_streamer = EmotiBitStreamer(PORT_NUMBER)
+emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 
+# TODO: Delete after implementing classes
 subject_data = {
     'ID': None,
     'Date': None,
@@ -58,6 +62,7 @@ subject_data = {
     'Test_Transcriptions': [], # This will hold the transcript, SER values, and timestamps in JSON object format
     'VR_Transcriptions_1': [], # This will hold the VR transcript, SER values, and timestamps in JSON object format
     'VR_Transcriptions_2': [], # This will hold the VR transcript, SER values, and timestamps in JSON object format
+    'Biometric_Baseline': [], # This will hold the biometric baseline data in JSON object format
     'Biometric_Data': [], # This will hold the biometric data in JSON object format
     'pss4_data': None,
     'background_data': None,
@@ -81,20 +86,26 @@ app = Flask(__name__)
 ##################################################################
 ## Routes 
 ##################################################################
-def get_biometrics_baseline():
-    global emotibit_streamer
+
+def start_emotibit_stream():
+    start_emotibit()
 
     try:
-        emotibit_streamer.start()
-        
-        emotibit_streamer.collect_eda()
-        time.sleep(10)  # Collect data for 10 seconds
-        data = emotibit_streamer.eda_handler()
-        return jsonify({'status': 'success', 'data': data}), 200
-
+        return jsonify({'message': 'Starting EmotiBit stream'})
+    
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
+
+def get_biometric_baseline():
+
+    try:
+        stop_emotibit()
+        data = emotibit_streamer.get_baseline_data()
+        return jsonify({'message': 'Baseline data collected.', 'data': data})
     
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400 
+
 def get_ser_question():
     global current_ser_question_index, ser_questions
     
@@ -561,7 +572,58 @@ def exit_survey():
 #     while not stop_event.is_set():
 #         timestamps.append(datetime.datetime.now().isoformat())
 #         time.sleep(10)
-        
+
+def start_emotibit():
+    # global emotibit_thread, emotibit_streamer
+    global emotibit_streamer
+
+    try:
+        # emotibit_thread = Thread(target=emotibit_streamer.start)
+        # emotibit_thread.start()
+        emotibit_streamer.start()
+        print("OSC server is streaming data.")
+
+    except Exception as e:
+        print(f"An error occurred while trying to start OSC stream: {str(e)}")
+
+def stop_emotibit():
+    # global emotibit_thread, emotibit_streamer
+    global emotibit_streamer
+
+    try:
+        # if emotibit_thread is not None and emotibit_thread.is_alive():
+        #     emotibit_streamer.stop()
+        #     emotibit_thread.join()
+        #     print("OSC server stopped.")
+        emotibit_streamer.stop()
+    
+    except Exception as e:
+        print(f"An error occurred while trying to stop OSC stream: {str(e)}")
+    
+# def biometric_baseline():
+#     global emotibit_streamer
+    
+#     try:
+#         emotibit_thread = Thread(target=emotibit_streamer.start)
+#         emotibit_thread.start()
+
+#         time.sleep(10)  # Collect data for 10 seconds
+
+#         emotibit_streamer.stop()
+#         emotibit_thread.join()
+
+#         eda_data = emotibit_streamer.get_eda_data() # TODO: Implement all streams and call get_data() instead of get_eda_data()
+
+#         return eda_data
+
+#     except Exception as e:
+#         print("An error occurred while trying to start stream.")
+#         return []
+
+# def stop_emotibit_stream():
+#     global emotibit_streamer
+#     emotibit_streamer.stop()
+
 def set_timestamp(t):   
     global timestamp
     timestamp = t
@@ -796,6 +858,19 @@ def get_audio_duration(file_path):
         duration = frames / float(rate)   
     return duration
 
+def save_audio_file(filename):
+        try:
+            os.makedirs(AUDIO_SAVE_FOLDER, exist_ok=True)
+            new_filename = os.path.join(AUDIO_SAVE_FOLDER, filename)
+            os.rename(RECORDING_FILE, new_filename)
+            print(f"File '{filename}' saved successfully.")
+        except PermissionError:
+            print(f"Permission denied: Unable to save file '{filename}'. Check file permissions.")
+        except FileNotFoundError:
+            print(f"File not found: '{RECORDING_FILE}' might have already been deleted.")
+        except Exception as e:
+            print(f"An error occurred while trying to save the file '{filename}': {str(e)}")
+
 def delete_recording_file(file_path):
     try:
         if os.path.exists(file_path):
@@ -810,12 +885,11 @@ def delete_recording_file(file_path):
     except Exception as e:
         print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
 
-# Necessary for SER task
-def normalize_audio(audio):
+def normalize_audio(audio): # Necessary for SER task
     audio_array = audio / np.max(np.abs(audio))
     return audio_array
 
-def process_audio_segments(ts):
+def process_audio_segments(ts, prefix):
     """
     This function processes the audio segments in 20.
     -second chunks and returns a list of transcriptions
@@ -847,6 +921,8 @@ def process_audio_segments(ts):
                 break # EOF
 
             temp_file = f"tmp/temp_segment_{i}.wav"
+            save_file = f"audio_save_folder/{prefix}_segment_{i}.wav"
+
             with wave.open(temp_file, 'wb') as wf_temp:
                 wf_temp.setnchannels(channels)
                 wf_temp.setsampwidth(wf.getsampwidth())
@@ -1092,7 +1168,8 @@ app.add_url_rule('/submit_background', 'submit_background', submit_background, m
 app.add_url_rule('/submit_exit', 'submit_exit', submit_exit, methods=['POST'])
 app.add_url_rule('/submit_demographics', 'submit_demographics', submit_demographics, methods=['POST'])
 app.add_url_rule('/submit_intro_data', 'submit_intro_data', submit_intro_data, methods=['POST'])
-app.add_url_rule('/get_biometrics_baseline', 'get_biometrics_baseline', get_biometrics_baseline, methods=['POST'])
+app.add_url_rule('/start_emotibit_stream', 'start_emotibit_stream', start_emotibit_stream, methods=['POST'])
+app.add_url_rule('/get_biometric_baseline', 'get_biometric_baseline', get_biometric_baseline, methods=['GET'])
 
 ######################################################
 # Main Loop
@@ -1112,4 +1189,4 @@ if __name__ == '__main__':
     AUDONNX_MODEL = set_aud_model(app)
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 
-    app.run(port=PORT_NUMBER,debug=True)
+    app.run(port=PORT_NUMBER,debug=False)

@@ -9,4 +9,6 @@
 /cache/*
 /static/videos/*
 /EmotiBitSoftware-MacOS/
+/tmp/*
+/audio_files/*
 config.txt
