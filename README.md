@@ -114,3 +114,7 @@ The test_manager.py class handles all testing procedures. The test questions are
     SER_questions.json
     task_1_data.json
     task_2_data.json
+
+**EmotiBit Streamer**
+
+The emotibit_streamer.py class handles all communication with the EmotiBit Oscilliscope app. The app must be running and connected to the EmotiBit device in order for data to begin streaming. The data is sent over OSC and the emotibit_streamer class starts the OSC server in a separate thread. **Please Note**: The Flask server must be run with the debug flag set to False in order for the OSC server to find an open port.
