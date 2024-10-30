@@ -98,7 +98,7 @@ You should see the following result in Terminal:
 
 **Subject**
 
-The susbject.py class handles all subject data collected during the experiment
+The subject.py class handles all subject data collected during the experiment
 
 **AWS Handler**
 
