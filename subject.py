@@ -16,7 +16,7 @@ import csv
 # background_data: A JSON object that holds the background data
 # demographics_data: A JSON object that holds the demographics data
 # exit_survey_data: A JSON object that holds the exit survey data
-# intro_data: A JSON object that holds the intro data
+# student_data: A JSON object that holds the student survey data
 # NOTE: All data will be uploaded to the AWS database once the subject has completed the study. 
 # A CSV file will also be created for the subject
 
@@ -36,7 +36,7 @@ class Subject:
             'background_data': {},
             'demographics_data': {},
             'exit_survey_data': {},
-            'intro_data': {}
+            'student_data': {}
         }
 
         self.csv_filename = ''
@@ -78,8 +78,8 @@ class Subject:
     def set_exit_survey_data(self, exit_survey):
         self.subject_data['exit_survey_data'] = exit_survey
     
-    def set_intro_data(self, intro):
-        self.subject_data['intro_data'] = intro
+    def set_student_data(self, student):
+        self.subject_data['student_data'] = student
 
     def set_csv_filename(self):
         if self.subject_data['ID'] == '' or self.subject_data['Name'] == '' or self.date == '':
@@ -124,8 +124,8 @@ class Subject:
     def get_exit_survey_data(self):
         return self.subject_data['exit_survey_data']
     
-    def get_intro_data(self):
-        return self.subject_data['intro_data']
+    def get_student_data(self):
+        return self.subject_data['student_data']
     
     def get_date(self):
         return self.date
@@ -155,7 +155,7 @@ class Subject:
                     'Test_Timestamp', 'Test_Transcript', 'Test_Emotion',
                     'VR1_Timestamp', 'VR1_Transcript', 'VR1_Emotion',
                     'VR2_Timestamp', 'VR2_Transcript', 'VR2_Emotion', 'PSS4_Survey',
-                    'Background_Survey', 'Demographics_Survey', 'Exit_Survey', 'Intro_Survey']
+                    'Background_Survey', 'Demographics_Survey', 'Exit_Survey', 'Student_Survey']
 
             # Open CSV file for writing
             with open(self.csv_filename, mode='w', newline='') as file:

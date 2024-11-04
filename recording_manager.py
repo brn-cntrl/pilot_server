@@ -5,6 +5,8 @@ import wave
 import time
 import numpy as np
 import os
+import shutil
+import speech_recognition as sr
 
 class RecordingManager():
     def __init__(self): 
@@ -140,7 +142,7 @@ class RecordingManager():
         try:
             os.makedirs(self.audio_save_folder, exist_ok=True)
             new_filename = os.path.join(self.audio_save_folder, filename)
-            os.rename(self.recording_file, new_filename)
+            shutil.copy(self.recording_file, new_filename)
             print(f"File '{filename}' saved successfully.")
         except PermissionError:
             print(f"Permission denied: Unable to save file '{filename}'. Check file permissions.")
@@ -148,7 +150,7 @@ class RecordingManager():
             print(f"File not found: '{self.recording_file}' might have already been deleted.")
         except Exception as e:
             print(f"An error occurred while trying to save the file '{filename}': {str(e)}")
-            
+
     # Necessary for SER task
     def normalize_audio(self, audio):
         audio_array = audio / np.max(np.abs(audio))
@@ -158,6 +160,78 @@ class RecordingManager():
         while not self.stop_event.is_set():
             timestamps.append(datetime.datetime.now().isoformat())
             time.sleep(10)
+
+    def rename_audio_file(self, id, prefix, suffix):
+        return f"ID_{id}_{prefix}_{suffix}.wav"
+    
+    def process_audio_segments(self, subject, ser_manager, ts, prefix):
+        """
+        This function processes the audio segments in 20.
+        -second chunks and returns a list of transcriptions
+        with timestamps and SER values in JSON object format.
+        """
+        initial_timestamp = ts
+        recognizer = sr.Recognizer()
+        audio_segments = []
+
+        with wave.open(self.recording_file, 'rb') as wf:
+            sample_rate = wf.getframerate()
+            channels = wf.getnchannels()
+            total_frames = wf.getnframes()
+            duration = total_frames / float(sample_rate)
+
+            segment_duration = 20
+            segment_frames = int(segment_duration * sample_rate)
+            total_segments = int(duration // segment_duration)
+
+            for i in range(total_segments + 1): # Include last segment if remainder exists
+                start_time = initial_timestamp + i * segment_duration
+                iso_timestamp = datetime.datetime.fromtimestamp(start_time).isoformat()
+                wf.setpos(i * segment_frames)
+
+                frames = wf.readframes(segment_frames)
+                if(len(frames) == 0):
+                    break # EOF
+
+                temp_file = f"tmp/temp_segment_{i}.wav"
+
+                id = subject.get_id()
+
+                # save_file = f"audio_save_folder/ID_{id}_{prefix}_segment_{i}.wav"
+
+                with wave.open(temp_file, 'wb') as wf_temp:
+                    wf_temp.setnchannels(channels)
+                    wf_temp.setsampwidth(wf.getsampwidth())
+                    wf_temp.setframerate(sample_rate)
+                    wf_temp.writeframes(frames)
+
+                with sr.AudioFile(temp_file) as source:
+                    audio_data = recognizer.record(source)
+                    try:
+                        recognized_text = recognizer.recognize_google(audio_data)
+                        sig = self.get_wav_as_np(temp_file)
+
+                        # TODO: Implement emotion prediction class
+                        emotion = ser_manager.predict_emotion(sig)
+
+                        transcription_data = {
+                            'timestamp': iso_timestamp,
+                            'recognized_text': recognized_text,
+                            'emotion': emotion
+                        }
+
+                        audio_segments.append(transcription_data)
+                    except sr.UnknownValueError:
+                        print(f"Google Speech Recognition could not understand the audio at {start_time:.2f}.")
+                    except sr.RequestError as e:
+                        print(f"Error with the recognition service: {e}")
+
+                    # Cleanup
+                    file_name = self.rename_audio_file(id, prefix, f"segment_{i}")
+                    self.save_audio_file(self.recording_file, file_name, 'audio_files')
+                    os.remove(temp_file)
+
+        return audio_segments
 
     ##################################################################
     ## GETTERS

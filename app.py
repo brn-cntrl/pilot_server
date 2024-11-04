@@ -22,6 +22,8 @@ from subject import Subject
 from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer import EmotiBitStreamer
+from ser_manager import SERManager
+import shutil
 
 ##################################################################
 ## Globals 
@@ -68,7 +70,7 @@ subject_data = {
     'background_data': None,
     'demographics_data': None,
     'exit_survey_data': None,
-    'intro_data': None
+    'student_data': None
 }
 
 TASK_QUESTIONS = {}
@@ -80,9 +82,9 @@ DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
 TABLE = DYNAMODB.Table('Users')
 ID_TABLE = DYNAMODB.Table('available_ids')
 
-# Initialize the Flask app
+# Initialize the Flask app and pass reference to ser manager singleton
 app = Flask(__name__)
-
+ser_manager = SERManager(app)
 ##################################################################
 ## Routes 
 ##################################################################
@@ -94,7 +96,7 @@ def start_emotibit_stream():
         return jsonify({'message': 'Starting EmotiBit stream'})
     
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+        return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
 def get_biometric_baseline():
 
@@ -128,6 +130,7 @@ def get_ser_question():
 def process_ser_answer():
     global RECORDING_FILE
     global current_ser_question_index
+    global subject_data
 
     stop_recording()
 
@@ -136,7 +139,12 @@ def process_ser_answer():
         normed_sig = normalize_audio(sig)
         print(normed_sig.shape)
         emotion = predict_emotion(normed_sig)
-        
+
+        id = subject_data.get('ID')
+        file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
+        file_name = rename_audio_file(id, "SER_question_", current_ser_question_index)
+        save_audio_file(RECORDING_FILE, file_name, 'audio_files')
+
         return jsonify({'status': 'Answer submitted.', 'message': emotion})
     
     except Exception as e:
@@ -205,23 +213,30 @@ def test_audio():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def submit_answer():
-    global current_question_index, current_test_number
+    global current_question_index, current_test_number, subject_data
     global stop_event, recording_thread, stream_is_active
-    global TASK_QUESTIONS
+    global TASK_QUESTIONS, RECORDING_FILE
 
     questions = TASK_QUESTIONS.get(current_test_number)
+
+    id = subject_data.get('ID')
+
+    # TODO Implement after subject class is finished and delete global reference
+    # id = subject.get_id() 
+
+    file_name = f"ID_{id}_test_{current_test_number}_question_{current_question_index}.wav"
 
     try:
         stop_recording()
         transcription = transcribe_audio()
         ts = get_timestamp()
-
         # ser = perform_ser()
         # Open audio file
         try:
             sig = get_wav_as_np(RECORDING_FILE)
             normed_sig = normalize_audio(sig)
             ser = predict_emotion(normed_sig)
+            save_audio_file(RECORDING_FILE, file_name, "audio_files")
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -240,7 +255,7 @@ def submit_answer():
 
         if check_answer(transcription, correct_answer):
             result = 'correct'
-        
+
         current_question_index += 1
 
         return jsonify({'status': 'Answer submitted.', 'result': result})
@@ -291,6 +306,7 @@ def submit_background():
         background_data = {
             'rush_caffeine': request.form.get('rush_caffeine'),
             'caffeine_details': request.form.get('caffeine_details'),
+            'caffeine_time': request.form.get('caffeine_time'),
             'thirst_hunger': request.form.get('thirst_hunger'),
             'heart_rate': request.form.get('heart_rate'),
             'neurological_conditions': request.form.get('neurological_conditions'),
@@ -383,25 +399,25 @@ def submit_demographics():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
-def submit_intro_data():
+def submit_student_data():
     global subject_data
     global subject
     try:
-        intro_data = {
+        student_data = {
             'PID': request.form.get('PID'),
             'class': request.form.get('class')
         }
 
-        subject_data['intro_data'] = intro_data
+        subject_data['student_data'] = student_data
 
         if subject:
-            subject.set_intro_data(intro_data)
+            subject.set_student_data(student_data)
             # Debugging statement
-            print(subject.get_intro_data())
+            print(subject.get_student_data())
         else:
             print("First create instance of Subject class")
 
-        return jsonify({'message': 'Intro data submitted successfully.'}), 200
+        return jsonify({'message': 'Student data submitted successfully.'}), 200
     
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
@@ -457,7 +473,7 @@ def submit():
 ##################################################################
 def record_vr_task():
     global subject_data, subject
-    global recording_manager
+    global recording_manager, ser_manager
     global stream_is_active, stop_event
 
     try:
@@ -490,10 +506,15 @@ def record_vr_task():
             else:
                 # ts = get_timestamp()
                 # vr_transcript = transcribe_vr_audio(ts, task_id)
-                vr_transcript = process_audio_segments(current_time_unix)
+
+                vr_transcript = process_audio_segments(current_time_unix, task_id)
+
+                # TODO: Uncomment after all classes implemented and delete global references
+                # vr_transcript = recording_manager.process_audio_segments(subject, ser_manager, current_time_unix, task_id)
 
                 if task_id == 'taskID1':
-                    subject_data['VR_Transcriptions_1'] = vr_transcript # TODO: Delete after subject class is implemented
+                    subject_data['VR_Transcriptions_1'] = vr_transcript 
+                    # TODO: Uncomment after subject class is implemented and delete global reference
                     # if subject:
                     #     subject.set_vr_transcriptions_1(vr_transcript)
                     #     # Debugging statement
@@ -693,7 +714,6 @@ def shutdown_server():
     os.kill(pid, signal.SIGINT)
 
 def prime_test():
-    
     global TASK_QUESTIONS_1, TASK_QUESTIONS_2, TASK_QUESTIONS
     with open('task_1_data.json', 'r') as f:
         TASK_QUESTIONS_1 = json.load(f)
@@ -750,6 +770,7 @@ def stop_recording():
     # Wait for recording thread to finish
     recording_thread.join()
 
+# TODO: Delete all audio functions after recording manager class is fully implemented
 # Record audio in separate thread
 def record_thread():
     global RECORDING_FILE
@@ -785,7 +806,7 @@ def record_thread():
         wf.writeframes(b''.join(frames))
 
     print(f"Recording stopped, saved to {RECORDING_FILE}")
-
+        
 def get_wav_as_np(filename):
     """
     This function loads the entire wav file stored in tmp and returns it as a 
@@ -858,18 +879,25 @@ def get_audio_duration(file_path):
         duration = frames / float(rate)   
     return duration
 
-def save_audio_file(filename):
-        try:
-            os.makedirs(AUDIO_SAVE_FOLDER, exist_ok=True)
-            new_filename = os.path.join(AUDIO_SAVE_FOLDER, filename)
-            os.rename(RECORDING_FILE, new_filename)
-            print(f"File '{filename}' saved successfully.")
-        except PermissionError:
-            print(f"Permission denied: Unable to save file '{filename}'. Check file permissions.")
-        except FileNotFoundError:
-            print(f"File not found: '{RECORDING_FILE}' might have already been deleted.")
-        except Exception as e:
-            print(f"An error occurred while trying to save the file '{filename}': {str(e)}")
+def rename_audio_file(id, name_param1, name_param2):
+    filename = f"ID_{id}_{name_param1}_{name_param2}.wav"
+
+    return filename
+
+def save_audio_file(old_path_filename, new_filename, save_folder):
+    try:
+        os.makedirs(save_folder, exist_ok=True)
+        new_filename = os.path.join(save_folder, new_filename)
+        #TODO: change function so that source folder and filename are separate. Get rid of global filename.
+        shutil.copy(old_path_filename, new_filename)
+
+        print(f"File '{old_path_filename}' saved successfully.")
+    except PermissionError:
+        print(f"Permission denied: Unable to save file '{old_path_filename}'. Check file permissions.")
+    except FileNotFoundError:
+        print(f"File not found: '{old_path_filename}' might have already been deleted.")
+    except Exception as e:
+        print(f"An error occurred while trying to save the file '{old_path_filename}': {str(e)}")
 
 def delete_recording_file(file_path):
     try:
@@ -896,7 +924,7 @@ def process_audio_segments(ts, prefix):
     with timestamps and SER values in JSON object format.
     """
     global RECORDING_FILE
-    global recording_manager
+    global recording_manager, subject, subject_data
     initial_timestamp = ts
     recognizer = sr.Recognizer()
     audio_segments = []
@@ -921,7 +949,12 @@ def process_audio_segments(ts, prefix):
                 break # EOF
 
             temp_file = f"tmp/temp_segment_{i}.wav"
-            save_file = f"audio_save_folder/{prefix}_segment_{i}.wav"
+
+            #TODO: Implement after subject class is finished and delete global reference
+            # id = subject.get_id()
+            id = subject_data.get('ID')
+
+            # save_file = f"audio_save_folder/ID_{id}_{prefix}_segment_{i}.wav"
 
             with wave.open(temp_file, 'wb') as wf_temp:
                 wf_temp.setnchannels(channels)
@@ -948,9 +981,19 @@ def process_audio_segments(ts, prefix):
                 except sr.RequestError as e:
                     print(f"Error with the recognition service: {e}")
 
+                # Cleanup
+                file_name = rename_audio_file(id, prefix, f"segment_{i}")
+                save_audio_file(RECORDING_FILE, file_name, 'audio_files')
                 os.remove(temp_file)
 
-    return audio_segments
+    try:
+        # Debug statement
+        print(audio_segments)
+        return audio_segments
+    
+    except Exception as e:
+        print(f"An error occurred: {str(e)}") 
+        return []
 
 ##################################################################
 ## Speech Recognition 
@@ -972,6 +1015,7 @@ def transcribe_audio():
         except sr.RequestError as e:
             return f"Could not request results from Google Speech Recognition service; {e}"
 
+# NOTE: Leave this function in place for now.
 # def transcribe_vr_audio(start_time, task_id):
 #     """ 
 #     This function transcribes the audio file in chunks of 5 seconds and returns a list of
@@ -1037,6 +1081,8 @@ def transcribe_audio():
 ################################################
 ## SER 
 ################################################
+
+#TODO: Delete after SER class is finished
 def set_aud_model(app):
     if is_folder_empty(app, 'model'):
         url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
@@ -1052,6 +1098,7 @@ def set_aud_model(app):
 
     return model
 
+# TODO: Delete after SER class is finished
 def predict_emotion(audio_chunk):
     import pandas as pd
     global CLF, AUDONNX_MODEL
@@ -1167,7 +1214,7 @@ app.add_url_rule('/submit_pss4', 'submit_pss4', submit_pss4, methods=['POST'])
 app.add_url_rule('/submit_background', 'submit_background', submit_background, methods=['POST'])
 app.add_url_rule('/submit_exit', 'submit_exit', submit_exit, methods=['POST'])
 app.add_url_rule('/submit_demographics', 'submit_demographics', submit_demographics, methods=['POST'])
-app.add_url_rule('/submit_intro_data', 'submit_intro_data', submit_intro_data, methods=['POST'])
+app.add_url_rule('/submit_student_data', 'submit_student_data', submit_student_data, methods=['POST'])
 app.add_url_rule('/start_emotibit_stream', 'start_emotibit_stream', start_emotibit_stream, methods=['POST'])
 app.add_url_rule('/get_biometric_baseline', 'get_biometric_baseline', get_biometric_baseline, methods=['GET'])
 
@@ -1187,6 +1234,10 @@ if __name__ == '__main__':
     # Set up SER
     ser_questions = prime_ser_task()
     AUDONNX_MODEL = set_aud_model(app)
+
+    # TODO: Uncomment after ser_manager class is finished and delete global model reference
+    # AUDONNX_MODEL = ser_manager.set_aud_mode()
+
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 
     app.run(port=PORT_NUMBER,debug=False)

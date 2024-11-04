@@ -14,7 +14,7 @@
     <button id="beginExperimentButton">Surveys</button><br>
     <div class="testModule" id="surveysDiv" style="display: none">
         <h2>Surveys and Participant Information</h2>
-        <p>Before performing the tasks, please click on the links in order and fill out the following forms and surveys.</p><br>
+        <p>Before performing the tasks, please fill out the following forms and surveys.</p><br>
         
         <button id="participantInfoButton">Participant Information</button><br>
         <div class="innerModule" id="participantInfoDiv" style="display:none;">
@@ -28,10 +28,10 @@
             <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
             <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
         </div><br>
-        <button id="introSurveyButton">Intro Survey</button><br><br>
-        <div class="innerModule" id="introDiv" style="display:none;" disabled>
+        <button id="studentSurveyButton">Student Information</button><br><br>
+        <div class="innerModule" id="studentDiv" style="display:none;" disabled>
             <p>Please fill out the following information if applicable:</p>
-            <form action="/submit_intro_questions" id="introForm" method="POST">
+            <form action="/submit_student_questions" id="studentForm" method="POST">
                 <label for="PID">PID:<span class="required">*</span></label>
                 <input type="text" id="PID" name="PID" required><br><br>
                 <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
@@ -39,19 +39,34 @@
                 <input type="submit" value="Submit">
             </form>
         </div>
-
+        <p> Note: These require both a subject and witness signature </p><br>
         <button id="consentFormButton">Consent Form</button><br><br>
         <button id="demographicSurveyButton">Demographic Survey</button><br><br>
         <button id="backgroundInfoButton">Background Information</button><br><br>
-        <button id="pss4_button">Stress Baseline Survey</button><br><br>
     </div><br>
+
+    <button id="biometricBaselineButton">Biometrics Baseline</button>
+    <div class="testModule" id="biometricBaselineDiv" style="display:none;">
+        <p>The experimenter will now help you put on two devices needed to collect data for the session.</p>
+        <button id="startBiometricBaseline">Begin Collecting Baseline</button>
+        <p id="biometricStatusMessage"></p>
+    </div><br><br>
+
+    <button id="stressBaselineButton">Stress Baseline</button>
+    <div class="testModule" id="stressBaselineDiv" style="display:none;">
+        <p>Please fill out this form.</p><br><br>
+        <button id="pss4_button">Stress Baseline Survey</button><br><br>
+    </div><br><br>
 
     <button id="testAudioButton">Test Audio</button><br>
     <div class="testModule" id="testAudioDiv" style="display:none;">
+        <p>The experimenter will now help you put on a device to record audio for the session.</p><br><br>
         <p>Please select your audio input or microphone.</p>
+
         <label for="audioDevices">Select Audio Input Device:</label><br>
         <select id="audioDevices" onchange="setDevice()"></select>
-        <p>Press "Record" and follow the instructions</p>
+
+        <p>Please press "Record" and read the following out loud to test the audio connection:</p>
         <button id="testAudio">Record</button>
         <p id="audioStatusMessage"></p>
     </div> <br>
@@ -68,12 +83,6 @@
         <p id="questionContainer" style="display:none;" disabled></p>
         <p id="status" style="display:none;" disabled></p>
         <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
-    </div><br>
-
-    <button id="biometricBaselineButton">Biometrics Baseline</button>
-    <div class="testModule" id="biometricBaselineDiv" style="display:none;">
-        <button id="startBiometricBaseline">Begin</button>
-        <p id="biometricStatusMessage"></p>
     </div><br>
 
     <h2>Experimental Tasks</h2>
@@ -127,22 +136,26 @@
             });
         });
 
+        document.getElementById("stressBaselineButton").addEventListener("click", function() {
+            toggleVis('stressBaselineDiv');
+        });
+
         document.getElementById('beginExperimentButton').addEventListener('click', function() {
             toggleVis('surveysDiv');
         });
 
-        document.getElementById('introSurveyButton').addEventListener('click', function() {
-            toggleVis('introDiv');
+        document.getElementById('studentSurveyButton').addEventListener('click', function() {
+            toggleVis('studentDiv');
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('introForm');
+        const form = document.getElementById('studentForm');
             form.addEventListener('submit', function(event) {
                 event.preventDefault(); 
 
                 const formData = new FormData(form); 
 
-                fetch('/submit_intro_data', { 
+                fetch('/submit_student_data', { 
                     method: 'POST',
                     body: formData
                 })
@@ -347,25 +360,70 @@
             toggleVis('biometricBaselineDiv');
         });
 
-        document.getElementById("startBiometricBaseline").addEventListener("click", function() {
-            fetch("/get_biometric_baseline", {
-                method: "POST"
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data.data);
-                document.getElementById('biometricStatusMessage').innerText = data.message;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
+        baselineButton = document.getElementById("startBiometricBaseline");
+        if (baselineButton.innerText == "Start Collecting Baseline"){
+            baselineButton.addEventListener("click", function() {
+                fetch("/start_emotibit_stream", {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    document.getElementById('startBiometricBaseline').innerText = "Stop Collecting Baseline";
+                    document.getElementById('biometricStatusMessage').innerText = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
+                });
             });
-        });
+        } else {
+            baselineButton.addEventListener("click", function() {
+                fetch("/stop_emotibit", {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    document.getElementById('startBiometricBaseline').innerText = "Start Collecting Baseline";
+                    document.getElementById('biometricStatusMessage').innerText = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while stopping biometric baseline.";
+                });
+            });
+        }
+        // document.getElementById("startBiometricBaseline").addEventListener("click", function() {
+        //     fetch("/start_emotibit_stream", {
+        //         method: "POST"
+        //     })
+        //     .then(response => {
+        //         if (!response.ok) {
+        //             throw new Error(`HTTP error! status: ${response.status}`);
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(data => {
+        //         console.log(data.message);
+        //         document.getElementById('startBiometricBaseline').innerText = "Stop Collecting Baseline";
+        //         document.getElementById('biometricStatusMessage').innerText = data.message;
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //         document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
+        //     });
+        // });
 
         let vrWin;
 

@@ -20,13 +20,15 @@ class EmotiBitStreamer:
         self.data = {
              "EDA": [],
             "HR": [],
-            "BI": []
+            "BI": [],
+            "HRV": []
         }
         
         self.baseline_data = {
             "EDA": [],
             "HR": [],
-            "BI": []
+            "BI": [],
+            "HRV": []
         }
 
         self.dispatcher = dispatcher.Dispatcher()
@@ -36,68 +38,53 @@ class EmotiBitStreamer:
         self.server_thread = None
         self.shutdown_event = Event()
         self.server = osc_server.ThreadingOSCUDPServer((self.ip, self.port), self.dispatcher)
-        self.server.allow_reuse_address = True  # Call this before binding
-        self.server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Corrected to SO_REUSEADDR
+        self.server.allow_reuse_address = True  
+        self.server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
         atexit.register(self.stop)
 
         print(f"IP: {self.ip}, Port: {self.port}")
+
     ###########################################
     # Methods
     ###########################################
     def start(self):
-        # if self.server:
-        #     print("Server is already running.")
-        #     return
-        
-        # print(f"Starting server at {self.ip}:{self.port}")
-        # self.server.serve_forever()
         if self.server_thread is not None and self.server_thread.is_alive():
             print("Server is already running.")
             return
         
         print(f"Starting server at {self.ip}:{self.port}")
         
-        # Start the server in a new thread
-        self.shutdown_event.clear()  # Clear the shutdown event before starting
+        self.shutdown_event.clear()  
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
         
     def stop(self):
-        # if self.server:
-        #     print(f"Stopping server at {self.ip}:{self.port}")
-        #     self.server.shutdown()
-        #     time.sleep(1)  # Wait for the server to stop    
-        #     self.server.server_close()
-        #     self.server = None  # Reset to allow future start
-        #     print("Server stopped successfully.")
-        # else:
-        #     print("Server was not running.")
         if self.server_thread is not None:
             print(f"Stopping server at {self.ip}:{self.port}")
-            self.shutdown_event.set()  # Signal the server to stop
-            self.server.shutdown()  # Shutdown the server
-            self.server.server_close()  # Close the server socket
-            self.server_thread.join()  # Wait for the server thread to finish
-            self.server_thread = None  # Reset the server thread
+            self.shutdown_event.set()  
+            self.server.shutdown()
+            self.server.server_close() 
+            self.server_thread.join()  
+            self.server_thread = None  
             print("Server stopped successfully.")
         else:
-            print("OSC Server was not running.")
-
-    # def run_server(self):
-    #     """ Run the OSC server until shutdown is signaled. """
-    #     while not self.shutdown_event.is_set():
-    #         self.server.handle_request()  # Handle a single request
+            return None
 
     def clear_data(self):
         self.data = {
             "EDA": [],
             "HR": [],
-            "BI": []
+            "BI": [],
+            "HRV": []
         }
 
-        self.eda_data = []
-        self.temp_data = []
-        self.hr_data = []
+    def clear_baseline_data(self):
+        self.baseline_data = {
+            "EDA": [],
+            "HR": [],
+            "BI": [],
+            "HRV": []
+        }
 
     def calculate_hrv_from_bi(self, bi_values):
         # HRV metrics directly from BI (beat interval) values
@@ -138,18 +125,6 @@ class EmotiBitStreamer:
         else:
             return self.baseline_data
     
-    def _get_local_ip(self):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
-    
-        except Exception as e:
-            print(f"Error getting local IP: {str(e)}")
-            return "127.0.0.1"  # Fallback to localhost
-    
     def get_latest_data(self):
         if self.data:
             return self.data[-1]
@@ -166,15 +141,7 @@ class EmotiBitStreamer:
     # Setters
     ############################################
     def set_emotibit_baseline(self):
-        # Clear the baseline data file first
-        self.baseline_data = {
-            "EDA": [],
-            "HR": [],
-            "BI": []
-        }
-
+        self.clear_baseline_data()
         self.baseline_data = self.data.copy()
-
-        # Clear the data after setting the baseline
         self.clear_data()
         print("Baseline set and primary data cleared.")

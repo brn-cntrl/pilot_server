@@ -15,68 +15,107 @@
         <form action="submit_background" id="backgroundForm">
             <h3>Did you rush here or have you had a caffeinated drink recently? <span class="required">*</span></h3>
             <label>
-                <input type="radio" name="rush_caffeine" value="Yes" required> Yes
+                <input type="radio" name="rush_caffeine" value="Yes" id="rush_caffeine_yes" required> Yes
             </label><br>
+            <p id="rush_message" style="display: none">If you wish to continue with the experiment, please sit here for a few minutes to enter a more relaxed state.</p>
             <label>
                 <input type="radio" name="rush_caffeine" value="No" required> No
             </label><br><br>
 
-            <label for="caffeine_details">If yes, what did you have and when? <span class="required">*</span></label><br><br>
-            <input type="text" id="caffeine_details" name="caffeine_details"><br><br>
+            <label for="caffeine_details">If yes, what did you have? <span class="required">*</span></label><br><br>
+            <select id="caffeine_details" name="caffeine_details" required>
+                <option value="" disabled selected>Select an option</option>
+                <option value="Coffee">Coffee</option>
+                <option value="Tea">Tea</option>
+                <option value="Energy Drink">Energy Drink</option>
+                <option value="Other">Other</option>
+            </select><br><br>
+            <label for="caffeine_time">If yes, what time did you have it? <span class="required">*</span></label><br><br>
+            <select id="caffeine_time" name="caffeine_time" required>
+                <option value="" disabled selected>Select a time</option>
+                <option value="6:00 AM">6:00 AM</option>
+                <option value="7:00 AM">7:00 AM</option>
+                <option value="8:00 AM">8:00 AM</option>
+                <option value="9:00 AM">9:00 AM</option>
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="11:00 AM">11:00 AM</option>
+                <option value="Other">Other</option>
+            </select><br><br>
 
             <h3>Are you thirsty or hungry?</h3>
             <label>
-                <input type="radio" name="thirst_hunger" value="Thirsty" required> Thirsty
+                <input type="radio" name="thirst_hunger" value="Thirsty" id="thirsty_yes" required> Thirsty
             </label><br>
+            <p id="thirsty_message" style="display: none">Please help yourself to a bottle of water.</p>
             <label>
-                <input type="radio" name="thirst_hunger" value="Hungry" required> Hungry
+                <input type="radio" name="thirst_hunger" value="Hungry" id="hungry_yes" required> Hungry
             </label><br>
+            <p id="hungry_message" style="display: none">It might be best to grab a snack and come back in an hour. We want to ensure you're feeling your best for the experiment.</p>
             <label>
-                <input type="radio" name="thirst_hunger" value="Both" required> Both
+                <input type="radio" name="thirst_hunger" value="Both" id="both_yes" required> Both
             </label><br>
+            <p id="both_message" style="display: none">Please help yourself to a water bottle. But, it might be best to grab a snack and come back in an hour. We want to ensure you're feeling your best for the experiment.</p>
             <label>
                 <input type="radio" name="thirst_hunger" value="Neither" required> Neither
             </label><br><br>
 
             <h3>What do you think your normal heart rate is? Is it elevated right now for any reason?<span class="required">*</span></h3>
-            <label for="heart_rate">
-            <input type="text" id="heart_rate" name="heart_rate" required>
-            </label><br><br>
+            <label>
+                <input type="radio" name="heart_rate" value="Yes" id="elevated_yes" required> Yes
+            </label><br>
+            <p id="elevated_message" style="display: none">If you wish to continue with the experiment, please sit here for a few minutes to enter a more relaxed state.</p>
+            <label>
+                <input type="radio" name="heart_rate" value="No" required> No
+            </label>
 
             <h3>Do you have any underlying neurological or neuropsychological conditions?<span class="required">*</span></h3>
             <label>
-                <input type="radio" name="neurological_conditions" value="Yes" required>Yes
+                <input type="radio" name="neurological_conditions" value="Yes" id="neuro_yes" required>Yes
             </label><br>
+            <p id="neuro_message" style="display: none">For your safety, we cannot include you in this study. Thank you for your understanding</p>
             <label>
                 <input type="radio" name="neurological_conditions" value="No" required>No
             </label><br><br>
-
             <label for="neurological_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
-            <input type="text" id="neurological_description" name="neurological_description" required><br><br>
+            <select id="neurological_description" name="neurological_description" required>
+                <option value="" disabled selected>Select your condition</option>
+                <option value="Condition1">Condition 1</option>
+                <option value="Condition2">Condition 2</option>
+                <option value="Condition3">Condition 3</option>
+            </select><br><br>
 
             <h3>Do you have any scars or tattoos on your non-dominant wrist?<span class="required">*</span></h3>
             <label>
-                <input type="radio" name="scars_tattoos" value="Yes" required>Yes
+                <input type="radio" name="scars_tattoos" value="Yes" id="tattoo_yes" required>Yes
             </label><br>
+            <p id="tattoo_message" style="display: none">Unfortunately, we cannot include you in this study. Thank you for your understanding</p>
             <label>
                 <input type="radio" name="scars_tattoos" value="No" required>No
             </label><br><br>
 
             <h3>Do you have any health conditions that might prevent you from using virtual reality equipment, such as severe motion sickness, epilepsy, or any other condition that could be triggered by VR?<span class="required">*</span></h3>
             <label>
-                <input type="radio" name="vr_conditions" value="Yes" required>Yes
+                <input type="radio" name="vr_conditions" value="Yes" id="condition_yes" required>Yes
             </label><br>
+            <p id="condition_message" style="display: none">For your safety, we cannot include you in this study. Thank you for your understanding</p>
             <label>
                 <input type="radio" name="vr_conditions" value="No" required>No
             </label><br><br>
-
             <label for="vr_condition_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
-            <input type="text" id="vr_condition_description" name="vr_condition_description" required><br><br>
+            <select id="vr_condition_description" name="vr_condition_description" required>
+                <option value="" disabled selected>Select your condition</option>
+                <option value="Motion Sickness">Motion Sickness</option>
+                <option value="Epilepsy">Epilepsy</option>
+                <option value="Vertigo">Vertigo</option>
+                <option value="Other">Other</option>
+            </select><br><br>
 
             <h3>Do you require glasses to participate in the experiment?<span class="required">*</span></h3>
             <label>
-                <input type="radio" name="glasses" value="Yes, I'll be wearing glasses" required> Yes, I'll be wearing glasses
+                <input type="radio" name="glasses" value="Yes, I'll be wearing glasses" id="glasses_yes" required> Yes, I'll be wearing glasses
             </label><br>
+            <p id="glasses_message" style="display: none">We’re sorry, but normal or corrected-to-normal vision is required to participate in this study. Thank you for your time.
+            </p>
             <label>
                 <input type="radio" name="glasses" value="Yes, I'll be wearing contacts" required> Yes, I'll be wearing contacts
             </label><br>
@@ -88,6 +127,87 @@
         </form>
     </div>
     <script>
+        // document.getElementById('rush_caffeine_yes').addEventListener('change', function() {
+        //     var rushMessage = document.getElementById('rush_message');
+        //     if (this.checked) {
+        //         rushMessage.style.display = 'block';
+        //     } else {
+        //         rushMessage.style.display = 'none';
+        //     }
+        // });
+
+        // document.getElementById('thirsty_yes').addEventListener('change', function() {
+        //     var thirstyMessage = document.getElementById('thirsty_message');
+        //     if (this.checked) {
+        //         thirstyMessage.style.display = 'block';
+        //     } else {
+        //         thirstyMessage.style.display = 'none';
+        //     }
+        // });
+
+        // document.getElementById('hungry_yes').addEventListener('change', function() {
+        //     var hungryMessage = document.getElementById('hungry_message');
+        //     if (this.checked) {
+        //         hungryMessage.style.display = 'block';
+        //     } else {
+        //         hungryMessage.style.display = 'none';
+        //     }
+        // });
+
+        // document.getElementById('both_yes').addEventListener('change', function() {
+        //     var bothMessage = document.getElementById('both_message');
+        //     if (this.checked) {
+        //         bothMessage.style.display = 'block';
+        //     } else {
+        //         bothMessage.style.display = 'none';
+        //     }
+        // });
+
+        // document.getElementById('elevated_yes').addEventListener('change', function() {
+        //     var elevatedMessage = document.getElementById('elevated_message');
+        //     if (this.checked) {
+        //         elevatedMessage.style.display = 'block';
+        //     } else {
+        //         elevatedMessage.style.display = 'none';
+        //     }
+        // });
+
+        // document.getElementById('glasses_yes').addEventListener('change', function() {
+        //     var glassesMessage = document.getElementById('glasses_message');
+        //     if (this.checked) {
+        //         glassesMessage.style.display = 'block';
+        //     } else {
+        //         glassesMessage.style.display = 'none';
+        //     }
+        // });
+        function toggleMessage(radioId, messageId) {
+            const radioButton = document.getElementById(radioId);
+            const message = document.getElementById(messageId);
+            if (radioButton.checked) {
+                message.style.display = 'block';
+            } else {
+                message.style.display = 'none';
+            }
+        }
+
+        // Add event listeners to each radio button group
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    // Call toggleMessage for each message based on respective radio button
+                    toggleMessage('rush_caffeine_yes', 'rush_message');
+                    toggleMessage('thirsty_yes', 'thirsty_message');
+                    toggleMessage('hungry_yes', 'hungry_message');
+                    toggleMessage('both_yes', 'both_message');
+                    toggleMessage('elevated_yes', 'elevated_message');
+                    toggleMessage('neuro_yes', 'neuro_message');
+                    toggleMessage('tattoo_yes', 'tattoo_message');
+                    toggleMessage('condition_yes', 'condition_message');
+                    toggleMessage('glasses_yes', 'glasses_message');
+                });
+            });
+        });
+        
         document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('backgroundForm');
             form.addEventListener('submit', function(event) {
