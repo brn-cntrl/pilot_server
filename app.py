@@ -86,15 +86,18 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 # Initialize the Flask app and pass reference to ser manager singleton
 app = Flask(__name__)
 ser_manager = SERManager(app)
+
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index():
     # TODO: implement test manager class and remove global reference
     global current_ser_question_index
     current_ser_question_index = 0
     return jsonify({'status': 'SER questions reset'})
 
+# @app.route('/start_emotibit_stream', methods=['POST'])
 # def start_emotibit_stream():
 #     start_emotibit()
 
@@ -104,8 +107,8 @@ def reset_ser_question_index():
 #     except Exception as e:
 #         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
+# @app.route('/get_biometric_baseline', methods=['POST'])
 # def get_biometric_baseline():
-
 #     try:
 #         stop_emotibit()
 #         data = emotibit_streamer.get_baseline_data()
@@ -114,6 +117,7 @@ def reset_ser_question_index():
 #     except Exception as e:
 #         return jsonify({'status': 'error', 'message': str(e)}), 400 
 
+@app.route('/get_ser_question', methods=['GET'])
 def get_ser_question():
     global current_ser_question_index, ser_questions
     
@@ -133,7 +137,8 @@ def get_ser_question():
     except Exception as e:
         print(f"Error in get_ser_question: {e}") 
         return jsonify({'status': 'error', 'message': str(e)}), 400
-    
+
+@app.route('/process_ser_answer', methods=['POST'])  
 def process_ser_answer():
     """
     Processes the user's spoken answer for a SER (Speech Emotion Recognition) question.
@@ -177,7 +182,8 @@ def process_ser_answer():
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
-    
+
+@app.route('/get_question', methods=['POST'])
 def get_question():
     """
     Retrieve the current question for the ongoing test.
@@ -210,6 +216,7 @@ def get_question():
     question = questions[current_question_index]
     return jsonify({'question': question['question'], "test_number": current_test_number})
 
+@app.route('/get_next_test', methods=['POST'])
 def get_next_test():
     global current_test_number, current_question_index, TASK_QUESTIONS
 
@@ -225,12 +232,14 @@ def get_next_test():
         
         return jsonify({"message": "Next test initiated.", "test_number": current_test_number})
 
+@app.route('/get_stream_active', methods=['GET'])
 def get_stream_active():
     global stream_is_active
     global recording_manager
     # stream_is_active = recording_manager.get_stream_is_active()
     return jsonify({'stream_active': stream_is_active})
 
+@app.route('/test_audio', methods=['POST'])
 def test_audio():
     global RECORDING_FILE
     try:
@@ -256,6 +265,7 @@ def test_audio():
         print(f"An error occurred: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/submit_answer', methods=['POST'])
 def submit_answer():
     """
     Route to submit an answer for the current question in the test.
@@ -331,10 +341,12 @@ def submit_answer():
         print(f"An error occurred: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/shutdown', methods=['POST'])
 def shutdown():
     shutdown_server()
     return jsonify({'message': 'Server shutting down...'})
 
+@app.route('/submit_pss4', methods=['POST'])
 def submit_pss4():
     global subject
     try:
@@ -361,7 +373,8 @@ def submit_pss4():
     
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-    
+
+@app.route('/submit_background', methods=['POST'])
 def submit_background():
     global subject
     try:
@@ -394,6 +407,7 @@ def submit_background():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
+@app.route('/submit_exit', methods=['POST'])
 def submit_exit():
     global subject
     try:
@@ -426,6 +440,7 @@ def submit_exit():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
+@app.route('/submit_demographics', methods=['POST'])
 def submit_demographics():
     global subject
     try:
@@ -464,6 +479,7 @@ def submit_demographics():
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
+@app.route('/submit_student_data', methods=['POST'])
 def submit_student_data():
     global subject_data
     global subject
@@ -486,7 +502,8 @@ def submit_student_data():
     
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-    
+
+@app.route('/upload_subject_data', methods=['POST'])    
 def upload_subject_data():
     global subject
 
@@ -496,7 +513,8 @@ def upload_subject_data():
         raise Exception(result['message'])
     else:
         print(result['message'])
-    
+
+@app.route('/submit', methods=['POST'])    
 def submit():
     global unique_id
     global participant_name
@@ -535,8 +553,45 @@ def submit():
         return jsonify({'message': 'Error processing request.'}), 400
 
 ##################################################################
-## Audio Recording Routes
+## Audio Routes
 ##################################################################
+@app.route('/get_audio_devices', methods=['GET'])
+def get_audio_devices():
+    audio_devices = fetch_audio_devices()
+    # global recording_manager
+    # audio_devices = recording_manager.get_audio_devices()
+    return jsonify(audio_devices)
+
+@app.route('/set_device', methods=['POST'])
+def set_device():
+    global device_index
+    global recording_manager
+    data = request.get_json()
+    print(f'Received data: {data}')  # Debugging statement
+
+    p = pyaudio.PyAudio()
+    device_index = int(data.get('device_index'))
+    if device_index is not None:
+        try:
+            info = p.get_device_info_by_index(device_index)
+            if info:
+                device_index = info['index']
+                recording_manager.set_device(info['index'])
+                p.terminate()
+                print(f'Device index set to: {device_index}')
+                return jsonify({'message': 'Device index set.'})
+            else:
+                p.terminate()
+                return jsonify({'message': 'Device index not found.'}), 400
+            
+        except Exception as e:
+            return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
+    
+    else:
+        p.terminate()
+        return jsonify({'message': 'Device index not provided.'}), 400
+    
+@app.route('/record_vr_task', methods=['POST'])
 def record_vr_task():
     """
     Endpoint to handle VR task recording actions.
@@ -617,7 +672,8 @@ def record_vr_task():
     except Exception as e:
         print(f"Exception: {str(e)}")
         return jsonify({'message': 'Error processing request.'}), 400
-    
+
+@app.route('/start_recording', methods=['POST'])    
 def start_recording():
     try:
         record_audio()
@@ -628,16 +684,20 @@ def start_recording():
 ##################################################################
 ## Views 
 ##################################################################
+@app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/break_page', methods=['GET'])
 def break_page():
     return render_template('break_page.html')
 
+@app.route('/video/<filename>')
 def video(filename):
     video_path = os.path.join('static', 'videos', filename)
     return send_file(video_path)
 
+@app.route('/test_page', methods=['GET'])
 def test_page():
     global current_question_index, current_test_number, TASK_QUESTIONS
     current_question_index = 0
@@ -645,29 +705,29 @@ def test_page():
 
     return render_template('test_page.html')
 
+@app.route('/vr_task', methods=['GET'])
 def vr_task():
     return render_template('vr_task.html')
 
+@app.route('/pss4', methods=['GET'])
 def pss4():
     return render_template('pss4.html')
 
+@app.route('/demographic_survey', methods=['GET'])
 def demographic_survey():
     return render_template('demographic_survey.html')
 
+@app.route('/background', methods=['GET'])
 def background():
     return render_template('background.html')
 
+@app.route('/exit_survey', methods=['GET'])
 def exit_survey():
     return render_template('exit_survey.html')
 
 ##################################################################
 ## Helper Functions 
 ##################################################################
-# def record_timestamps(timestamps):  # For use in thread
-#     while not stop_event.is_set():
-#         timestamps.append(datetime.datetime.now().isoformat())
-#         time.sleep(10)
-
 # def start_emotibit():
 #     # global emotibit_thread, emotibit_streamer
 #     global emotibit_streamer
@@ -815,6 +875,16 @@ def prime_ser_task():
 ##################################################################
 ## Audio 
 ##################################################################
+def fetch_audio_devices():
+    p = pyaudio.PyAudio()
+    audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
+                     for i in range(p.get_device_count())
+                     if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
+    
+    p.terminate()
+
+    return audio_devices
+
 # TODO: Delete all audio functions after recording manager class is fully implemented
 # Record audio in separate thread
 def record_audio():
@@ -1146,9 +1216,9 @@ def transcribe_audio(file):
         except sr.RequestError as e:
             return f"Could not request results from Google Speech Recognition service; {e}"
     
-################################################
+##################################################################
 ## SER 
-################################################
+##################################################################
 
 #TODO: Delete after SER class is finished
 def set_aud_model(app):
@@ -1220,90 +1290,9 @@ def predict_emotion(audio_chunk):
 
     return prediction[0]
 
-################################################
-
-def get_audio_devices():
-    audio_devices = fetch_audio_devices()
-    # global recording_manager
-    # audio_devices = recording_manager.get_audio_devices()
-    return jsonify(audio_devices)
-
-def set_device():
-    global device_index
-    global recording_manager
-    data = request.get_json()
-    print(f'Received data: {data}')  # Debugging statement
-
-    p = pyaudio.PyAudio()
-    device_index = int(data.get('device_index'))
-    if device_index is not None:
-        try:
-            info = p.get_device_info_by_index(device_index)
-            if info:
-                device_index = info['index']
-                recording_manager.set_device(info['index'])
-                p.terminate()
-                print(f'Device index set to: {device_index}')
-                return jsonify({'message': 'Device index set.'})
-            else:
-                p.terminate()
-                return jsonify({'message': 'Device index not found.'}), 400
-            
-        except Exception as e:
-            return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
-    
-    else:
-        p.terminate()
-        return jsonify({'message': 'Device index not provided.'}), 400
-    
-def fetch_audio_devices():
-    p = pyaudio.PyAudio()
-    audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
-                     for i in range(p.get_device_count())
-                     if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
-    
-    p.terminate()
-
-    return audio_devices
-
-# Register Views
-app.add_url_rule('/', 'index', index)
-app.add_url_rule('/break_page', 'break_page', break_page, methods=['GET'])
-app.add_url_rule('/test_page', 'test_page', test_page, methods=['GET'])
-app.add_url_rule('/vr_task', 'vr_task', vr_task, methods=['GET'])
-app.add_url_rule('/pss4', 'pss4', pss4, methods=['GET'])
-app.add_url_rule('/demographic_survey', 'demographic_survey', demographic_survey, methods=['GET'])
-app.add_url_rule('/background', 'background', background, methods=['GET'])
-app.add_url_rule('/exit_survey', 'exit_survey', exit_survey, methods=['GET'])
-
-# Register Routes
-app.add_url_rule('/get_ser_question', 'get_ser_question', get_ser_question, methods=['GET'])
-app.add_url_rule('/process_ser_answer', 'process_ser_answer', process_ser_answer, methods=['POST'])
-app.add_url_rule('/get_question', 'get_question', get_question, methods=['POST'])
-app.add_url_rule('/get_next_test', 'get_next_test', get_next_test, methods=['POST'])
-app.add_url_rule('/get_stream_active', 'get_stream_active', get_stream_active, methods=['GET'])
-app.add_url_rule('/submit_answer', 'submit_answer', submit_answer, methods=['POST'])
-app.add_url_rule('/shutdown', 'shutdown', shutdown, methods=['POST'])
-app.add_url_rule('/upload_subject_data', 'upload_subject_data', upload_subject_data, methods=['POST'])
-app.add_url_rule('/submit', 'submit', submit, methods=['POST'])
-app.add_url_rule('/get_audio_devices', 'get_audio_devices', get_audio_devices, methods=['GET'])
-app.add_url_rule('/set_device', 'set_device', set_device, methods=['POST'])
-app.add_url_rule('/test_audio', 'test_audio', test_audio, methods=['POST'])
-app.add_url_rule('/record_vr_task', 'record_vr_task', record_vr_task, methods=['POST'])
-app.add_url_rule('/start_recording', 'start_recording', start_recording, methods=['POST'])
-app.add_url_rule('/video/<filename>', 'video', video)
-app.add_url_rule('/submit_pss4', 'submit_pss4', submit_pss4, methods=['POST'])
-app.add_url_rule('/submit_background', 'submit_background', submit_background, methods=['POST'])
-app.add_url_rule('/submit_exit', 'submit_exit', submit_exit, methods=['POST'])
-app.add_url_rule('/submit_demographics', 'submit_demographics', submit_demographics, methods=['POST'])
-app.add_url_rule('/submit_student_data', 'submit_student_data', submit_student_data, methods=['POST'])
-# app.add_url_rule('/start_emotibit_stream', 'start_emotibit_stream', start_emotibit_stream, methods=['POST'])
-# app.add_url_rule('/get_biometric_baseline', 'get_biometric_baseline', get_biometric_baseline, methods=['GET'])
-app.add_url_rule('/reset_ser_question_index', 'reset_ser_question_index', reset_ser_question_index, methods=['POST'])
-
-######################################################
+####################################################################
 # Main Loop
-######################################################
+####################################################################
 if __name__ == '__main__':
     # Suppress warnings for now
     warnings.filterwarnings("ignore")
