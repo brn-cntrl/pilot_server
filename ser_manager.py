@@ -5,6 +5,7 @@ import audeer
 import numpy as np
 import joblib
 import os
+import numpy as np
 
 class SERManager:
     def __init__(self, app):
@@ -34,6 +35,20 @@ class SERManager:
         return model
     
     def predict_emotion(self, audio_chunk):
+        """
+        Predicts the emotion from a given audio chunk using a pre-trained AUDONNX model.
+        Parameters:
+            - audio_chunk (numpy.ndarray): The input audio data in numpy array format. The data type should be np.float32.
+        Returns:
+            - str: The predicted emotion label.
+        Raises:
+            - ValueError: If the AUDONNX_MODEL is not initialized.
+        Notes:
+            - The function first ensures that the audio chunk is of type np.float32.
+            - It then extracts hidden states features from the audio chunk using the AUDONNX model.
+            - The hidden states are reshaped and converted into a pandas DataFrame.
+            - The DataFrame is then used to predict the emotion using a classifier (CLF).
+        """
         
         if audio_chunk.dtype != np.float32:
             audio_chunk = audio_chunk.astype(np.float32)

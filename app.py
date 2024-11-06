@@ -135,6 +135,23 @@ def get_ser_question():
         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 def process_ser_answer():
+    """
+    Processes the user's spoken answer for a SER (Speech Emotion Recognition) question.
+    This function performs the following steps:
+    1. Stops the current audio recording.
+    2. Converts the recorded audio file to a numpy array.
+    3. Normalizes the audio signal.
+    4. Predicts the emotion from the normalized audio signal.
+    5. Appends the predicted emotion to the subject's SER baseline data.
+    6. Renames the audio file based on the subject's ID and the current question index.
+    7. Saves the renamed audio file to the 'audio_files' directory.
+    8. Returns a JSON response indicating the status of the submission.
+    Returns:
+        - Response: A JSON response with the status of the answer submission.
+            If successful, returns {'status': 'Answer submitted.'}.
+            If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
+    """
+
     global RECORDING_FILE
     global current_ser_question_index
     global subject_data
@@ -162,6 +179,21 @@ def process_ser_answer():
         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 def get_question():
+    """
+    Retrieve the current question for the ongoing test.
+    This route fetches the current question based on the global variables
+    `current_question_index` and `current_test_number`. It accesses the
+    `TASK_QUESTIONS` dictionary to get the list of questions for the current
+    test. If there are no more questions in the current test, it increments
+    the test number and resets the question index to 0 to fetch the next set
+    of questions. If no questions are found for the current or next test,
+    it returns a JSON response with `{"question": None}`.
+
+    Returns:
+        - Response: A JSON response containing the current question and the
+            test number, or `{"question": None}` if no questions are available.
+    """
+
     global current_question_index, current_test_number, TASK_QUESTIONS
     questions = TASK_QUESTIONS.get(current_test_number)
 
@@ -224,6 +256,23 @@ def test_audio():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def submit_answer():
+    """
+    Route to submit an answer for the current question in the test.
+    This function handles the submission of an answer by performing the following steps:
+        1. Stops the current audio recording.
+        2. Transcribes the recorded audio.
+        3. Normalizes the audio signal and predicts the emotion.
+        4. Saves the audio file with a specific naming convention.
+        5. Appends the transcription and emotion prediction to the test data.
+        6. Checks the transcription against the correct answer and determines if it is correct or incorrect.
+        7. Increments the question index for the next question.
+    Returns:
+        - JSON response indicating the status of the submission and the result (correct/incorrect).
+    Raises:
+        - 400: If the transcription could not be understood or if there was an error requesting results from the speech recognition service.
+        - 500: If there was any other error during the process.
+    """
+
     global current_question_index, current_test_number, subject_data
     global stop_event, recording_thread, stream_is_active
     global TASK_QUESTIONS, RECORDING_FILE
@@ -488,6 +537,22 @@ def submit():
 ## Audio Recording Routes
 ##################################################################
 def record_vr_task():
+    """
+    Endpoint to handle VR task recording actions.
+    This function processes incoming JSON requests to start or stop a VR task recording.
+    Depending on the action specified in the request, it either starts the recording or stops it
+    and processes the recorded audio.
+    The function performs the following actions:
+        - If the action is 'start', it returns a success message. The actual "start_recording" route is called from the client.
+        - If the action is 'stop', it stops the recording, splits the audio into segments, generates
+            timestamps, transcribes the audio, predicts emotions, and stores the results in the subject data.
+    Returns:
+        - Response: A JSON response indicating the result of the action with an appropriate HTTP status code.
+    Raises:
+        - Exception: If any error occurs during the processing of the request, an error message is returned
+                   with a 400 HTTP status code.
+    """
+
     global subject_data, subject
     global recording_manager, ser_manager
     global stream_is_active, stop_event
@@ -508,7 +573,6 @@ def record_vr_task():
             # recording_manager.stop_recording()
             stop_recording()
 
-            # Split the audio file into 20 second segments
             # audio_segments = recording_manager.split_wav_to_segments(20, "tmp/")
             audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
 
@@ -516,10 +580,8 @@ def record_vr_task():
             audio_segments = sorted(audio_segments, key=lambda x: 
                                     int(os.path.splitext(os.path.basename(x))[0].split('_')[-1]))
 
-            # Generate timestamp array
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
             
-            # Generate transcription and SER for each segment
             transcriptions = []
             ser_predictions = []
 
@@ -533,11 +595,9 @@ def record_vr_task():
                 emotion = predict_emotion(normed_sig)
                 ser_predictions.append(emotion)
 
-            # Combine timestamps, transcriptions, and SER predictions into a list of dictionaries
             vr_data = [{'timestamp': ts, 'transcription': tr, 'SER': ser} 
                     for ts, tr, ser in zip(timestamps, transcriptions, ser_predictions)]
             
-            # Set vr task data to subject json data
             if task_id == 'taskID1':
                 # subject.set_vr_transcriptions_1(vr_data)
                 subject_data["VR_Transcriptions_1"] = vr_data
@@ -824,8 +884,13 @@ def record_thread():
         
 def get_wav_as_np(filename):
     """
-    Loads the entire wav file stored in tmp and returns it as a 
-    normalized numpy array.
+    Loads the entire wav file stored in tmp and returns it as a normalized numpy array.
+    Arguments: 
+        - the path and filename of the wav file
+    Returns: 
+        - the wav file as a numpy array
+    Exception: 
+        - if the file is not found
     """
     try:
         with wave.open(filename, 'rb') as wf:
@@ -846,9 +911,21 @@ def get_wav_as_np(filename):
     
 def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
     """
-    Returns the section of audio specified by the offset and duration parameters as a normalized 
+    Returns the section of audio specified by the offset and duration Args as a normalized 
     numpy array. This is necessary for the current SER classifier and is subject to change when 
     another SER module is implemented.
+
+    Args:
+    - the path and filename of the wav file, 
+    - the offset in seconds, 
+    - the duration in seconds, 
+    - the samplerate in Hz.
+
+    Returns: 
+    - the audio chunk as a numpy array
+
+    Exception: 
+    - if the file is not found
     """
     try:
         with wave.open(filename, 'rb') as wf:
@@ -879,19 +956,38 @@ def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
 def resample_audio(signal, original_sample_rate, target_sample_rate):
     """
     Resamples the signal to match the target sample rate using linear interpolation.
+
+    Args: 
+    - the signal as a numpy array, 
+    - the original sample rate in Hz, 
+    - the target sample rate in Hz.
+    Returns:
+    - the resampled signal as a numpy array
     """
     ratio = target_sample_rate / original_sample_rate
     resampled_length = int(len(signal) * ratio)
     resampled_signal = np.interp(
         np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
     )
+
     return resampled_signal
 
 def get_audio_duration(file_path):
+    """
+    Calculate the duration of an audio file.
+    This function opens an audio file specified by the file_path, reads the number of frames and the frame rate,
+    and calculates the duration of the audio in seconds.
+    Parameter:
+    - file_path (str): The path/filename of the audio file.
+    Returns:
+    - float: The duration of the audio file in seconds.
+    """
+
     with wave.open(file_path, 'rb') as wf:
         frames = wf.getnframes()          
         rate = wf.getframerate()          
-        duration = frames / float(rate)   
+        duration = frames / float(rate)
+
     return duration
 
 def rename_audio_file(id, name_param1, name_param2):
@@ -954,7 +1050,7 @@ def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder
     """
     Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
 
-    Parameters:
+    Args:
     - input_wav (str): Path to the input WAV file.
     - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
     - output_folder (str): Folder to save the output segments. Default is 'tmp'.
@@ -1010,14 +1106,12 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     """
     Generates a list of ISO 8601 formatted start timestamps for each audio segment file
     in the specified output folder, assuming they were created sequentially.
-
-    Parameters:
-    - start_time_unix (int): Unix timestamp of the start of the recording.
-    - segment_duration (int): Duration of each segment in seconds.
-    - output_folder (str): Folder containing the segment files.
-
+    Args:
+        - start_time_unix (int): Unix timestamp of the start of the recording.
+        - segment_duration (int): Duration of each segment in seconds.
+        - output_folder (str): Folder containing the segment files.
     Returns:
-    - List of start timestamps in ISO 8601 format for each segment.
+        - List of start timestamps in ISO 8601 format for each segment.
     """
     segment_timestamps = []
     segment_files = sorted([f for f in os.listdir(output_folder) if f.endswith('.wav')])
@@ -1048,69 +1142,6 @@ def transcribe_audio():
         
         except sr.RequestError as e:
             return f"Could not request results from Google Speech Recognition service; {e}"
-
-# NOTE: Leave this function in place for now.
-# def transcribe_vr_audio(start_time, task_id):
-#     """ 
-#     This function transcribes the audio file in chunks of 5 seconds and returns a list of
-#     transcriptions with timestamps and SER values in json format.
-#     """
-#     global RECORDING_FILE
-#     global recording_manager
-
-#     # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
-#     recording_start_time = datetime.datetime.fromisoformat(start_time)
-#     recognizer = sr.Recognizer()
-#     vr_transcriptions = []  
-    
-#     with sr.AudioFile(RECORDING_FILE) as source:
-#         try:
-#             duration = get_audio_duration(RECORDING_FILE)
-#             print(f"Audio duration: {duration}")
-
-#             chunk_duration = 5
-#             current_time = 0
-
-#             if chunk_duration > duration:
-#                 print(f"Error: Chunk duration ({chunk_duration} seconds) exceeds audio file duration ({duration} seconds).")
-#                 return []
-        
-#             while current_time + chunk_duration <= duration:
-#                 print(f"Transcribing from offset {current_time} seconds...") 
-#                 try:
-#                     remaining_time = duration - current_time
-#                     chunk_time = min(chunk_duration, remaining_time)
-#                     audio_chunk = recognizer.record(source, duration=chunk_time, offset=current_time)
-#                     recognized_text = recognizer.recognize_google(audio_chunk)
-#                     sig = get_audio_chunk_as_np(RECORDING_FILE, offset=current_time, duration=chunk_duration)
-#                     # sig = recording_manager.get_audio_chunk_as_np(current_time, chunk_duration)
-#                     # normed_sig = normalize_audio(sig)
-#                     emotion = predict_emotion(sig)
-#                     real_timestamp = recording_start_time + datetime.timedelta(seconds=current_time)
-#                     real_timestamp_iso = real_timestamp.isoformat()
-
-#                     transcription_data = {
-#                         'taskID': task_id,
-#                         'timestamp': real_timestamp_iso,
-#                         'recognized_text': recognized_text,
-#                         'emotion': emotion
-#                     }
-
-#                     vr_transcriptions.append(transcription_data)
-#                     current_time += chunk_duration
-
-#                 except sr.UnknownValueError:
-#                     print(f"Google Speech Recognition could not understand the audio  at{current_time:.2f}.")
-#                     current_time += chunk_duration
-#                 except sr.RequestError as e:
-#                     print(f"Error with the recognition service: {e}")
-#                     break
-                
-#             return vr_transcriptions
-        
-#         except Exception as e:
-#             print(f"An error occurred: {str(e)}")
-#             return []
     
 ################################################
 ## SER 
@@ -1134,6 +1165,20 @@ def set_aud_model(app):
 
 # TODO: Delete after SER class is finished
 def predict_emotion(audio_chunk):
+    """
+    Predicts the emotion from an audio chunk using a pre-trained classifier and an ONNX model.
+    Args:
+        audio_chunk (numpy.ndarray): The input audio chunk to be analyzed. It should be a numpy array.
+    Returns:
+        str: The predicted emotion label.
+    Raises:
+        ValueError: If the AUDONNX_MODEL is not initialized.
+    Notes:
+        - The function expects the global variables `CLF` (classifier) and `AUDONNX_MODEL` (ONNX model) to be initialized before calling this function.
+        - The audio chunk will be converted to float32 if it is not already in that format.
+        - The function extracts hidden states from the audio chunk using the ONNX model and then uses these features to predict the emotion using the classifier.
+    """
+
     import pandas as pd
     global CLF, AUDONNX_MODEL
 

@@ -11,7 +11,8 @@ import speech_recognition as sr
 class RecordingManager():
     """
     Handles all recording logic and file read/write for audio files. Also handles
-    the setting of system audio device.
+    the setting of system audio device. All handling of audio files post recording
+    is handled in the app.py file.
     """
     def __init__(self): 
         self.stop_event = threading.Event()
@@ -80,9 +81,19 @@ class RecordingManager():
 
     def get_audio_chunk_as_np(self, offset=0, duration=None, sample_rate=16000):
         """
-        This function returns the section of audio specified by the offset and 
-        duration parameters as a normalized numpy array. This is necessary for the
-        current SER classifier and is subject to change.
+        Returns the section of audio specified by the offset and duration parameters as a normalized 
+        numpy array. This is necessary for the current SER classifier and is subject to change when 
+        another SER module is implemented.
+
+        Parameters
+        - the path and filename of the wav file, 
+        - the offset in seconds, 
+        - the duration in seconds, 
+        - the samplerate in Hz.
+        Returns: 
+        - the audio chunk as a numpy array
+        Exception:
+        - if the file is not found
         """
         try:
             with wave.open(self.recording_file, 'rb') as wf:
@@ -113,6 +124,13 @@ class RecordingManager():
     def resample_audio(signal, original_sample_rate, target_sample_rate):
         """
         Resamples the signal to match the target sample rate using linear interpolation.
+
+        Parameters: 
+        - the signal as a numpy array, 
+        - the original sample rate in Hz, 
+        - the target sample rate in Hz.
+        Returns:
+        - the resampled signal as a numpy array
         """
         ratio = target_sample_rate / original_sample_rate
         resampled_length = int(len(signal) * ratio)
@@ -122,51 +140,29 @@ class RecordingManager():
         return resampled_signal
 
     def get_audio_duration(self):
+        """
+        Calculate the duration of an audio file.
+        This function opens an audio file specified by the file_path, reads the number of frames and the frame rate,
+        and calculates the duration of the audio in seconds.
+        Parameter:
+            file_path (str): The path/filename of the audio file.
+        Returns:
+            float: The duration of the audio file in seconds.
+        """
         with wave.open(self.recording_file, 'rb') as wf:
             frames = wf.getnframes()          
             rate = wf.getframerate()          
             duration = frames / float(rate)   
         return duration
 
-    def delete_recording_file(self):
-        try:
-            if os.path.exists(self.recording_file):
-                os.remove(self.recording_file)
-                print(f"File '{self.recording_file}' deleted successfully.")
-            else:
-                print(f"File '{self.recording_file}' does not exist.")
-        except PermissionError:
-            print(f"Permission denied: Unable to delete file '{self.recording_file}'. Check file permissions.")
-        except FileNotFoundError:
-            print(f"File not found: '{self.recording_file}' might have already been deleted.")
-        except Exception as e:
-            print(f"An error occurred while trying to delete the file '{self.recording_file}': {str(e)}")
-
-    def save_audio_file(self, filename):
-        try:
-            os.makedirs(self.audio_save_folder, exist_ok=True)
-            new_filename = os.path.join(self.audio_save_folder, filename)
-            shutil.copy(self.recording_file, new_filename)
-            print(f"File '{filename}' saved successfully.")
-        except PermissionError:
-            print(f"Permission denied: Unable to save file '{filename}'. Check file permissions.")
-        except FileNotFoundError:
-            print(f"File not found: '{self.recording_file}' might have already been deleted.")
-        except Exception as e:
-            print(f"An error occurred while trying to save the file '{filename}': {str(e)}")
-
-    # Necessary for SER task
-    def normalize_audio(self, audio):
+    def normalize_audio(self, audio): # Necessary for SER task
         audio_array = audio / np.max(np.abs(audio))
         return audio_array
 
-    def record_timestamps(self, timestamps):  # For use in thread
-        while not self.stop_event.is_set():
-            timestamps.append(datetime.datetime.now().isoformat())
-            time.sleep(10)
-
-    def rename_audio_file(self, id, prefix, suffix):
-        return f"ID_{id}_{prefix}_{suffix}.wav"
+    # def record_timestamps(self, timestamps): # For use in thread
+    #     while not self.stop_event.is_set():
+    #         timestamps.append(datetime.datetime.now().isoformat())
+    #         time.sleep(10)
     
     def split_wav_to_segments(self, task_id, input_wav, segment_duration=20, output_folder="tmp/"):
         """
@@ -176,9 +172,8 @@ class RecordingManager():
         - input_wav (str): Path to the input WAV file.
         - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
         - output_folder (str): Folder to save the output segments. Default is 'tmp'.
-
         Returns:
-        - List of paths to the saved segment files.
+        - List of paths/filenames to the saved segment files.
         """
         # Ensure the output folder exists
         if not output_folder or not isinstance(output_folder, str):
