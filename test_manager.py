@@ -1,4 +1,5 @@
 import json
+import re
 
 class TestManager:
     def __init__(self):
@@ -32,4 +33,17 @@ class TestManager:
             return "Tests completed"
         
     def get_next_test(self, test_index):
+        if test_index >= len(self.questions):
+            return "Tests completed"
         return self.questions[test_index]
+
+    def preprocess_text(self, text):
+        text = text.lower()
+        text = re.sub(r'[^\w\s]', '', text)
+        return text.strip()
+
+    def check_answer(self, transcription, correct_answers):
+        print(f"Transcription: {transcription}")
+        transcription = self.preprocess_text(transcription)
+
+        return any(word in correct_answers for word in transcription.split())

@@ -11,6 +11,7 @@ import csv
 # Test_Transcriptions: A list of JSON objects that hold the transcript, SER values, and timestamps for the test data
 # VR_Transcriptions_1: A list of JSON objects that hold the transcript, SER values, and timestamps for the VR data
 # VR_Transcriptions_2: A list of JSON objects that hold the transcript, SER values, and timestamps for the VR data
+# Biometric_Baseline: A list of JSON objects that hold the biometric baseline data
 # Biometric_Data: A list of JSON objects that hold the biometric data
 # pss4_data: A JSON object that holds the PSS-4 data
 # background_data: A JSON object that holds the background data
@@ -31,7 +32,9 @@ class Subject:
             'Test_Transcriptions': [], 
             'VR_Transcriptions_1': [], 
             'VR_Transcriptions_2': [], 
+            'Biometric_Baseline': [],
             'Biometric_Data': [], 
+            'SER_Baseline': [],
             'pss4_data': {},
             'background_data': {},
             'demographics_data': {},
@@ -63,8 +66,11 @@ class Subject:
     def set_vr_transcriptions_2(self, vr_transcriptions_2):
         self.subject_data['VR_Transcriptions_2'] = vr_transcriptions_2
 
-    def set_biometric_data(self, biometric_data):
-        self.subject_data['Biometric_Data'] = biometric_data
+    def set_biometric_data(self, e_streamer):
+        self.subject_data['Biometric_Data'] = e_streamer.get_data()
+
+    def set_biometric_baseline(self, e_streamer):
+        self.subject_data['Biometric_Baseline'] = e_streamer.get_baseline_data()
 
     def set_pss4(self, pss4):
         self.subject_data['pss4_data'] = pss4
@@ -134,10 +140,20 @@ class Subject:
         return self.subject_data
     
     ######################## METHODS ########################
-    def append_test_transcription(self, transcription):
-        self.subject_data['Test_Transcriptions'].append(transcription)
+    def append_test_transcription(self, ts, transcription, ser):
+        entry = {
+            'timestamp': ts,
+            'transcript': transcription,
+            'emotion': ser
+        }
 
-    def upload_to_database(self):
+        self.subject_data['Test_Transcriptions'].append(entry)
+
+    def upload_to_database(self, e_streamer):
+
+        self.set_biometric_baseline(e_streamer)
+        self.set_biometric_data(e_streamer)
+
         try:
             # TODO: Implement AWS database upload
             xr_awshandler = AWSHandler('session_a')
@@ -154,8 +170,10 @@ class Subject:
             headers = ['ID', 'Date', 'Name', 'Email',
                     'Test_Timestamp', 'Test_Transcript', 'Test_Emotion',
                     'VR1_Timestamp', 'VR1_Transcript', 'VR1_Emotion',
-                    'VR2_Timestamp', 'VR2_Transcript', 'VR2_Emotion', 'PSS4_Survey',
-                    'Background_Survey', 'Demographics_Survey', 'Exit_Survey', 'Student_Survey']
+                    'VR2_Timestamp', 'VR2_Transcript', 'VR2_Emotion', 
+                    'Biometric_Baseline_EDA', 'Biometric_Baseline_HR', 'Biometric_Baseline_BI', 'Biometric_Baseline_HRV',
+                    'Biometric_Data_EDA', 'Biometric_Data_HR','Biometric_Data_BI', 'Biometric_Data_HRV',
+                    'PSS4_Survey', 'Background_Survey', 'Demographics_Survey', 'Exit_Survey', 'Student_Survey']
 
             # Open CSV file for writing
             with open(self.csv_filename, mode='w', newline='') as file:
@@ -190,6 +208,27 @@ class Subject:
                         row['VR2_Emotion'] = self.subject_data['VR_Transcriptions_2'][i]['emotion']
                     else:
                         row['VR2_Timestamp'] = row['VR2_Transcript'] = row['VR2_Emotion'] = ''
+                    if i < len(self.subject_data['Biometric_Baseline']):
+                        row['Biometric_Baseline_EDA'] = self.subject_data['Biometric_Baseline'][i].get('EDA', '')
+                        row['Biometric_Baseline_HR'] = self.subject_data['Biometric_Baseline'][i].get('HR', '')
+                        row['Biometric_Baseline_BI'] = self.subject_data['Biometric_Baseline'][i].get('BI', '')
+                        row['Biometric_Baseline_HRV'] = self.subject_data['Biometric_Baseline'][i].get('HRV', '')
+                    else:
+                        row['Biometric_Baseline_EDA'] = row['Biometric_Baseline_HR'] = row['Biometric_Baseline_BI'] = row['Biometric_Baseline_HRV'] = ''
+
+                    if i < len(self.subject_data['Biometric_Data']):
+                        row['Biometric_Data_EDA'] = self.subject_data['Biometric_Data'][i].get('EDA', '')
+                        row['Biometric_Data_HR'] = self.subject_data['Biometric_Data'][i].get('HR', '')
+                        row['Biometric_Data_BI'] = self.subject_data['Biometric_Data'][i].get('BI', '')
+                        row['Biometric_Data_HRV'] = self.subject_data['Biometric_Data'][i].get('HRV', '')
+                    else:
+                        row['Biometric_Data_EDA'] = row['Biometric_Data_HR'] = row['Biometric_Data_BI'] = row['Biometric_Data_HRV'] = ''
+
+                    row['PSS4_Survey'] = self.subject_data['pss4_data']
+                    row['Background_Survey'] = self.subject_data['background_data']
+                    row['Demographics_Survey'] = self.subject_data['demographics_data']
+                    row['Exit_Survey'] = self.subject_data['exit_survey_data']
+                    row['Student_Survey'] = self.subject_data['student_data']
 
                     # Write the row to the CSV file
                     writer.writerow(row)
@@ -208,5 +247,6 @@ class Subject:
             print(e)
             return {"status": "error", "message": "Failed to upload data"}
     
+
     def create_csv(self):
         pass

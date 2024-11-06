@@ -9,6 +9,10 @@ import shutil
 import speech_recognition as sr
 
 class RecordingManager():
+    """
+    Handles all recording logic and file read/write for audio files. Also handles
+    the setting of system audio device.
+    """
     def __init__(self): 
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
@@ -164,74 +168,61 @@ class RecordingManager():
     def rename_audio_file(self, id, prefix, suffix):
         return f"ID_{id}_{prefix}_{suffix}.wav"
     
-    def process_audio_segments(self, subject, ser_manager, ts, prefix):
+    def split_wav_to_segments(self, task_id, input_wav, segment_duration=20, output_folder="tmp/"):
         """
-        This function processes the audio segments in 20.
-        -second chunks and returns a list of transcriptions
-        with timestamps and SER values in JSON object format.
+        Splits a WAV file into user defined number of segments and saves each segment in the specified output folder.
+
+        Parameters:
+        - input_wav (str): Path to the input WAV file.
+        - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
+        - output_folder (str): Folder to save the output segments. Default is 'tmp'.
+
+        Returns:
+        - List of paths to the saved segment files.
         """
-        initial_timestamp = ts
-        recognizer = sr.Recognizer()
-        audio_segments = []
+        # Ensure the output folder exists
+        if not output_folder or not isinstance(output_folder, str):
+            raise ValueError("Invalid output folder path.")
+        
+        os.makedirs(output_folder, exist_ok=True)
+        
+        segment_files = []
+        try:
+            with wave.open(input_wav, 'rb') as wf:
+                sample_rate = wf.getframerate()
+                channels = wf.getnchannels()
+                sample_width = wf.getsampwidth()
+                total_frames = wf.getnframes()
+                duration = total_frames / sample_rate
+                
+                print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
 
-        with wave.open(self.recording_file, 'rb') as wf:
-            sample_rate = wf.getframerate()
-            channels = wf.getnchannels()
-            total_frames = wf.getnframes()
-            duration = total_frames / float(sample_rate)
+                # Calculate frames per segment
+                segment_frames = int(segment_duration * sample_rate)
+                total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
+                
+                for i in range(total_segments):
+                    wf.setpos(i * segment_frames)
+                
+                    frames = wf.readframes(segment_frames)
 
-            segment_duration = 20
-            segment_frames = int(segment_duration * sample_rate)
-            total_segments = int(duration // segment_duration)
-
-            for i in range(total_segments + 1): # Include last segment if remainder exists
-                start_time = initial_timestamp + i * segment_duration
-                iso_timestamp = datetime.datetime.fromtimestamp(start_time).isoformat()
-                wf.setpos(i * segment_frames)
-
-                frames = wf.readframes(segment_frames)
-                if(len(frames) == 0):
-                    break # EOF
-
-                temp_file = f"tmp/temp_segment_{i}.wav"
-
-                id = subject.get_id()
-
-                # save_file = f"audio_save_folder/ID_{id}_{prefix}_segment_{i}.wav"
-
-                with wave.open(temp_file, 'wb') as wf_temp:
-                    wf_temp.setnchannels(channels)
-                    wf_temp.setsampwidth(wf.getsampwidth())
-                    wf_temp.setframerate(sample_rate)
-                    wf_temp.writeframes(frames)
-
-                with sr.AudioFile(temp_file) as source:
-                    audio_data = recognizer.record(source)
-                    try:
-                        recognized_text = recognizer.recognize_google(audio_data)
-                        sig = self.get_wav_as_np(temp_file)
-
-                        # TODO: Implement emotion prediction class
-                        emotion = ser_manager.predict_emotion(sig)
-
-                        transcription_data = {
-                            'timestamp': iso_timestamp,
-                            'recognized_text': recognized_text,
-                            'emotion': emotion
-                        }
-
-                        audio_segments.append(transcription_data)
-                    except sr.UnknownValueError:
-                        print(f"Google Speech Recognition could not understand the audio at {start_time:.2f}.")
-                    except sr.RequestError as e:
-                        print(f"Error with the recognition service: {e}")
-
-                    # Cleanup
-                    file_name = self.rename_audio_file(id, prefix, f"segment_{i}")
-                    self.save_audio_file(self.recording_file, file_name, 'audio_files')
-                    os.remove(temp_file)
-
-        return audio_segments
+                    segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
+                    print(f"Creating segment file: {segment_file}")  # Debugging statement
+                    
+                    with wave.open(segment_file, 'wb') as segment_wf:
+                        segment_wf.setnchannels(channels)
+                        segment_wf.setsampwidth(sample_width)
+                        segment_wf.setframerate(sample_rate)
+                        segment_wf.writeframes(frames)
+                    
+                    segment_files.append(segment_file)
+                    print(f"Segment {i} saved as {segment_file}")
+                    
+            return segment_files
+        except Exception as e:
+            print(f"An error occurred while splitting the WAV file: {str(e)}")
+        
+        return segment_files
 
     ##################################################################
     ## GETTERS

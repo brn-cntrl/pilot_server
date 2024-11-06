@@ -52,58 +52,65 @@
         
         function VRRecording(button, action){
             const taskID = button.id;
+            console.log(`taskID: ${taskID}, action: ${action}`);  // Debugging statement
             statusId1 = document.getElementById("status1");
             statusId2 = document.getElementById("status2");
-            startRecording();
-            let checkInterval = setInterval(() => {
-                if (checkActiveStream()) {
-                    console.log("Stream is active.");
-                    if (taskID == 'taskID1'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerHTML = 'Recording stream active.';
-                    } else if (taskID == 'taskID2'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerHTML = 'Recording stream active.';
+            if(action == 'start'){
+                startRecording();
+                let checkInterval = setInterval(() => {
+                    if (checkActiveStream()) {
+                        console.log("Stream is active.");
+                        if (taskID == 'taskID1'){
+                            statusId1.style.display = 'block';
+                            statusId1.innerHTML = 'Recording stream active.';
+                        } else if (taskID == 'taskID2'){
+                            statusId2.style.display = 'block';
+                            statusId2.innerHTML = 'Recording stream active.';
+                        }
+                        clearInterval(checkInterval); // Stop checking once stream is active
+                    } else {
+                        if(taskID == 'taskID1'){
+                            statusId1.style.display = 'block';
+                            statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
+                        } else if (taskID == 'taskID2'){
+                            statusId2.style.display = 'block';
+                            statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
+                        }
                     }
-                    clearInterval(checkInterval); // Stop checking once stream is active
-                } else {
+                }, 2000); 
+            } else if (action == 'stop'){
+                console.log(`taskID: ${taskID}, action: ${action}`);
+                fetch('/record_vr_task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        task_id: taskID,
+                        action: action
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Success:', data);
                     if(taskID == 'taskID1'){
                         statusId1.style.display = 'block';
-                        statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
+                        statusId1.innerHTML = data.message;
                     } else if (taskID == 'taskID2'){
                         statusId2.style.display = 'block';
-                        statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
+                        statusId2.innerHTML = data.message;
                     }
-                }
-            }, 2000); 
-
-            fetch('/record_vr_task', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({task_id: taskID, action: action})
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-                if (data.message == 'Recording started and stream is active.' && action == 'start' && taskID == 'taskID1'){
-                    document.getElementById('status1').style.display = 'block';
-                    document.getElementById('status1').innerHTML = 'Recording started and stream is active.';
-                } else if (data.message == 'Recording started and stream is active.' && action == 'start' && taskID == 'taskID2'){
-                    document.getElementById('status2').style.display = 'block';
-                    document.getElementById('status2').innerHTML = 'Recording started and stream is active.';
-                } 
-                
-                if (data.message == 'Recording stopped.'){
-                    document.getElementById('status1').style.display = 'none';
-                    document.getElementById('status2').style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        } 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
     </script>
 </body>
 </html>

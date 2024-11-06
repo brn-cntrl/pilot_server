@@ -1,0 +1,15 @@
+.gitingore
+/archive/
+/blueprints/
+/__pycache__/
+/pretrained_models/
+/tests/
+/utilities/
+/wav2vec2_checkpoints/
+/model/model.onnx
+/cache/*
+/static/videos/*
+/EmotiBitSoftware-MacOS/
+/tmp/*
+/audio_files/*
+config.txt
