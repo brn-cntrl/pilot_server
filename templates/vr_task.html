@@ -15,12 +15,14 @@
     <button class="VRTaskButton">Begin VR Task 1</button><br>
     <div class="testModule" style="display:none" disabled>
         <button id="taskID1" class="VRRecord">Start Recording</button><br><br>
+        <p>Please note that when recording is stopped, post-processing may take several minutes</p>
         <p id="status1" style="display:none">Please wait...</p>
     </div><br>
 
     <button class="VRTaskButton">Begin VR Task 2</button><br>
     <div class="testModule" style="display:none" disabled>
         <button id="taskID2" class="VRRecord">Start Recording</button><br><br>
+        <p>Please note that when recording is stopped, post-processing may take several minutes</p>
         <p id="status2" style="display:none">Please wait...</p>
     </div>
 
@@ -80,6 +82,14 @@
                 }, 2000); 
             } else if (action == 'stop'){
                 console.log(`taskID: ${taskID}, action: ${action}`);
+                if(taskID == 'taskID1'){
+                    statusId1.style.display = 'block';
+                    statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
+                } else if (taskID == 'taskID2'){
+                    statusId2.style.display = 'block';
+                    statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
+                }
+
                 fetch('/record_vr_task', {
                     method: 'POST',
                     headers: {
