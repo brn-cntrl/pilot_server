@@ -232,9 +232,10 @@ def get_stream_active():
     return jsonify({'stream_active': stream_is_active})
 
 def test_audio():
+    global RECORDING_FILE
     try:
         stop_recording()
-        transcription = transcribe_audio()
+        transcription = transcribe_audio(RECORDING_FILE)
         print(transcription)
         if transcription.startswith("Google Speech Recognition could not understand"):
             return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
@@ -288,7 +289,7 @@ def submit_answer():
 
     try:
         stop_recording()
-        transcription = transcribe_audio()
+        transcription = transcribe_audio(RECORDING_FILE)
         ts = get_timestamp()
         # ser = perform_ser()
         # Open audio file
@@ -584,7 +585,7 @@ def record_vr_task():
             
             transcriptions = []
             ser_predictions = []
-
+            
             for segment_file in audio_segments:
                 transcription = transcribe_audio(segment_file)
                 transcriptions.append(transcription)
@@ -605,9 +606,11 @@ def record_vr_task():
                 # subject.set_vr_transcriptions_2(vr_data)
                 subject_data["VR_Transcriptions_2"] = vr_data
 
+            # Debug statement
+            print(subject_data['VR_Transcriptions_1'])
             backup_tmp_audio_files()
 
-            return jsonify({'message': 'Recording stopped.', 'task_id': task_id}), 200
+            return jsonify({'message': 'Audio successfully processed.', 'task_id': task_id}), 200
         else:
             print("Invalid Action")
             return jsonify({'message': 'Invalid action.'}), 400
@@ -1117,7 +1120,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     segment_files = sorted([f for f in os.listdir(output_folder) if f.endswith('.wav')])
     
     segment_timestamps = [
-        datetime.fromtimestamp(start_time_unix + (i * segment_duration)).isoformat(timespec='seconds')
+        datetime.datetime.fromtimestamp(start_time_unix + (i * segment_duration)).isoformat(timespec='seconds')
         for i in range(len(segment_files))
     ]
     
@@ -1126,13 +1129,13 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
 ##################################################################
 ## Speech Recognition 
 ##################################################################
-def transcribe_audio():
-    global RECORDING_FILE #TODO: Remove when recording_manager is implemented
+def transcribe_audio(file):
+    #TODO: Remove when recording_manager is implemented
     global recording_manager
     # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
 
     recognizer = sr.Recognizer()
-    with sr.AudioFile(RECORDING_FILE) as source:
+    with sr.AudioFile(file) as source:
         audio_data = recognizer.record(source)
         try:
             return recognizer.recognize_google(audio_data)
