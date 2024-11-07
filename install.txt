@@ -1,0 +1,11 @@
+flask==2.2.2
+pywebview==5.2
+boto3==1.35.6
+joblib==1.2.0
+pyaudio==0.2.14
+SpeechRecognition==3.10.4
+audinterface==1.2.2
+audeer==2.2.0
+audonnx==0.7.0
+numpy==1.24.3
+pandas==2.2.2
