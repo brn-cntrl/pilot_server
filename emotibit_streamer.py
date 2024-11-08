@@ -107,10 +107,13 @@ class EmotiBitStreamer:
         self.dispatcher.unmap(address)
     
     def generic_handler(self, address, stream_name, *args):
-            if stream_name in self.data:
-                self.data[stream_name].append(args)
-            else:
-                print(f"Stream name {stream_name} not found in data")
+        stream_name = stream_name[0]  # Extract the string from the list
+        print(f"Stream name: {stream_name}")
+        print(f"Data: {self.data}")
+        if stream_name in self.data:
+            self.data[stream_name].append(args)
+        else:
+            print(f"Stream name {stream_name} not found in data")
 
     ###########################################
     # Getters
@@ -119,6 +122,8 @@ class EmotiBitStreamer:
         return self.data
     
     def get_baseline_data(self):
+        self._set_emotibit_baseline()
+
         if all(len(v) == 0 for v in self.baseline_data.values()):
             print("All baseline data arrays are empty")
             return {}
@@ -140,7 +145,7 @@ class EmotiBitStreamer:
     ############################################
     # Setters
     ############################################
-    def set_emotibit_baseline(self):
+    def _set_emotibit_baseline(self):
         self.clear_baseline_data()
         self.baseline_data = self.data.copy()
         self.clear_data()

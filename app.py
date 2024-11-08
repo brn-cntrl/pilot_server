@@ -1,15 +1,15 @@
 from flask import Flask, request, jsonify, render_template, redirect, send_file
+import webview
 import warnings
 import threading
 from threading import Thread
 import boto3
 import joblib
-import os
+import os, sys
 import datetime
 import time
 import pyaudio
 import wave
-import threading
 import signal 
 import json
 import re
@@ -21,7 +21,7 @@ import audonnx
 from subject import Subject
 from recording_manager import RecordingManager
 from test_manager import TestManager
-# from emotibit_streamer import EmotiBitStreamer
+from emotibit_streamer import EmotiBitStreamer
 from ser_manager import SERManager
 import shutil
 
@@ -40,7 +40,7 @@ current_test_number = 1
 stop_event = threading.Event()
 recording_started_event = threading.Event()
 recording_thread = None
-# emotibit_thread = None
+emotibit_thread = None
 timestamp = None
 stream_is_active = None
 TASK_QUESTIONS_1 = None
@@ -53,7 +53,7 @@ EMOTIBIT_PORT_NUMBER = 9005
 subject = Subject() 
 recording_manager = RecordingManager() 
 test_manager = TestManager()
-# emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
+emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 
 # TODO: Delete after implementing classes
 subject_data = {
@@ -97,25 +97,29 @@ def reset_ser_question_index():
     current_ser_question_index = 0
     return jsonify({'status': 'SER questions reset'})
 
-# @app.route('/start_emotibit_stream', methods=['POST'])
-# def start_emotibit_stream():
-#     start_emotibit()
+@app.route('/start_emotibit_stream', methods=['POST'])
+def start_emotibit_stream():
+    start_emotibit()
 
-#     try:
-#         return jsonify({'message': 'Starting EmotiBit stream'})
+    try:
+        return jsonify({'message': 'Starting EmotiBit stream'})
     
-#     except Exception as e:
-#         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
-# @app.route('/get_biometric_baseline', methods=['POST'])
-# def get_biometric_baseline():
-#     try:
-#         stop_emotibit()
-#         data = emotibit_streamer.get_baseline_data()
-#         return jsonify({'message': 'Baseline data collected.', 'data': data})
+@app.route('/get_biometric_baseline', methods=['POST'])
+def get_biometric_baseline():
+    try:
+        stop_emotibit()
+        data = emotibit_streamer.get_baseline_data()
+
+        # Debug statement
+        print(data)
+        
+        return jsonify({'message': 'Baseline data collected.', 'data': data})
     
-#     except Exception as e:
-#         return jsonify({'status': 'error', 'message': str(e)}), 400 
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400 
 
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question():
@@ -505,14 +509,15 @@ def submit_student_data():
 
 @app.route('/upload_subject_data', methods=['POST'])    
 def upload_subject_data():
-    global subject
+    print("subject class not fully implemented.")
+    # global subject
 
-    result = subject.upload_to_database()
+    # result = subject.upload_to_database()
 
-    if result['status'] == 'error':
-        raise Exception(result['message'])
-    else:
-        print(result['message'])
+    # if result['status'] == 'error':
+    #     raise Exception(result['message'])
+    # else:
+    #     print(result['message'])
 
 @app.route('/submit', methods=['POST'])    
 def submit():
@@ -685,7 +690,7 @@ def start_recording():
 ## Views 
 ##################################################################
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
 @app.route('/break_page', methods=['GET'])
@@ -728,57 +733,36 @@ def exit_survey():
 ##################################################################
 ## Helper Functions 
 ##################################################################
-# def start_emotibit():
-#     # global emotibit_thread, emotibit_streamer
-#     global emotibit_streamer
 
-#     try:
-#         # emotibit_thread = Thread(target=emotibit_streamer.start)
-#         # emotibit_thread.start()
-#         emotibit_streamer.start()
-#         print("OSC server is streaming data.")
+# Emotibit #######################################################
+def start_emotibit():
+    # global emotibit_thread, emotibit_streamer
+    global emotibit_streamer
 
-#     except Exception as e:
-#         print(f"An error occurred while trying to start OSC stream: {str(e)}")
+    try:
+        # emotibit_thread = Thread(target=emotibit_streamer.start)
+        # emotibit_thread.start()
+        emotibit_streamer.start()
+        print("OSC server is streaming data.")
 
-# def stop_emotibit():
-#     # global emotibit_thread, emotibit_streamer
-#     global emotibit_streamer
+    except Exception as e:
+        print(f"An error occurred while trying to start OSC stream: {str(e)}")
 
-#     try:
-#         # if emotibit_thread is not None and emotibit_thread.is_alive():
-#         #     emotibit_streamer.stop()
-#         #     emotibit_thread.join()
-#         #     print("OSC server stopped.")
-#         emotibit_streamer.stop()
+def stop_emotibit():
+    # global emotibit_thread, emotibit_streamer
+    global emotibit_streamer
+
+    try:
+        # if emotibit_thread is not None and emotibit_thread.is_alive():
+        #     emotibit_streamer.stop()
+        #     emotibit_thread.join()
+        #     print("OSC server stopped.")
+        emotibit_streamer.stop()
     
-#     except Exception as e:
-#         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
-    
-# def biometric_baseline():
-#     global emotibit_streamer
-    
-#     try:
-#         emotibit_thread = Thread(target=emotibit_streamer.start)
-#         emotibit_thread.start()
+    except Exception as e:
+        print(f"An error occurred while trying to stop OSC stream: {str(e)}")
 
-#         time.sleep(10)  # Collect data for 10 seconds
-
-#         emotibit_streamer.stop()
-#         emotibit_thread.join()
-
-#         eda_data = emotibit_streamer.get_eda_data() # TODO: Implement all streams and call get_data() instead of get_eda_data()
-
-#         return eda_data
-
-#     except Exception as e:
-#         print("An error occurred while trying to start stream.")
-#         return []
-
-# def stop_emotibit_stream():
-#     global emotibit_streamer
-#     emotibit_streamer.stop()
-
+##################################################################
 def set_timestamp(t):   
     global timestamp
     timestamp = t
@@ -1200,9 +1184,9 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
 ## Speech Recognition 
 ##################################################################
 def transcribe_audio(file):
-    #TODO: Remove when recording_manager is implemented
+    #TODO: Remove global reference and uncomment below when recording_manager is implemented
     global recording_manager
-    # RECORDING_FILE = recording_manager.get_recording_file() #TODO - Implement this when recording manager is finished
+    # RECORDING_FILE = recording_manager.get_recording_file() 
 
     recognizer = sr.Recognizer()
     with sr.AudioFile(file) as source:
@@ -1290,11 +1274,14 @@ def predict_emotion(audio_chunk):
 
     return prediction[0]
 
+def run_flask():
+    app.run(debug=False, use_reloader=False)
+
 ####################################################################
 # Main Loop
 ####################################################################
 if __name__ == '__main__':
-    # Suppress warnings for now
+    # Suppress warnings 
     warnings.filterwarnings("ignore")
 
     # TODO: replace this with a call to the AWS server to retrieve the list of available IDs
@@ -1312,4 +1299,20 @@ if __name__ == '__main__':
 
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 
-    app.run(port=PORT_NUMBER,debug=True)
+    # Debug must be set to false when Emotibit streaming code is active
+    app.run(port=PORT_NUMBER,debug=False)
+
+    # Uncomment when switching to pywebview
+    # flask_thread = threading.Thread(target=run_flask)
+    # flask_thread.daemon = True  
+    # flask_thread.start()
+
+    # window = webview.create_window("Pilot Server", "http://127.0.0.1:5000")
+
+    # try:
+    #     webview.start()
+    # except Exception as e:
+    #     print(f"Error: {e}")
+    # finally:
+    #     # Close the program when the webview window is closed
+    #     sys.exit()

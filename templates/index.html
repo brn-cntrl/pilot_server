@@ -48,7 +48,7 @@
     <button id="biometricBaselineButton">Biometrics Baseline</button>
     <div class="testModule" id="biometricBaselineDiv" style="display:none;">
         <p>The experimenter will now help you put on two devices needed to collect data for the session.</p>
-        <button id="startBiometricBaseline">Begin Collecting Baseline</button>
+        <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
     </div><br><br>
 
@@ -376,49 +376,55 @@
         });
 
         baselineButton = document.getElementById("startBiometricBaseline");
-        if (baselineButton.innerText == "Start Collecting Baseline"){
-            baselineButton.addEventListener("click", function() {
-                fetch("/start_emotibit_stream", {
-                    method: "POST"
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data.message);
-                    document.getElementById('startBiometricBaseline').innerText = "Stop Collecting Baseline";
-                    document.getElementById('biometricStatusMessage').innerText = data.message;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
-                });
-            });
-        } else {
-            baselineButton.addEventListener("click", function() {
-                fetch("/stop_emotibit", {
-                    method: "POST"
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data.message);
-                    document.getElementById('startBiometricBaseline').innerText = "Start Collecting Baseline";
-                    document.getElementById('biometricStatusMessage').innerText = data.message;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while stopping biometric baseline.";
-                });
+        function startBaseline() {
+            fetch("/start_emotibit_stream", {
+                method: "POST"
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data.message);
+                baselineButton.innerText = "Stop Collecting Baseline";
+                document.getElementById('biometricStatusMessage').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
             });
         }
+
+        function stopBaseline() {
+            fetch("/get_biometric_baseline", {
+                method: "POST"
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data.message);
+                baselineButton.innerText = "Start Collecting Baseline";
+                document.getElementById('biometricStatusMessage').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('biometricStatusMessage').innerText = "Error occurred while stopping biometric baseline.";
+            });
+        }
+
+        baselineButton.addEventListener("click", function() {
+            if (baselineButton.innerText == "Start Collecting Baseline") {
+                startBaseline();
+            } else {
+                stopBaseline();
+            }
+        });
         // document.getElementById("startBiometricBaseline").addEventListener("click", function() {
         //     fetch("/start_emotibit_stream", {
         //         method: "POST"
