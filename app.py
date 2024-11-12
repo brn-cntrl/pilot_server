@@ -9,6 +9,7 @@ import os, sys
 import datetime
 import time
 import pyaudio
+import librosa
 import wave
 import signal 
 import json
@@ -51,7 +52,7 @@ EMOTIBIT_PORT_NUMBER = 9005
 
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject = Subject() 
-recording_manager = RecordingManager() 
+recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER) 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 
@@ -111,11 +112,10 @@ def start_emotibit_stream():
 def get_biometric_baseline():
     try:
         stop_emotibit()
-        data = emotibit_streamer.get_baseline_data()
-
+        data = emotibit_streamer.get_biometric_baseline()
         # Debug statement
         print(data)
-        
+
         return jsonify({'message': 'Baseline data collected.', 'data': data})
     
     except Exception as e:
@@ -168,10 +168,9 @@ def process_ser_answer():
     stop_recording()
 
     try:
-        sig = get_wav_as_np(RECORDING_FILE)
-        normed_sig = normalize_audio(sig)
-        print(normed_sig.shape)
-        emotion = predict_emotion(normed_sig)
+        sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
+        sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
+        emotion = predict_emotion(sig_resampled)
         subject_data['SER_Baseline'].append(emotion)
 
         # Debug statement
@@ -305,12 +304,10 @@ def submit_answer():
         stop_recording()
         transcription = transcribe_audio(RECORDING_FILE)
         ts = get_timestamp()
-        # ser = perform_ser()
-        # Open audio file
         try:
-            sig = get_wav_as_np(RECORDING_FILE)
-            normed_sig = normalize_audio(sig)
-            ser = predict_emotion(normed_sig)
+            sig, sr = librosa.load(RECORDING_FILE, sr=None)
+            resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
+            ser = predict_emotion(resampled_sig)
             save_audio_file(RECORDING_FILE, file_name, "audio_files")
 
         except Exception as e:
@@ -532,7 +529,7 @@ def submit():
             current_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
             # NOTE: This is a temporary test method to generate unique IDs
-            # The aws_handler will assign the ID when upload_subject_data is called
+            # The aws_handler will assign the ID when subject instance is created
             # at the end of the test session
             unique_id = get_available_id()
             
@@ -651,9 +648,9 @@ def record_vr_task():
                 transcriptions.append(transcription)
 
                 # SER
-                sig = get_wav_as_np(segment_file)
-                normed_sig = normalize_audio(sig)
-                emotion = predict_emotion(normed_sig)
+                sig, sr = librosa.load(segment_file, sr=None)
+                resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
+                emotion = predict_emotion(resampled_sig)
                 ser_predictions.append(emotion)
 
             vr_data = [{'timestamp': ts, 'transcription': tr, 'SER': ser} 
@@ -1235,7 +1232,6 @@ def predict_emotion(audio_chunk):
         - The audio chunk will be converted to float32 if it is not already in that format.
         - The function extracts hidden states from the audio chunk using the ONNX model and then uses these features to predict the emotion using the classifier.
     """
-
     import pandas as pd
     global CLF, AUDONNX_MODEL
 
@@ -1299,9 +1295,11 @@ if __name__ == '__main__':
 
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 
+    
+
     # Debug must be set to false when Emotibit streaming code is active
     app.run(port=PORT_NUMBER,debug=False)
-
+    
     # Uncomment when switching to pywebview
     # flask_thread = threading.Thread(target=run_flask)
     # flask_thread.daemon = True  

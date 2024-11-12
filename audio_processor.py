@@ -1,7 +1,5 @@
 import os
-import numpy as np
-import pandas as pd
-import pyaudio
+import numpy as np 
 import wave
 
 class AudioProcessor:
