@@ -80,8 +80,8 @@
             <li>Press "Submit" to register your answer and receive the next question</li>
         </ul> <br>
         <button id="beginSERButton">Begin</button>
-        <p id="questionContainer" style="display:none;" disabled></p>
         <p id="status" style="display:none;" disabled></p>
+        <p id="questionContainer" style="display:none;" disabled></p>
         <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
     </div><br>
 
@@ -248,25 +248,28 @@
             }
         });
         
+        let statusMessage = document.getElementById('status');
         document.getElementById('beginSERButton').addEventListener('click', function(){
+            
+
             document.getElementById('beginSERButton').disabled = true;
             document.getElementById('questionContainer').style.display = 'block';
             document.getElementById('questionContainer').disabled = false;
-            document.getElementById('status').style.display = 'block';
-            document.getElementById('status').disabled = false;
+            statusMessage.style.display = 'block';
+            statusMessage.disabled = false;
             document.getElementById('submitAnswer').style.display = 'block';
             document.getElementById('submitAnswer').disabled = false;
 
             // Start recording audio stream
             startRecording()
                 .then(() => {
-                    let statusMessage = document.getElementById('status');
                     let checkInterval = setInterval(() => {
                         let streamActive = checkActiveStream();  
                         if (streamActive) {
                             clearInterval(checkInterval); 
                             console.log('Stream is active');
                             document.getElementById('submitAnswer').disabled = false;
+                            statusMessage.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                         
                         } else {
                             console.log('Stream is not active');
@@ -323,11 +326,13 @@
                         document.getElementById("status").disabled = false;
                     } else {
                         // document.getElementById("status").innerHTML = data.message;
-                        document.getElementById("status").style.display = "block";
-                        document.getElementById("status").disabled = false;
+                        statusMessage.style.display = "block";
+                        statusMessage.disabled = false;
+                        statusMessage.innerText = "Answer submitted successfully. Please wait for the next question.";
 
                         // Ensure recording starts only after answer is processed
                         return startRecording();
+
                     }
                 })
                 .then(() => {

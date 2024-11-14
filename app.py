@@ -170,12 +170,21 @@ def process_ser_answer():
     try:
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
+
         emotion = predict_emotion(sig_resampled)
-        subject_data['SER_Baseline'].append(emotion)
+        ts = get_timestamp()
+
+        baseline_data = {
+            'timestamp': ts,
+            'emotion': emotion
+        }
+        
+        subject_data['SER_Baseline'].append(baseline_data)
 
         # Debug statement
-        print(f"Emotion: {emotion}")
+        print(f"SER Baseline: {subject_data['SER_Baseline']}")
 
+        # Save the audio file with naming convention
         id = subject_data.get('ID')
         file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
         file_name = rename_audio_file(id, "SER_question_", current_ser_question_index)
@@ -305,6 +314,7 @@ def submit_answer():
         transcription = transcribe_audio(RECORDING_FILE)
         ts = get_timestamp()
         try:
+            # Save permanent copies of audio
             sig, sr = librosa.load(RECORDING_FILE, sr=None)
             resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
             ser = predict_emotion(resampled_sig)

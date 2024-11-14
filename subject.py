@@ -42,8 +42,8 @@ class Subject:
         }
 
         # Create subject ID when the object is created
-        self.aws_handler = AWSHandler()
-        
+        # self.aws_handler = AWSHandler('session_a')
+
         # TODO: Uncomment when ready to go to production
         # self.subject_data["ID"] = self.aws_handler.get_subject_id()
 

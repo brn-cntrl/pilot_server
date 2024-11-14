@@ -39,12 +39,6 @@ class EmotiBitStreamer:
         }
 
         self.dispatcher = dispatcher.Dispatcher()
-        # self.dispatcher.map("/EmotiBit/0/EDA", self.print_osc_message)
-        # self.dispatcher.map("/EmotiBit/0/BI", self.print_osc_message)
-        # self.dispatcher.map("/EmotiBit/0/HR", self.print_osc_message)
-        # self.dispatcher.map("/EmotiBit/0/TEMP", self.print_osc_message)
-        # self.dispatcher.map("/EmotiBit/0/ACC:Z", self.print_osc_message)
-
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
 
         self.server_thread = None
@@ -166,6 +160,7 @@ class EmotiBitStreamer:
         return self._port
     
     def get_biometric_baseline(self):
+        print("Retrieving biometric baseline data...")
         self.set_biometric_baseline()
         return self.baseline_data
     
@@ -190,8 +185,8 @@ class EmotiBitStreamer:
         self._data = data
     
     @baseline_data.setter
-    def baseline_data(self):
-        self._baseline_data = copy.deepcopy(self._data)
+    def baseline_data(self, value):
+        self._baseline_data = copy.deepcopy(value)
 
     @ip.setter
     def ip(self, ip):
@@ -210,7 +205,6 @@ class EmotiBitStreamer:
         else:
             print("Setting baseline data...")
             self.baseline_data = self.data
-
-        del self.data
+            del self.data
 
         print("Baseline set and primary data cleared.")
