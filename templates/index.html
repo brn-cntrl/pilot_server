@@ -24,20 +24,22 @@
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required><br><br>
                 <button type="submit" id="submitButton">Submit Information</button>
-            </form>
+            </form><br>
             <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
             <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
         </div><br>
         <button id="studentSurveyButton">Student Information</button><br><br>
         <div class="innerModule" id="studentDiv" style="display:none;" disabled>
             <p>Please fill out the following information if applicable:</p>
-            <form action="/submit_student_questions" id="studentForm" method="POST">
+            <form action="/submit_student_data" id="studentForm" method="POST">
                 <label for="PID">PID:<span class="required">*</span></label>
                 <input type="text" id="PID" name="PID" required><br><br>
                 <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
                 <input type="text" id="class" name="class" required><br><br>
                 <input type="submit" value="Submit">
-            </form>
+            </form><br>
+            <div id="notification2" style="display:none; color: green;">Form submitted successfully!</div>
+            <div id="errorNotification2" style="display:none; color: red;">Error submitting form.</div>
         </div>
         <p> Note: These require both a subject and witness signature </p><br>
         <button id="consentFormButton">Consent Form</button><br><br>
@@ -117,35 +119,32 @@
             .catch(error => console.error('Error:', error));
         }
 
-        document.getElementById('nameForm').addEventListener('submit', function(event) {
-            event.preventDefault(); 
-            const formData = new FormData(this);
-            const notification1 = document.getElementById('notification');
-            const errorNotification1 = document.getElementById('errorNotification');
-
-            const data = {
-                name: formData.get('name'),
-                email: formData.get('email')
-            };
-
-            fetch('/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams(formData).toString()
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('nameForm');
+            const notification1 = document.getElementById('notification1');
+            const errorNotification1 = document.getElementById('errorNotification1');
+            form.addEventListener('submit', function(event){
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch('/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(formData).toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    notification1.style.display = 'block';
+                    errorNotification1.style.display = 'none';
+                    console.log('Success:', data);
+                })
+                .catch((error) => {
+                    notification1.style.display = 'none';
+                    errorNotification1.style.display = 'block';
+                    console.error('Error:', error);
+                });
             })
-            .then(response => response.json())
-            .then(data => {
-                notification1.style.display = 'block';
-                errorNotification1.style.display = 'none';
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-                notification1.style.display = 'none';
-                errorNotification1.style.display = 'block';
-                console.error('Error:', error);
-            });
         });
 
         document.getElementById("stressBaselineButton").addEventListener("click", function() {
@@ -164,7 +163,8 @@
         const form = document.getElementById('studentForm');
             form.addEventListener('submit', function(event) {
                 event.preventDefault(); 
-
+                const notification2 = document.getElementById('notification2');
+                const errorNotification2 = document.getElementById('errorNotification2');
                 const formData = new FormData(form); 
 
                 fetch('/submit_student_data', { 
@@ -173,9 +173,13 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    notification2.style.display = 'block';
+                    errorNotification2.style.display = 'none';
                     console.log(data); 
                 })
                 .catch(error => {
+                    notification2.style.display = 'none';
+                    errorNotification2.style.display = 'block';
                     console.error('Error:', error);
                 });
             });

@@ -86,9 +86,10 @@
             </label><br><br>
             <input type="submit" value="Submit"><br><br>
         </form>
+        <div id="notification" style="display:none; color: green;">Form submitted successfully!</div>
+        <div id="errorNotification" style="display:none; color: red;">Error submitting form.</div>
     </div>
-    <div id="notification" style="display:none; color: green;">Form submitted successfully!</div>
-    <div id="errorNotification" style="display:none; color: red;">Error submitting form.</div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('pss4Form');

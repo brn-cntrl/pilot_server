@@ -106,11 +106,13 @@
                 <input type="text" id="feedback" name="feedback">
             </label><br><br>
 
-            <input type="submit" value="Submit"><br><br>
+            <input type="submit" value="Submit"><br>
         </form>
+        <div id="message" style="display:none; margin-top: 20px;"></div>
         </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+        const message = document.getElementById('message');
         const form = document.getElementById('exitForm');
             form.addEventListener('submit', function(event) {
                 event.preventDefault(); 
@@ -123,9 +125,14 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data); 
+                    message.style.display = 'block';
+                    message.style.color = 'green';
+                    message.innerText = 'Form submitted successfully!';
                 })
                 .catch(error => {
+                    message.style.display = 'block';
+                    message.style.color = 'red';
+                    message.innerText = 'Error submitting form. Please try again.';
                     console.error('Error:', error);
                 });
             });

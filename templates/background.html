@@ -125,6 +125,7 @@
 
             <input type="submit" value="Submit"><br><br>
         </form>
+        <div id="feedback" style="display:none; margin-top: 20px;"></div>
     </div>
     <script>
         // document.getElementById('rush_caffeine_yes').addEventListener('change', function() {
@@ -221,9 +222,14 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data); 
+                    feedback.style.display = 'block';
+                    feedback.style.color = 'green';
+                    feedback.innerText = 'Form submitted successfully!'; 
                 })
                 .catch(error => {
+                    feedback.style.display = 'block';
+                    feedback.style.color = 'red';
+                    feedback.innerText = 'Error submitting form. Please try again.';
                     console.error('Error:', error);
                 });
             });

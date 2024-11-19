@@ -24,6 +24,7 @@ from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer import EmotiBitStreamer
 from ser_manager import SERManager
+from csv_handler import CSVHandler
 import shutil
 
 ##################################################################
@@ -55,6 +56,7 @@ subject = Subject()
 recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER) 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
+
 
 # TODO: Delete after implementing classes
 subject_data = {
@@ -516,7 +518,6 @@ def submit_student_data():
 
 @app.route('/upload_subject_data', methods=['POST'])    
 def upload_subject_data():
-    print("subject class not fully implemented.")
     # global subject
 
     # result = subject.upload_to_database()
@@ -525,6 +526,12 @@ def upload_subject_data():
     #     raise Exception(result['message'])
     # else:
     #     print(result['message'])
+    try:
+        csv_handler = CSVHandler(subject)
+        csv_handler.create_csv()
+
+    except Exception as e:
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit():

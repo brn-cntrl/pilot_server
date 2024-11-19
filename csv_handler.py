@@ -37,7 +37,12 @@ class CSVHandler:
             len(self.subject_data['VR_Transcriptions_2']),
             len(self.subject_data['Biometric_Baseline']),
             len(self.subject_data['Biometric_Data']),
-            len(self.subject_data['SER_Baseline'])
+            len(self.subject_data['SER_Baseline']),
+            len(self.subject_data['pss4_data']),
+            len(self.subject_data['background_data']),
+            len(self.subject_data['demographics_data']),
+            len(self.subject_data['exit_survey_data']),
+            len(self.subject_data['student_data'])
         )
 
             # Create CSV headers
@@ -49,7 +54,18 @@ class CSVHandler:
             'Baseline_BI_Timestamp', 'Biometric_Baseline_BI', 'Baseline_HRV_Timestamp', 'Biometric_Baseline_HRV',
             'EDA_Timestamp', 'Biometric_Data_EDA', 'HR_Timestamp', 'Biometric_Data_HR', 
             'BI_Timestamp', 'Biometric_Data_BI', 'HRV_Timestamp', 'Biometric_Data_HRV', 'SER_Baseline_Timestamp', 'SER_Baseline_Emotion',
-            'PSS4_Survey', 'Background_Survey', 'Demographics_Survey', 'Exit_Survey', 'Student_Survey']
+            'PSS4_Purpose', 'PSS4_Time_Nature', 'PSS4_Access_Gardens', 'PSS4_Enjoy_Time_Natural', 'PSS4_Environmental_Preference',
+            'PSS4_Natural_Elements', 'PSS4_Interior_Preference','PSS4_Instructions', 'PSS4_Expectations', 'PSS4_Feedback', 
+            'Background_Rush_Caffeine','Background_Caffeine_Details', 'Background_Caffeine_Time', 'Background_Thirst_Hunger', 
+            'Background_Heart_Rate', 'Background_Neurological_Condition', 'Background_Neurological_Description', 'Background_Scars_Tattoo',
+            'Background_VR_Conditions', 'Background_VR_Condition_Description', 'Background_Glasses', 
+            'Demographics_Age', 'Demographics_Gender', 'Demographics_Education', 'Demographics_Childhood_Setting', 
+            'Demographics_Current_Setting', 'Demographics_Nature', 'Demographics_Green_Spaces', 'Demographics_Pref_Natural',
+            'Demographics_Env_Prefs', 'Demographics_Pref_Interior', 'Demographics_Work_Study_Env', 'Demographics_Current_Mood',
+            'Demographics_Stress_Level', 'Demographics_Physical_Activity', 'Demographics_Sleep_Quality', 'Demographics_VR_Experience',
+            'Demographics_VR_Comfort', 'Exit_Survey_Main_Purpose', 'Exit_Survey_Time_In_Nature', 'Exit_Survey_Access_Gardens',
+            'Exit_Survey_Enjoy_Time_Natural', 'Exit_Survey_Environ_Preference', 'Exit_Survey_Natural_Elements', 'Exit_Survey_Interior_Preference',
+            'Exit_Survey_Instructions', 'Exit_Survey_Expectations', 'Exit_Survey_Feedback', 'Student_Survey_PID', 'Student_Survey_Class']
         
         try:
             # Open CSV file for writing
@@ -116,18 +132,95 @@ class CSVHandler:
                     else:
                         row['SER_Baseline_Timestamp'] = row['SER_Baseline_Emotion'] = ''
 
-                    row['PSS4_Survey'] = self.subject_data['pss4_data']
-                    row['Background_Survey'] = self.subject_data['background_data']
-                    row['Demographics_Survey'] = self.subject_data['demographics_data']
-                    row['Exit_Survey'] = self.subject_data['exit_survey_data']
-                    row['Student_Survey'] = self.subject_data['student_data']
+                    if i == 0 and self.subject_data['pss4_data']:   
+                        row['PSS4_Main_Purpose'] = self.subject_data['pss4_data']['main_purpose']
+                        row['PSS4_Time_Nature'] = self.subject_data['pss4_data']['time_in_nature']
+                        row['PSS4_Access_Gardens'] = self.subject_data['pss4_data']['access_gardens']
+                        row['PSS4_Enjoy_Time_Natural'] = self.subject_data['pss4_data']['enjoy_time_natural']
+                        row['PSS4_Environmental_Preference'] = self.subject_data['pss4_data']['environment_preference']
+                        row['PSS4_Natural_Elements'] = self.subject_data['pss4_data']['natural_elements']
+                        row['PSS4_Interior_Preference'] = self.subject_data['pss4_data']['interior_preference']
+                        row['PSS4_Instructions'] = self.subject_data['pss4_data']['instructions']
+                        row['PSS4_Expectations'] = self.subject_data['pss4_data']['expectations']
+                        row['PSS4_Feedback'] = self.subject_data['pss4_data']['feedback']
+                    else:
+                        row['PSS4_Main_Purpose'] = row['PSS4_Time_Nature'] = row['PSS4_Access_Gardens'] = ''
+                        row['PSS4_Enjoy_Time_Natural'] = row['PSS4_Environmental_Preference'] = row['PSS4_Natural_Elements'] = ''
+                        row['PSS4_Interior_Preference'] = row['PSS4_Instructions'] = row['PSS4_Expectations'] = ''
+                        row['PSS4_Feedback'] = ''
 
-                    # Write the row to the CSV file
+                    if i == 0 and self.subject_data['background_data']:
+                        row['Background_Rush_Caffeine'] = self.subject_data['background_data']['rush_caffeine']
+                        row['Background_Caffeine_Details'] = self.subject_data['background_data']['caffeine_details']
+                        row['Background_Caffeine_Time'] = self.subject_data['background_data']['caffeine_time']
+                        row['Background_Thirst_Hunger'] = self.subject_data['background_data']['thirst_hunger']
+                        row['Background_Heart_Rate'] = self.subject_data['background_data']['heart_rate']
+                        row['Background_Neurological_Condition'] = self.subject_data['background_data']['neurological_conditions']
+                        row['Background_Neurological_Description'] = self.subject_data['background_data']['neurological_description']
+                        row['Background_Scars_Tattoo'] = self.subject_data['background_data']['scars_tattoos']
+                        row['Background_VR_Conditions'] = self.subject_data['background_data']['vr_conditions']
+                        row['Background_VR_Condition_Description'] = self.subject_data['background_data']['vr_condition_description']
+                        row['Background_Glasses'] = self.subject_data['background_data']['glasses']
+                    else:
+                        row['Background_Rush_Caffeine'] = row['Background_Caffeine_Details'] = row['Background_Caffeine_Time'] = ''
+                        row['Background_Thirst_Hunger'] = row['Background_Heart_Rate'] = row['Background_Neurological_Condition'] = ''
+                        row['Background_Neurological_Description'] = row['Background_Scars_Tattoo'] = row['Background_VR_Conditions'] = ''
+                        row['Background_VR_Condition_Description'] = row['Background_Glasses'] = ''
+
+                    if i == 0 and self.subject_data['demographics_data']:
+                        row['Demographics_Age'] = self.subject_data['demographics_data']['age']
+                        row['Demographics_Gender'] = self.subject_data['demographics_data']['gender']
+                        row['Demographics_Education'] = self.subject_data['demographics_data']['education']
+                        row['Demographics_Childhood_Setting'] = self.subject_data['demographics_data']['childhood_setting']
+                        row['Demographics_Current_Setting'] = self.subject_data['demographics_data']['current_living_setting']
+                        row['Demographics_Nature'] = self.subject_data['demographics_data']['exposure_to_nature']
+                        row['Demographics_Green_Spaces'] = self.subject_data['demographics_data']['access_to_green_spaces']
+                        row['Demographics_Pref_Natural'] = self.subject_data['demographics_data']['preference_for_natural_environments']
+                        row['Demographics_Env_Prefs'] = self.subject_data['demographics_data']['environmental_preferences']
+                        row['Demographics_Pref_Interior'] = self.subject_data['demographics_data']['preference_for_interior_design']
+                        row['Demographics_Work_Study_Env'] = self.subject_data['demographics_data']['work_study_environment']
+                        row['Demographics_Current_Mood'] = self.subject_data['demographics_data']['current_mood']
+                        row['Demographics_Stress_Level'] = self.subject_data['demographics_data']['stress_level']
+                        row['Demographics_Physical_Activity'] = self.subject_data['demographics_data']['physical_activity']
+                        row['Demographics_Sleep_Quality'] = self.subject_data['demographics_data']['sleep_quality']
+                        row['Demographics_VR_Experience'] = self.subject_data['demographics_data']['previous_vr_experience']
+                        row['Demographics_VR_Comfort'] = self.subject_data['demographics_data']['comfort_with_vr']
+                    else:
+                        row['Demographics_Age'] = row['Demographics_Gender'] = row['Demographics_Education'] = ''
+                        row['Demographics_Childhood_Setting'] = row['Demographics_Current_Setting'] = row['Demographics_Nature'] = ''
+                        row['Demographics_Green_Spaces'] = row['Demographics_Pref_Natural'] = row['Demographics_Env_Prefs'] = ''
+                        row['Demographics_Pref_Interior'] = row['Demographics_Work_Study_Env'] = row['Demographics_Current_Mood'] = ''
+                        row['Demographics_Stress_Level'] = row['Demographics_Physical_Activity'] = row['Demographics_Sleep_Quality'] = ''
+                        row['Demographics_VR_Experience'] = row['Demographics_VR_Comfort'] = ''
+
+                    if i == 0 and self.subject_data['exit_survey_data']:
+                        row['Exit_Survey_Main_Purpose'] = self.subject_data['exit_survey_data']['main_purpose']
+                        row['Exit_Survey_Time_In_Nature'] = self.subject_data['exit_survey_data']['time_in_nature']
+                        row['Exit_Survey_Access_Gardens'] = self.subject_data['exit_survey_data']['access_gardens']
+                        row['Exit_Survey_Enjoy_Time_Natural'] = self.subject_data['exit_survey_data']['enjoy_time_natural']
+                        row['Exit_Survey_Environ_Preference'] = self.subject_data['exit_survey_data']['environment_preference']
+                        row['Exit_Survey_Natural_Elements'] = self.subject_data['exit_survey_data']['natural_elements']
+                        row['Exit_Survey_Interior_Preference'] = self.subject_data['exit_survey_data']['interior_preference']
+                        row['Exit_Survey_Instructions'] = self.subject_data['exit_survey_data']['instructions']
+                        row['Exit_Survey_Expectations'] = self.subject_data['exit_survey_data']['expectations']
+                        row['Exit_Survey_Feedback'] = self.subject_data['exit_survey_data']['feedback']
+                    else:
+                        row['Exit_Survey_Main_Purpose'] = row['Exit_Survey_Time_In_Nature'] = row['Exit_Survey_Access_Gardens'] = ''
+                        row['Exit_Survey_Enjoy_Time_Natural'] = row['Exit_Survey_Environ_Preference'] = row['Exit_Survey_Natural_Elements'] = ''
+                        row['Exit_Survey_Interior_Preference'] = row['Exit_Survey_Instructions'] = row['Exit_Survey_Expectations'] = ''
+                        row['Exit_Survey_Feedback'] = ''
+
+                    if i == 0 and self.subject_data['student_data']:
+                        row['Student_Survey_PID'] = self.subject_data['student_data']['pid']
+                        row['Student_Survey_Class'] = self.subject_data['student_data']['class']
+                    else:
+                        row['Student_Survey_PID'] = row['Student_Survey_Class'] = ''
+                        
                     writer.writerow(row)
 
         except Exception as e:
             print(e)
-            return {"status": "error", "message": "Failed to create CSV file"}        
+            return None      
 
         # NOTE: UNCOMMENT when awshandler is ready
         # response = xr_awshandler.upload_subject_data(subject_data)
