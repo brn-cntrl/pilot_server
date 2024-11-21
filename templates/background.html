@@ -74,10 +74,10 @@
             </label><br>
             <p id="neuro_message" style="display: none">For your safety, we cannot include you in this study. Thank you for your understanding</p>
             <label>
-                <input type="radio" name="neurological_conditions" value="No" required>No
+                <input type="radio" name="neurological_conditions" value="No" id="neuro_no" required>No
             </label><br><br>
             <label for="neurological_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
-            <select id="neurological_description" name="neurological_description" required>
+            <select id="neurological_description" name="neurological_description" disabled>
                 <option value="" disabled selected>Select your condition</option>
                 <option value="Condition1">Condition 1</option>
                 <option value="Condition2">Condition 2</option>
@@ -181,6 +181,30 @@
         //         glassesMessage.style.display = 'none';
         //     }
         // });
+        document.addEventListener('DOMContentLoaded', function () {
+            const neuroYes = document.getElementById('neuro_yes');
+            const neuroNo = document.getElementById('neuro_no');
+            const neuroDescription = document.getElementById('neurological_description');
+            const neuroMessage = document.getElementById('neuro_message');
+
+            neuroYes.addEventListener('change', function () {
+                if (neuroYes.checked) {
+                    neuroDescription.disabled = false;  
+                    neuroDescription.required = true;
+                    neuroMessage.style.display = 'block'; 
+                }
+            });
+
+            neuroNo.addEventListener('change', function () {
+                if (neuroNo.checked) {
+                    neuroDescription.disabled = true; 
+                    neuroDescription.required = false;
+                    neuroDescription.value = ""; 
+                    neuroMessage.style.display = 'none';
+                }
+            });
+        });
+
         function toggleMessage(radioId, messageId) {
             const radioButton = document.getElementById(radioId);
             const message = document.getElementById(messageId);

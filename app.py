@@ -126,7 +126,7 @@ def get_biometric_baseline():
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question():
     global current_ser_question_index, ser_questions
-    
+    global recording_manager
     questions = ser_questions.get('questions', [])
     
     try:
@@ -136,8 +136,8 @@ def get_ser_question():
             return jsonify({'question': question})
         
         elif current_ser_question_index >= len(questions):
-            # recording_manager.stop_recording()
-            stop_recording()
+            recording_manager.stop_recording()
+            # stop_recording()
             return jsonify({'question': 'SER task completed.'}), 200  
 
     except Exception as e:
@@ -164,10 +164,11 @@ def process_ser_answer():
     """
 
     global RECORDING_FILE
-    global current_ser_question_index
+    global current_ser_question_index, recording_manager
     global subject_data
 
-    stop_recording()
+    # stop_recording()
+    recording_manager.stop_recording()
 
     try:
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
@@ -183,10 +184,6 @@ def process_ser_answer():
         
         subject_data['SER_Baseline'].append(baseline_data)
 
-        # Debug statement
-        print(f"SER Baseline: {subject_data['SER_Baseline']}")
-
-        # Save the audio file with naming convention
         id = subject_data.get('ID')
         file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
         file_name = rename_audio_file(id, "SER_question_", current_ser_question_index)
@@ -248,18 +245,18 @@ def get_next_test():
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active():
-    global stream_is_active
     global recording_manager
-    # stream_is_active = recording_manager.get_stream_is_active()
+    stream_is_active = recording_manager.get_stream_is_active()
     return jsonify({'stream_active': stream_is_active})
 
 @app.route('/test_audio', methods=['POST'])
 def test_audio():
-    global RECORDING_FILE
+    global RECORDING_FILE, recording_manager
     try:
-        stop_recording()
+        # stop_recording()
+        recording_manager.stop_recording()
         transcription = transcribe_audio(RECORDING_FILE)
-        print(transcription)
+        
         if transcription.startswith("Google Speech Recognition could not understand"):
             return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
         
@@ -299,7 +296,7 @@ def submit_answer():
     """
 
     global current_question_index, current_test_number, subject_data
-    global stop_event, recording_thread, stream_is_active
+    global recording_manager
     global TASK_QUESTIONS, RECORDING_FILE
 
     questions = TASK_QUESTIONS.get(current_test_number)
@@ -312,7 +309,8 @@ def submit_answer():
     file_name = f"ID_{id}_test_{current_test_number}_question_{current_question_index}.wav"
 
     try:
-        stop_recording()
+        # stop_recording()
+        recording_manager.stop_recording()
         transcription = transcribe_audio(RECORDING_FILE)
         ts = get_timestamp()
         try:
@@ -576,9 +574,9 @@ def submit():
 ##################################################################
 @app.route('/get_audio_devices', methods=['GET'])
 def get_audio_devices():
-    audio_devices = fetch_audio_devices()
-    # global recording_manager
-    # audio_devices = recording_manager.get_audio_devices()
+    global recording_manager
+    # audio_devices = fetch_audio_devices()
+    audio_devices = recording_manager.get_audio_devices()
     return jsonify(audio_devices)
 
 @app.route('/set_device', methods=['POST'])
@@ -636,6 +634,7 @@ def record_vr_task():
         data = request.get_json()
         task_id = data.get('task_id')
         action = data.get('action')
+        
         # Debug statement
         print(f"Received task_id: {task_id}, action: {action}")
         current_time_unix = int(time.time())
@@ -645,11 +644,11 @@ def record_vr_task():
             return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200
         
         elif action == 'stop':
-            # recording_manager.stop_recording()
-            stop_recording()
+            recording_manager.stop_recording()
+            # stop_recording()
 
-            # audio_segments = recording_manager.split_wav_to_segments(20, "tmp/")
-            audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
+            audio_segments = recording_manager.split_wav_to_segments(20, "tmp/")
+            # audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
 
             # Extract the index number from the filename to enforce sorting order
             audio_segments = sorted(audio_segments, key=lambda x: 
@@ -694,8 +693,9 @@ def record_vr_task():
 
 @app.route('/start_recording', methods=['POST'])    
 def start_recording():
+    global recording_manager
     try:
-        record_audio()
+        recording_manager.start_recording()
         return jsonify({'status': 'Recording started.'}), 200
     except Exception as e:
         return jsonify({'status': 'Error starting recording.'}), 400
@@ -750,12 +750,9 @@ def exit_survey():
 
 # Emotibit #######################################################
 def start_emotibit():
-    # global emotibit_thread, emotibit_streamer
     global emotibit_streamer
 
     try:
-        # emotibit_thread = Thread(target=emotibit_streamer.start)
-        # emotibit_thread.start()
         emotibit_streamer.start()
         print("OSC server is streaming data.")
 
@@ -763,14 +760,9 @@ def start_emotibit():
         print(f"An error occurred while trying to start OSC stream: {str(e)}")
 
 def stop_emotibit():
-    # global emotibit_thread, emotibit_streamer
     global emotibit_streamer
 
     try:
-        # if emotibit_thread is not None and emotibit_thread.is_alive():
-        #     emotibit_streamer.stop()
-        #     emotibit_thread.join()
-        #     print("OSC server stopped.")
         emotibit_streamer.stop()
     
     except Exception as e:
@@ -873,175 +865,174 @@ def prime_ser_task():
 ##################################################################
 ## Audio 
 ##################################################################
-def fetch_audio_devices():
-    p = pyaudio.PyAudio()
-    audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
-                     for i in range(p.get_device_count())
-                     if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
+# def fetch_audio_devices():
+#     p = pyaudio.PyAudio()
+#     audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
+#                      for i in range(p.get_device_count())
+#                      if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
     
-    p.terminate()
+#     p.terminate()
 
-    return audio_devices
+#     return audio_devices
 
 # TODO: Delete all audio functions after recording manager class is fully implemented
 # Record audio in separate thread
-def record_audio():
-    global stop_event
-    global recording_thread
-    global timestamp
-    global recording_started_event
-    # global recording_manager
-    # Reset the stop event to false
+# def record_audio():
+#     global stop_event
+#     global recording_thread
+#     global timestamp
+#     global recording_started_event
+#     # global recording_manager
+#     # Reset the stop event to false
 
-    # recording_manager.start_recording()
-    # t = recording_manager.get_timestamp()
-    stop_event.clear()
-    recording_started_event.clear()
+#     # recording_manager.start_recording()
+#     # t = recording_manager.get_timestamp()
+#     stop_event.clear()
+#     recording_started_event.clear()
 
-    t = datetime.datetime.now().isoformat()
-    set_timestamp(t)
+#     t = datetime.datetime.now().isoformat()
+#     set_timestamp(t)
 
-    recording_thread = threading.Thread(target=record_thread)
-    recording_thread.start()
-    recording_started_event.wait()
+#     recording_thread = threading.Thread(target=record_thread)
+#     recording_thread.start()
+#     recording_started_event.wait()
 
-    print("Recording thread started.")
+#     print("Recording thread started.")
 
 # TODO: Delete after recording manager is finished
-def stop_recording():
-    global recording_thread, stop_event, stream_is_active
-
-    stop_event.set()
-    recording_started_event.clear()
-    stream_is_active = False
-    # Wait for recording thread to finish
+# def stop_recording():
+#     global recording_thread, stop_event, stream_is_active
+#     stop_event.set()
+#     recording_started_event.clear()
+#     stream_is_active = False
+#     # Wait for recording thread to finish
 
     recording_thread.join()
 
-def record_thread():
-    # This function only to be called in threading.Thread
-    global RECORDING_FILE
-    global stop_event
-    global recording_started_event
-    global stream_is_active
+# def record_thread():
+#     # This function only to be called in threading.Thread
+#     global RECORDING_FILE
+#     global stop_event
+#     global recording_started_event
+#     global stream_is_active
 
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=pyaudio.paInt16, 
-                        channels=1, 
-                        rate=44100, 
-                        input=True, 
-                        input_device_index=device_index,
-                        frames_per_buffer=1024)
+#     audio = pyaudio.PyAudio()
+#     stream = audio.open(format=pyaudio.paInt16, 
+#                         channels=1, 
+#                         rate=44100, 
+#                         input=True, 
+#                         input_device_index=device_index,
+#                         frames_per_buffer=1024)
     
-    frames = []
+#     frames = []
 
-    recording_started_event.set()
-    stream_is_active = stream.is_active()
-    while not stop_event.is_set():
-        data = stream.read(1024)
-        frames.append(data)
+#     recording_started_event.set()
+#     stream_is_active = stream.is_active()
+#     while not stop_event.is_set():
+#         data = stream.read(1024)
+#         frames.append(data)
     
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
+#     stream.stop_stream()
+#     stream.close()
+#     audio.terminate()
 
-    with wave.open(RECORDING_FILE, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(44100)
-        wf.writeframes(b''.join(frames))
+#     with wave.open(RECORDING_FILE, 'wb') as wf:
+#         wf.setnchannels(1)
+#         wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+#         wf.setframerate(44100)
+#         wf.writeframes(b''.join(frames))
 
-    print(f"Recording stopped, saved to {RECORDING_FILE}")
+#     print(f"Recording stopped, saved to {RECORDING_FILE}")
         
-def get_wav_as_np(filename):
-    """
-    Loads the entire wav file stored in tmp and returns it as a normalized numpy array.
-    Arguments: 
-        - the path and filename of the wav file
-    Returns: 
-        - the wav file as a numpy array
-    Exception: 
-        - if the file is not found
-    """
-    try:
-        with wave.open(filename, 'rb') as wf:
-            num_channels = wf.getnchannels()
-            num_frames = wf.getnframes()
-            signal = wf.readframes(num_frames)
-            signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
-            signal = signal / np.iinfo(np.int16).max
+# def get_wav_as_np(filename):
+#     """
+#     Loads the entire wav file stored in tmp and returns it as a normalized numpy array.
+#     Arguments: 
+#         - the path and filename of the wav file
+#     Returns: 
+#         - the wav file as a numpy array
+#     Exception: 
+#         - if the file is not found
+#     """
+#     try:
+#         with wave.open(filename, 'rb') as wf:
+#             num_channels = wf.getnchannels()
+#             num_frames = wf.getnframes()
+#             signal = wf.readframes(num_frames)
+#             signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
+#             signal = signal / np.iinfo(np.int16).max
 
-            if num_channels == 2:
-                signal = signal.reshape(-1, 2)
-                signal = signal.mean(axis=1)
+#             if num_channels == 2:
+#                 signal = signal.reshape(-1, 2)
+#                 signal = signal.mean(axis=1)
 
-            return signal
-    except Exception as e:
-        print("Couldn't locate an audio file.")
-        return None
+#             return signal
+#     except Exception as e:
+#         print("Couldn't locate an audio file.")
+#         return None
     
-def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
-    """
-    Returns the section of audio specified by the offset and duration Args as a normalized 
-    numpy array. This is necessary for the current SER classifier and is subject to change when 
-    another SER module is implemented.
+# def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
+#     """
+#     Returns the section of audio specified by the offset and duration Args as a normalized 
+#     numpy array. This is necessary for the current SER classifier and is subject to change when 
+#     another SER module is implemented.
 
-    Args:
-    - the path and filename of the wav file, 
-    - the offset in seconds, 
-    - the duration in seconds, 
-    - the samplerate in Hz.
+#     Args:
+#     - the path and filename of the wav file, 
+#     - the offset in seconds, 
+#     - the duration in seconds, 
+#     - the samplerate in Hz.
 
-    Returns: 
-    - the audio chunk as a numpy array
+#     Returns: 
+#     - the audio chunk as a numpy array
 
-    Exception: 
-    - if the file is not found
-    """
-    try:
-        with wave.open(filename, 'rb') as wf:
-            num_channels = wf.getnchannels()
-            original_sample_rate = wf.getframerate()
-            start_frame = int(offset * original_sample_rate)
-            num_frames = int(duration * original_sample_rate) if duration else wf.getnframes() - start_frame
+#     Exception: 
+#     - if the file is not found
+#     """
+#     try:
+#         with wave.open(filename, 'rb') as wf:
+#             num_channels = wf.getnchannels()
+#             original_sample_rate = wf.getframerate()
+#             start_frame = int(offset * original_sample_rate)
+#             num_frames = int(duration * original_sample_rate) if duration else wf.getnframes() - start_frame
 
-            wf.setpos(start_frame)
-            signal = wf.readframes(num_frames)
-            signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
-            signal = signal / np.iinfo(np.int16).max  
+#             wf.setpos(start_frame)
+#             signal = wf.readframes(num_frames)
+#             signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
+#             signal = signal / np.iinfo(np.int16).max  
 
-            # Convert stereo to mono by averaging channels
-            if num_channels == 2:
-                signal = signal.reshape(-1, 2).mean(axis=1)
+#             # Convert stereo to mono by averaging channels
+#             if num_channels == 2:
+#                 signal = signal.reshape(-1, 2).mean(axis=1)
 
-            # If the original sample rate differs, resample to target sample rate
-            if original_sample_rate != sample_rate:
-                signal = resample_audio(signal, original_sample_rate, sample_rate)
+#             # If the original sample rate differs, resample to target sample rate
+#             if original_sample_rate != sample_rate:
+#                 signal = resample_audio(signal, original_sample_rate, sample_rate)
 
-            return signal
+#             return signal
         
-    except Exception as e:
-        print(f"An error occurred while processing the audio: {e}")
-        return None
+#     except Exception as e:
+#         print(f"An error occurred while processing the audio: {e}")
+#         return None
 
-def resample_audio(signal, original_sample_rate, target_sample_rate):
-    """
-    Resamples the signal to match the target sample rate using linear interpolation.
+# def resample_audio(signal, original_sample_rate, target_sample_rate):
+#     """
+#     Resamples the signal to match the target sample rate using linear interpolation.
 
-    Args: 
-    - the signal as a numpy array, 
-    - the original sample rate in Hz, 
-    - the target sample rate in Hz.
-    Returns:
-    - the resampled signal as a numpy array
-    """
-    ratio = target_sample_rate / original_sample_rate
-    resampled_length = int(len(signal) * ratio)
-    resampled_signal = np.interp(
-        np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
-    )
+#     Args: 
+#     - the signal as a numpy array, 
+#     - the original sample rate in Hz, 
+#     - the target sample rate in Hz.
+#     Returns:
+#     - the resampled signal as a numpy array
+#     """
+#     ratio = target_sample_rate / original_sample_rate
+#     resampled_length = int(len(signal) * ratio)
+#     resampled_signal = np.interp(
+#         np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
+#     )
 
-    return resampled_signal
+#     return resampled_signal
 
 def get_audio_duration(file_path):
     """
@@ -1114,64 +1105,61 @@ def normalize_audio(audio): # Necessary for SER task
     audio_array = audio / np.max(np.abs(audio))
     return audio_array
 
-import wave
-import os
+# def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder="tmp/"):
+#     """
+#     Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
 
-def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder="tmp/"):
-    """
-    Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
+#     Args:
+#     - input_wav (str): Path to the input WAV file.
+#     - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
+#     - output_folder (str): Folder to save the output segments. Default is 'tmp'.
 
-    Args:
-    - input_wav (str): Path to the input WAV file.
-    - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
-    - output_folder (str): Folder to save the output segments. Default is 'tmp'.
-
-    Returns:
-    - List of paths to the saved segment files.
-    """
-    # Ensure the output folder exists
-    if not output_folder or not isinstance(output_folder, str):
-        raise ValueError("Invalid output folder path.")
+#     Returns:
+#     - List of paths to the saved segment files.
+#     """
+#     # Ensure the output folder exists
+#     if not output_folder or not isinstance(output_folder, str):
+#         raise ValueError("Invalid output folder path.")
     
-    os.makedirs(output_folder, exist_ok=True)
+#     os.makedirs(output_folder, exist_ok=True)
     
-    segment_files = []
-    try:
-        with wave.open(input_wav, 'rb') as wf:
-            sample_rate = wf.getframerate()
-            channels = wf.getnchannels()
-            sample_width = wf.getsampwidth()
-            total_frames = wf.getnframes()
-            duration = total_frames / sample_rate
+#     segment_files = []
+#     try:
+#         with wave.open(input_wav, 'rb') as wf:
+#             sample_rate = wf.getframerate()
+#             channels = wf.getnchannels()
+#             sample_width = wf.getsampwidth()
+#             total_frames = wf.getnframes()
+#             duration = total_frames / sample_rate
             
-            print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
+#             print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
 
-            # Calculate frames per segment
-            segment_frames = int(segment_duration * sample_rate)
-            total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
+#             # Calculate frames per segment
+#             segment_frames = int(segment_duration * sample_rate)
+#             total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
             
-            for i in range(total_segments):
-                wf.setpos(i * segment_frames)
+#             for i in range(total_segments):
+#                 wf.setpos(i * segment_frames)
             
-                frames = wf.readframes(segment_frames)
+#                 frames = wf.readframes(segment_frames)
 
-                segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
-                print(f"Creating segment file: {segment_file}")  # Debugging statement
+#                 segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
+#                 print(f"Creating segment file: {segment_file}")  # Debugging statement
                 
-                with wave.open(segment_file, 'wb') as segment_wf:
-                    segment_wf.setnchannels(channels)
-                    segment_wf.setsampwidth(sample_width)
-                    segment_wf.setframerate(sample_rate)
-                    segment_wf.writeframes(frames)
+#                 with wave.open(segment_file, 'wb') as segment_wf:
+#                     segment_wf.setnchannels(channels)
+#                     segment_wf.setsampwidth(sample_width)
+#                     segment_wf.setframerate(sample_rate)
+#                     segment_wf.writeframes(frames)
                 
-                segment_files.append(segment_file)
-                print(f"Segment {i} saved as {segment_file}")
+#                 segment_files.append(segment_file)
+#                 print(f"Segment {i} saved as {segment_file}")
                 
-        return segment_files
-    except Exception as e:
-        print(f"An error occurred while splitting the WAV file: {str(e)}")
+#         return segment_files
+#     except Exception as e:
+#         print(f"An error occurred while splitting the WAV file: {str(e)}")
     
-    return segment_files
+#     return segment_files
 
 def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/"):
     """

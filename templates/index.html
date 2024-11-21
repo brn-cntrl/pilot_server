@@ -255,7 +255,6 @@
         let statusMessage = document.getElementById('status');
         document.getElementById('beginSERButton').addEventListener('click', function(){
             
-
             document.getElementById('beginSERButton').disabled = true;
             document.getElementById('questionContainer').style.display = 'block';
             document.getElementById('questionContainer').disabled = false;
@@ -434,26 +433,6 @@
                 stopBaseline();
             }
         });
-        // document.getElementById("startBiometricBaseline").addEventListener("click", function() {
-        //     fetch("/start_emotibit_stream", {
-        //         method: "POST"
-        //     })
-        //     .then(response => {
-        //         if (!response.ok) {
-        //             throw new Error(`HTTP error! status: ${response.status}`);
-        //         }
-        //         return response.json();
-        //     })
-        //     .then(data => {
-        //         console.log(data.message);
-        //         document.getElementById('startBiometricBaseline').innerText = "Stop Collecting Baseline";
-        //         document.getElementById('biometricStatusMessage').innerText = data.message;
-        //     })
-        //     .catch(error => {
-        //         console.error('Error:', error);
-        //         document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
-        //     });
-        // });
 
         let vrWin;
 

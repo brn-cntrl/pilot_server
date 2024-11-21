@@ -22,20 +22,23 @@ class EmotiBitStreamer:
         self._data = {
              "EDA": [],
             "HR": [],
-            "BI": []
+            "BI": [],
+            "HRV": []
         }
         
         self._baseline_data = {
             "EDA": [],
             "HR": [],
-            "BI": []
+            "BI": [],
+            "HRV": []
         }
 
         # Structure for tracking the last time data was received from the EmotiBit
         self.last_received = {
             "EDA": None,
             "HR": None,
-            "BI": None
+            "BI": None,
+            "HRV": None
         }
 
         self.dispatcher = dispatcher.Dispatcher()
@@ -74,21 +77,38 @@ class EmotiBitStreamer:
             self.server.shutdown()
             self.server.server_close() 
             self.server_thread.join()  
-            self.server_thread = None  
+            self.server_thread = None 
+
+            if len(self.data["BI"]) > 0:
+                print("Calculating HRV from BI data...")
+                self.data["HRV"] = self.calculate_hrv_from_bi(self.data["BI"])
+                print("HRV calculated and appended to data.")
+            else:
+                print("No BI data available to calculate HRV.")
+
             print("Server stopped successfully.")
         else:
             return None
 
     def calculate_hrv_from_bi(self, bi_values):
-        # HRV metrics directly from BI (beat interval) values
-        sdnn = np.std(bi_values)
-        rmssd = np.sqrt(np.mean(np.square(np.diff(bi_values))))
-        return {"SDNN": sdnn, "RMSSD": rmssd}
+        # Convert ISO timestamps to datetime objects for sorting or other operations
+        timestamps = [datetime.fromisoformat(ts.replace("Z", "+00:00")) for ts, _ in bi_values]
+
+        # Extract intervals and convert to seconds
+        intervals = np.array([interval for _, interval in bi_values]) / 1000.0
+
+        rmssd_values = []
+        for i in range(1, len(intervals)):
+            diff = intervals[i] - intervals[i - 1]
+            rmssd = np.sqrt(diff ** 2)
+            rmssd_values.append((timestamps[i].isoformat(), rmssd))
+
+        return rmssd_values
     
-    def calculate_hrv_from_hr(self, hr_values):
-        # Convert HR to IBI
-        ibi_values = 60000 / np.array(hr_values)  # Converts HR (bpm) to IBI (ms)
-        return self.calculate_hrv_from_bi(ibi_values)  # Use BI-based HRV calculation
+    # def calculate_hrv_from_hr(self, hr_values):
+    #     # Convert HR to IBI
+    #     ibi_values = 60000 / np.array(hr_values)  # Converts HR (bpm) to IBI (ms)
+    #     return self.calculate_hrv_from_bi(ibi_values)  # Use BI-based HRV calculation
     
     def print_osc_message(address, *args):
         """This function is for debugging the incoming messages"""

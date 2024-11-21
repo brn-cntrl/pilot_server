@@ -102,6 +102,18 @@ class RecordingManager():
 
         print(f"Recording stopped, saved to {self.recording_file}")
 
+    # def record_audio(self):
+    #     self.stop_event.clear()
+    #     self.recording_started_event.clear()
+
+    #     self._timestamp = datetime.datetime.now().isoformat()
+
+    #     self.recording_thread = threading.Thread(target=self.record_thread)
+    #     self.recording_thread.start()
+    #     self.recording_started_event.wait()
+
+    #     print("Recording thread started.")
+
     ##################################################################
     ## GETTERS
     ##################################################################
