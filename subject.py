@@ -1,6 +1,4 @@
-import datetime
 from aws_handler import AWSHandler
-import csv
 
 # This class will hold all the data for a single subject
 # The data will be stored in a dictionary with the following keys
@@ -55,33 +53,3 @@ class Subject:
     @subject_data.setter
     def subject_data(self, subject_data):
         self._subject_data = subject_data
-
-    def set_subject_data_key(self, key, value):
-        self.subject_data[key] = value
-
-    ######################## METHODS ########################
-    def append_test_transcription(self, ts, transcription, ser):
-        entry = {
-            'timestamp': ts,
-            'transcript': transcription,
-            'emotion': ser
-        }
-
-        self.subject_data['Test_Transcriptions'].append(entry)
-
-    def append_vr_transcription(self, ts, transcription, ser, vr_number):
-        entry = {
-            'timestamp': ts,
-            'transcript': transcription,
-            'emotion': ser
-        }
-
-        if vr_number == 1:
-            self.subject_data['VR_Transcriptions_1'].append(entry)
-
-        elif vr_number == 2:
-            self.subject_data['VR_Transcriptions_2'].append(entry)
-            
-        else:
-            raise ValueError('Invalid VR number')
-        

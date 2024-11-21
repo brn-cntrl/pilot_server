@@ -30,21 +30,13 @@ import shutil
 ##################################################################
 ## Globals 
 ##################################################################
-participant_name = " "
-unique_id = None
 device_index = 0
 RECORDING_FILE = 'tmp/recording.wav'
 AUDIO_SAVE_FOLDER = 'audio_files'
-recording_process = None
 current_question_index = 0
 current_ser_question_index = 0
 current_test_number = 1
-stop_event = threading.Event()
-recording_started_event = threading.Event()
-recording_thread = None
 emotibit_thread = None
-timestamp = None
-stream_is_active = None
 TASK_QUESTIONS_1 = None
 TASK_QUESTIONS_2 = None
 SER_QUESTIONS = None
@@ -56,26 +48,6 @@ subject = Subject()
 recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER) 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
-
-
-# TODO: Delete after implementing classes
-subject_data = {
-    'ID': None,
-    'Date': None,
-    'Name': None,
-    'Email': None,
-    'Test_Transcriptions': [], # This will hold the transcript, SER values, and timestamps in JSON object format
-    'VR_Transcriptions_1': [], # This will hold the VR transcript, SER values, and timestamps in JSON object format
-    'VR_Transcriptions_2': [], # This will hold the VR transcript, SER values, and timestamps in JSON object format
-    'Biometric_Baseline': [], # This will hold the biometric baseline data in JSON object format
-    'Biometric_Data': [], # This will hold the biometric data in JSON object format
-    'SER_Baseline': [], # This will hold the SER baseline data in JSON object format
-    'pss4_data': None,
-    'background_data': None,
-    'demographics_data': None,
-    'exit_survey_data': None,
-    'student_data': None
-}
 
 TASK_QUESTIONS = {}
 MODEL_ROOT = "model"
@@ -163,11 +135,9 @@ def process_ser_answer():
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE
+    global RECORDING_FILE, subject
     global current_ser_question_index, recording_manager
-    global subject_data
 
-    # stop_recording()
     recording_manager.stop_recording()
 
     try:
@@ -175,16 +145,11 @@ def process_ser_answer():
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
 
         emotion = predict_emotion(sig_resampled)
-        ts = get_timestamp()
-
-        baseline_data = {
-            'timestamp': ts,
-            'emotion': emotion
-        }
+        ts = recording_manager.timestamp
         
-        subject_data['SER_Baseline'].append(baseline_data)
-
-        id = subject_data.get('ID')
+        subject.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion})
+        
+        id = subject.subject_data['ID']
         file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
         file_name = rename_audio_file(id, "SER_question_", current_ser_question_index)
         save_audio_file(RECORDING_FILE, file_name, 'audio_files')
@@ -295,16 +260,13 @@ def submit_answer():
         - 500: If there was any other error during the process.
     """
 
-    global current_question_index, current_test_number, subject_data
-    global recording_manager
+    global current_question_index, current_test_number
+    global recording_manager, subject
     global TASK_QUESTIONS, RECORDING_FILE
 
     questions = TASK_QUESTIONS.get(current_test_number)
 
-    id = subject_data.get('ID')
-
-    # TODO Implement after subject class is finished and delete global reference
-    # id = subject.get_id() 
+    id = subject.subject_data.get('ID')
 
     file_name = f"ID_{id}_test_{current_test_number}_question_{current_question_index}.wav"
 
@@ -312,7 +274,7 @@ def submit_answer():
         # stop_recording()
         recording_manager.stop_recording()
         transcription = transcribe_audio(RECORDING_FILE)
-        ts = get_timestamp()
+        ts = recording_manager.timestamp
         try:
             # Save permanent copies of audio
             sig, sr = librosa.load(RECORDING_FILE, sr=None)
@@ -324,7 +286,7 @@ def submit_answer():
             print(f"An error occurred: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-        append_test_transcription(ts, transcription, ser)
+        subject.subject_data["Test_Transcriptions"].append({'timestamp': ts, 'transcript': transcription, 'emotion':ser})
         
         if transcription.startswith("Google Speech Recognition could not understand"):
             return jsonify({'status': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
@@ -354,8 +316,11 @@ def submit_answer():
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
-    shutdown_server()
-    return jsonify({'message': 'Server shutting down...'})
+    response = jsonify ({'message': 'Server shutting down...'})
+    response.status_code = 200
+    threading.Thread(target=shutdown_server).start() 
+
+    return response
 
 @app.route('/submit_pss4', methods=['POST'])
 def submit_pss4():
@@ -369,16 +334,7 @@ def submit_pss4():
             'response_4': request.form.get('controlFeeling4')
         }
 
-        subject_data['pss4_data'] = pss4
-
-         # TODO: Uncomment after subject class is finished and delete global reference
-        # if subject:
-        #     subject.set_pss4(pss4)
-        #     # Debugging statement
-        #     print(subject.get_pss4())
-
-        # else:
-        #     print("Create instance of Subject first.")
+        subject.subject_data['pss4_data'] = pss4
 
         return jsonify({'message': 'PSS-4 submitted successfully.'}), 200
     
@@ -403,15 +359,7 @@ def submit_background():
             'glasses': request.form.get('glasses'),
         }
 
-        subject_data['background_data'] = background_data # TODO: Delete after subject class tests
-
-        # TODO: Uncomment after subect class is finished and delete global reference
-        # if subject:
-        #     subject.set_background_data(background_data)
-        #     # Debugging statement
-        #     print(subject.get_background_data())
-        # else:
-        #     print("First create instance of Subject class")
+        subject.subject_data['background_data'] = background_data 
 
         return jsonify({'message': 'Background data submitted successfully.'}), 200
     
@@ -435,16 +383,7 @@ def submit_exit():
             'feedback': request.form.get('feedback')
         }
 
-        subject_data['exit_survey_data'] = exit_survey_data # TODO: Delete after subject class tests
-
-        # TODO: Uncomment after subject class is finished and delete global reference
-        # if subject:
-        #     subject.set_exit_survey_data(exit_survey_data)
-        #     # Debugging statement
-        #     print(subject.get_exit_survey_data())
-
-        # else:
-        #     print("First create instance of Subject class")
+        subject.subject_data['exit_survey_data'] = exit_survey_data 
 
         return jsonify({'message': 'Exit survey data submitted successfully.'}), 200
     
@@ -475,15 +414,7 @@ def submit_demographics():
             'comfort_with_vr': request.form.get('comfort_with_vr'),
         }
 
-        subject_data['demographics_data'] = demographics_data
-
-         # TODO: Uncomment after subject class is finished and delete global reference
-        # if subject:
-        #     subject.set_demographics_data(demographics_data)
-        #     # Debugging statement
-        #     print(subject.get_demographics_data())
-        # else:
-        #     print("First create instance of Subject class")
+        subject.subject_data['demographics_data'] = demographics_data
 
         return jsonify({'message': 'Demographics data submitted successfully.'}), 200
     
@@ -492,22 +423,15 @@ def submit_demographics():
 
 @app.route('/submit_student_data', methods=['POST'])
 def submit_student_data():
-    global subject_data
     global subject
+
     try:
         student_data = {
             'PID': request.form.get('PID'),
             'class': request.form.get('class')
         }
 
-        subject_data['student_data'] = student_data
-         # TODO: Uncomment after subject class is finished and delete global reference
-        # if subject:
-        #     subject.set_student_data(student_data)
-        #     # Debugging statement
-        #     print(subject.get_student_data())
-        # else:
-        #     print("First create instance of Subject class")
+        subject.subject_data['student_data'] = student_data
 
         return jsonify({'message': 'Student data submitted successfully.'}), 200
     
@@ -516,14 +440,8 @@ def submit_student_data():
 
 @app.route('/upload_subject_data', methods=['POST'])    
 def upload_subject_data():
-    # global subject
+    global subject, csv_handler
 
-    # result = subject.upload_to_database()
-
-    # if result['status'] == 'error':
-    #     raise Exception(result['message'])
-    # else:
-    #     print(result['message'])
     try:
         csv_handler = CSVHandler(subject)
         csv_handler.create_csv()
@@ -533,10 +451,8 @@ def upload_subject_data():
 
 @app.route('/submit', methods=['POST'])    
 def submit():
-    global unique_id
-    global participant_name
     global subject
-
+    
     try:
         if request.method == 'POST':
             participant_name = request.form['name']
@@ -548,21 +464,10 @@ def submit():
             # at the end of the test session
             unique_id = get_available_id()
             
-             # TODO: Uncomment after subject class is finished and delete global reference
-            # if subject:
-            #     subject.set_name(participant_name)
-            #     subject.set_email(email)
-            #     subject.set_id(unique_id)
-            #     subject.set_csv_filename()
-            # else:
-            #     print("Create instance of Subject class first.")
-
-            # TODO: Remove line setting unique_id when AWS server is ready
-            # TODO: Remove block after subject class implemented
-            subject_data['ID'] = unique_id
-            subject_data['Name'] = participant_name
-            subject_data['Date'] = current_date
-            subject_data['Email'] = email
+            subject.subject_data['Name'] = participant_name
+            subject.subject_data['Email'] = email
+            subject.subject_data['ID'] = unique_id
+            subject.subject_data['Date'] = current_date
 
             return jsonify({'message': 'User information submitted.'}), 200
         
@@ -575,7 +480,6 @@ def submit():
 @app.route('/get_audio_devices', methods=['GET'])
 def get_audio_devices():
     global recording_manager
-    # audio_devices = fetch_audio_devices()
     audio_devices = recording_manager.get_audio_devices()
     return jsonify(audio_devices)
 
@@ -626,29 +530,23 @@ def record_vr_task():
                    with a 400 HTTP status code.
     """
 
-    global subject_data, subject
-    global recording_manager, ser_manager
-    global stream_is_active, stop_event
+    global recording_manager, ser_manager, subject
     global RECORDING_FILE
+
     try:
         data = request.get_json()
         task_id = data.get('task_id')
         action = data.get('action')
-        
-        # Debug statement
-        print(f"Received task_id: {task_id}, action: {action}")
+
         current_time_unix = int(time.time())
 
         if action == 'start':
-            current_time_unix = int(time.time())
             return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200
         
         elif action == 'stop':
             recording_manager.stop_recording()
-            # stop_recording()
-
-            audio_segments = recording_manager.split_wav_to_segments(20, "tmp/")
-            # audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
+            
+            audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
 
             # Extract the index number from the filename to enforce sorting order
             audio_segments = sorted(audio_segments, key=lambda x: 
@@ -673,14 +571,11 @@ def record_vr_task():
                     for ts, tr, ser in zip(timestamps, transcriptions, ser_predictions)]
             
             if task_id == 'taskID1':
-                # subject.set_vr_transcriptions_1(vr_data)
-                subject_data["VR_Transcriptions_1"] = vr_data
+                subject.subject_data["VR_Transcriptions_1"] = vr_data
+                
             elif task_id == 'taskID2':
-                # subject.set_vr_transcriptions_2(vr_data)
-                subject_data["VR_Transcriptions_2"] = vr_data
+                subject.subject_data["VR_Transcriptions_2"] = vr_data
 
-            # Debug statement
-            print(subject_data['VR_Transcriptions_1'])
             backup_tmp_audio_files()
 
             return jsonify({'message': 'Audio successfully processed.', 'task_id': task_id}), 200
@@ -769,14 +664,6 @@ def stop_emotibit():
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
 
 ##################################################################
-def set_timestamp(t):   
-    global timestamp
-    timestamp = t
-
-def get_timestamp():
-    global timestamp
-    return timestamp
-
 def preprocess_text(text):
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)
@@ -787,28 +674,6 @@ def check_answer(transcription, correct_answers):
     transcription = preprocess_text(transcription)
 
     return any(word in correct_answers for word in transcription.split())
-
-# Saves to file at root of the project. Transcriptions are appended when "submit_answer" is called
-def append_test_transcription(timestamp, transcription, ser):
-    global subject, subject_data
-    entry = {
-        'timestamp': timestamp,
-        'transcription': transcription,
-        'ser': ser
-    }
-
-    # Append to the json data
-    try:
-        subject_data['Test_Transcriptions'].append(entry) # TODO: Delete once subject class is fully implemented
-
-         # TODO: Uncomment after subject class is finished and delete global reference
-        # if subject:
-        #     subject.append_test_transcription(entry)
-        # else:
-        #     print("Create instance of Subject class first.")
-
-    except Exception as e:
-        print(f"Error appending to JSON: {e}")
 
 def is_folder_empty(app, folder_name):
     folder_path = os.path.join(app.root_path, folder_name)
@@ -836,8 +701,10 @@ def get_available_id(filename='available_ids.txt'):
             raise Exception('No more IDs available')
     
 def shutdown_server():
-    pid= os.getpid()
+    time.sleep(1)
+    pid = os.getpid()
     os.kill(pid, signal.SIGINT)
+
 
 def prime_test():
     global TASK_QUESTIONS_1, TASK_QUESTIONS_2, TASK_QUESTIONS
@@ -865,175 +732,61 @@ def prime_ser_task():
 ##################################################################
 ## Audio 
 ##################################################################
-# def fetch_audio_devices():
-#     p = pyaudio.PyAudio()
-#     audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
-#                      for i in range(p.get_device_count())
-#                      if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
+def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder="tmp/"):
+    """
+    Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
+
+    Args:
+    - input_wav (str): Path to the input WAV file.
+    - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
+    - output_folder (str): Folder to save the output segments. Default is 'tmp'.
+
+    Returns:
+    - List of paths to the saved segment files.
+    """
+    # Ensure the output folder exists
+    if not output_folder or not isinstance(output_folder, str):
+        raise ValueError("Invalid output folder path.")
     
-#     p.terminate()
-
-#     return audio_devices
-
-# TODO: Delete all audio functions after recording manager class is fully implemented
-# Record audio in separate thread
-# def record_audio():
-#     global stop_event
-#     global recording_thread
-#     global timestamp
-#     global recording_started_event
-#     # global recording_manager
-#     # Reset the stop event to false
-
-#     # recording_manager.start_recording()
-#     # t = recording_manager.get_timestamp()
-#     stop_event.clear()
-#     recording_started_event.clear()
-
-#     t = datetime.datetime.now().isoformat()
-#     set_timestamp(t)
-
-#     recording_thread = threading.Thread(target=record_thread)
-#     recording_thread.start()
-#     recording_started_event.wait()
-
-#     print("Recording thread started.")
-
-# TODO: Delete after recording manager is finished
-# def stop_recording():
-#     global recording_thread, stop_event, stream_is_active
-#     stop_event.set()
-#     recording_started_event.clear()
-#     stream_is_active = False
-#     # Wait for recording thread to finish
-
-    recording_thread.join()
-
-# def record_thread():
-#     # This function only to be called in threading.Thread
-#     global RECORDING_FILE
-#     global stop_event
-#     global recording_started_event
-#     global stream_is_active
-
-#     audio = pyaudio.PyAudio()
-#     stream = audio.open(format=pyaudio.paInt16, 
-#                         channels=1, 
-#                         rate=44100, 
-#                         input=True, 
-#                         input_device_index=device_index,
-#                         frames_per_buffer=1024)
+    os.makedirs(output_folder, exist_ok=True)
     
-#     frames = []
+    segment_files = []
+    try:
+        with wave.open(input_wav, 'rb') as wf:
+            sample_rate = wf.getframerate()
+            channels = wf.getnchannels()
+            sample_width = wf.getsampwidth()
+            total_frames = wf.getnframes()
+            duration = total_frames / sample_rate
+            
+            print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
 
-#     recording_started_event.set()
-#     stream_is_active = stream.is_active()
-#     while not stop_event.is_set():
-#         data = stream.read(1024)
-#         frames.append(data)
+            # Calculate frames per segment
+            segment_frames = int(segment_duration * sample_rate)
+            total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
+            
+            for i in range(total_segments):
+                wf.setpos(i * segment_frames)
+            
+                frames = wf.readframes(segment_frames)
+
+                segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
+                print(f"Creating segment file: {segment_file}")  # Debugging statement
+                
+                with wave.open(segment_file, 'wb') as segment_wf:
+                    segment_wf.setnchannels(channels)
+                    segment_wf.setsampwidth(sample_width)
+                    segment_wf.setframerate(sample_rate)
+                    segment_wf.writeframes(frames)
+                
+                segment_files.append(segment_file)
+                print(f"Segment {i} saved as {segment_file}")
+                
+        return segment_files
+    except Exception as e:
+        print(f"An error occurred while splitting the WAV file: {str(e)}")
     
-#     stream.stop_stream()
-#     stream.close()
-#     audio.terminate()
-
-#     with wave.open(RECORDING_FILE, 'wb') as wf:
-#         wf.setnchannels(1)
-#         wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-#         wf.setframerate(44100)
-#         wf.writeframes(b''.join(frames))
-
-#     print(f"Recording stopped, saved to {RECORDING_FILE}")
-        
-# def get_wav_as_np(filename):
-#     """
-#     Loads the entire wav file stored in tmp and returns it as a normalized numpy array.
-#     Arguments: 
-#         - the path and filename of the wav file
-#     Returns: 
-#         - the wav file as a numpy array
-#     Exception: 
-#         - if the file is not found
-#     """
-#     try:
-#         with wave.open(filename, 'rb') as wf:
-#             num_channels = wf.getnchannels()
-#             num_frames = wf.getnframes()
-#             signal = wf.readframes(num_frames)
-#             signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
-#             signal = signal / np.iinfo(np.int16).max
-
-#             if num_channels == 2:
-#                 signal = signal.reshape(-1, 2)
-#                 signal = signal.mean(axis=1)
-
-#             return signal
-#     except Exception as e:
-#         print("Couldn't locate an audio file.")
-#         return None
-    
-# def get_audio_chunk_as_np(filename, offset=0, duration=None, sample_rate=16000):
-#     """
-#     Returns the section of audio specified by the offset and duration Args as a normalized 
-#     numpy array. This is necessary for the current SER classifier and is subject to change when 
-#     another SER module is implemented.
-
-#     Args:
-#     - the path and filename of the wav file, 
-#     - the offset in seconds, 
-#     - the duration in seconds, 
-#     - the samplerate in Hz.
-
-#     Returns: 
-#     - the audio chunk as a numpy array
-
-#     Exception: 
-#     - if the file is not found
-#     """
-#     try:
-#         with wave.open(filename, 'rb') as wf:
-#             num_channels = wf.getnchannels()
-#             original_sample_rate = wf.getframerate()
-#             start_frame = int(offset * original_sample_rate)
-#             num_frames = int(duration * original_sample_rate) if duration else wf.getnframes() - start_frame
-
-#             wf.setpos(start_frame)
-#             signal = wf.readframes(num_frames)
-#             signal = np.frombuffer(signal, dtype=np.int16).astype(np.float32)
-#             signal = signal / np.iinfo(np.int16).max  
-
-#             # Convert stereo to mono by averaging channels
-#             if num_channels == 2:
-#                 signal = signal.reshape(-1, 2).mean(axis=1)
-
-#             # If the original sample rate differs, resample to target sample rate
-#             if original_sample_rate != sample_rate:
-#                 signal = resample_audio(signal, original_sample_rate, sample_rate)
-
-#             return signal
-        
-#     except Exception as e:
-#         print(f"An error occurred while processing the audio: {e}")
-#         return None
-
-# def resample_audio(signal, original_sample_rate, target_sample_rate):
-#     """
-#     Resamples the signal to match the target sample rate using linear interpolation.
-
-#     Args: 
-#     - the signal as a numpy array, 
-#     - the original sample rate in Hz, 
-#     - the target sample rate in Hz.
-#     Returns:
-#     - the resampled signal as a numpy array
-#     """
-#     ratio = target_sample_rate / original_sample_rate
-#     resampled_length = int(len(signal) * ratio)
-#     resampled_signal = np.interp(
-#         np.linspace(0, len(signal) - 1, resampled_length), np.arange(len(signal)), signal
-#     )
-
-#     return resampled_signal
-
+    return segment_files
 def get_audio_duration(file_path):
     """
     Calculate the duration of an audio file.
@@ -1104,62 +857,6 @@ def delete_recording_file(file_path):
 def normalize_audio(audio): # Necessary for SER task
     audio_array = audio / np.max(np.abs(audio))
     return audio_array
-
-# def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder="tmp/"):
-#     """
-#     Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
-
-#     Args:
-#     - input_wav (str): Path to the input WAV file.
-#     - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
-#     - output_folder (str): Folder to save the output segments. Default is 'tmp'.
-
-#     Returns:
-#     - List of paths to the saved segment files.
-#     """
-#     # Ensure the output folder exists
-#     if not output_folder or not isinstance(output_folder, str):
-#         raise ValueError("Invalid output folder path.")
-    
-#     os.makedirs(output_folder, exist_ok=True)
-    
-#     segment_files = []
-#     try:
-#         with wave.open(input_wav, 'rb') as wf:
-#             sample_rate = wf.getframerate()
-#             channels = wf.getnchannels()
-#             sample_width = wf.getsampwidth()
-#             total_frames = wf.getnframes()
-#             duration = total_frames / sample_rate
-            
-#             print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
-
-#             # Calculate frames per segment
-#             segment_frames = int(segment_duration * sample_rate)
-#             total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
-            
-#             for i in range(total_segments):
-#                 wf.setpos(i * segment_frames)
-            
-#                 frames = wf.readframes(segment_frames)
-
-#                 segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
-#                 print(f"Creating segment file: {segment_file}")  # Debugging statement
-                
-#                 with wave.open(segment_file, 'wb') as segment_wf:
-#                     segment_wf.setnchannels(channels)
-#                     segment_wf.setsampwidth(sample_width)
-#                     segment_wf.setframerate(sample_rate)
-#                     segment_wf.writeframes(frames)
-                
-#                 segment_files.append(segment_file)
-#                 print(f"Segment {i} saved as {segment_file}")
-                
-#         return segment_files
-#     except Exception as e:
-#         print(f"An error occurred while splitting the WAV file: {str(e)}")
-    
-#     return segment_files
 
 def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/"):
     """

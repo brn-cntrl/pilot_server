@@ -2,10 +2,6 @@ import threading
 import datetime
 import pyaudio
 import wave
-import time
-import numpy as np
-import os
-import shutil
 import speech_recognition as sr
 
 class RecordingManager():
@@ -101,18 +97,6 @@ class RecordingManager():
             wf.writeframes(b''.join(frames))
 
         print(f"Recording stopped, saved to {self.recording_file}")
-
-    # def record_audio(self):
-    #     self.stop_event.clear()
-    #     self.recording_started_event.clear()
-
-    #     self._timestamp = datetime.datetime.now().isoformat()
-
-    #     self.recording_thread = threading.Thread(target=self.record_thread)
-    #     self.recording_thread.start()
-    #     self.recording_started_event.wait()
-
-    #     print("Recording thread started.")
 
     ##################################################################
     ## GETTERS
