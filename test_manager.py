@@ -24,6 +24,43 @@ class TestManager:
             self.task_2_questions = {}
             print("task_2_data.json not found")
 
+        self._current_question_index = 0  
+        self._current_test_index = 0
+        self._current_ser_question_index = 0
+    
+    @property
+    def current_question_index(self):
+        return self._current_question_index
+    
+    @current_question_index.setter
+    def current_question_index(self, index):
+        self._current_question_index = index
+    
+    @property
+    def current_test_index(self):
+        return self._current_test_index
+    
+    @current_test_index.setter
+    def current_test_index(self, index):
+        self._current_test_index = index
+    
+    @property
+    def current_ser_question_index(self):
+        return self._current_ser_question_index
+    
+    @current_ser_question_index.setter
+    def current_ser_question_index(self, index):
+        self._current_ser_question_index = index
+    
+    def incement_ser_question_index(self):
+        self.current_ser_question_index += 1
+
+    def increment_question_index(self):
+        self.current_question_index += 1
+    
+    def increment_test_index(self):
+        self.current_test_index += 1
+        
     def get_next_question(self, task_number, index):
         if task_number == 1:
             return self.task_1_questions[index]

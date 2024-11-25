@@ -10,7 +10,6 @@ import datetime
 import time
 import pyaudio
 import librosa
-import wave
 import signal 
 import json
 import re
@@ -19,17 +18,22 @@ import numpy as np
 import audinterface
 import audeer
 import audonnx
-from subject import Subject
+
+from subject_manager import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer import EmotiBitStreamer
 from ser_manager import SERManager
 from csv_handler import CSVHandler
-import shutil
+from audio_file_manager import AudioFileManager
 
 ##################################################################
 ## Globals 
 ##################################################################
+
+# Initialize the Flask app and pass reference to ser manager singleton
+app = Flask(__name__)
+
 device_index = 0
 RECORDING_FILE = 'tmp/recording.wav'
 AUDIO_SAVE_FOLDER = 'audio_files'
@@ -44,10 +48,14 @@ PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
-subject = Subject() 
+subject_manager = SubjectManager() 
 recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER) 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
+audio_file_manager = AudioFileManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
+
+#TODO: IMPLEMENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ser_manager = SERManager(app)
 
 TASK_QUESTIONS = {}
 MODEL_ROOT = "model"
@@ -58,18 +66,34 @@ DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
 TABLE = DYNAMODB.Table('Users')
 ID_TABLE = DYNAMODB.Table('available_ids')
 
-# Initialize the Flask app and pass reference to ser manager singleton
-app = Flask(__name__)
-ser_manager = SERManager(app)
-
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/baseline_comparison', methods=['POST'])
+def baseline_comparison():
+    global subject_manager
+    try:
+        bio_baseline_data = subject_manager.subject_data.get('Biometric_Baseline', [])
+        bio_data = subject_manager.subject_data.get('Biometric_Data', [])
+
+        keys = ["EDA", "HR", "BI", "HRV"]
+
+        baseline_means = {key: calculate_biometric_mean(bio_baseline_data, key) for key in keys}
+        data_means = {key: calculate_biometric_mean(bio_data, key) for key in keys}
+
+        return jsonify({'baseline_means': baseline_means, 'data_means': data_means})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+    
 @app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index():
     # TODO: implement test manager class and remove global reference
     global current_ser_question_index
     current_ser_question_index = 0
+
+    test_manager.current_question_index = 0
+
     return jsonify({'status': 'SER questions reset'})
 
 @app.route('/start_emotibit_stream', methods=['POST'])
@@ -135,8 +159,8 @@ def process_ser_answer():
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE, subject
-    global current_ser_question_index, recording_manager
+    global RECORDING_FILE, subject_manager
+    global current_ser_question_index, recording_manager, audio_file_manager
 
     recording_manager.stop_recording()
 
@@ -147,12 +171,12 @@ def process_ser_answer():
         emotion = predict_emotion(sig_resampled)
         ts = recording_manager.timestamp
         
-        subject.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion})
+        subject_manager.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion})
         
-        id = subject.subject_data['ID']
+        id = subject_manager.subject_data['ID']
         file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
-        file_name = rename_audio_file(id, "SER_question_", current_ser_question_index)
-        save_audio_file(RECORDING_FILE, file_name, 'audio_files')
+        file_name = audio_file_manager.rename_audio_file(id, "SER_question_", current_ser_question_index)
+        audio_file_manager.save_audio_file(RECORDING_FILE, file_name, 'audio_files')
 
         return jsonify({'status': 'Answer submitted.'})
     
@@ -261,12 +285,12 @@ def submit_answer():
     """
 
     global current_question_index, current_test_number
-    global recording_manager, subject
+    global recording_manager, subject_manager, audio_file_manager
     global TASK_QUESTIONS, RECORDING_FILE
 
     questions = TASK_QUESTIONS.get(current_test_number)
 
-    id = subject.subject_data.get('ID')
+    id = subject_manager.subject_data.get('ID')
 
     file_name = f"ID_{id}_test_{current_test_number}_question_{current_question_index}.wav"
 
@@ -280,13 +304,13 @@ def submit_answer():
             sig, sr = librosa.load(RECORDING_FILE, sr=None)
             resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
             ser = predict_emotion(resampled_sig)
-            save_audio_file(RECORDING_FILE, file_name, "audio_files")
+            audio_file_manager.save_audio_file(RECORDING_FILE, file_name, "audio_files")
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-        subject.subject_data["Test_Transcriptions"].append({'timestamp': ts, 'transcript': transcription, 'emotion':ser})
+        subject_manager.subject_data["Test_Transcriptions"].append({'timestamp': ts, 'transcript': transcription, 'emotion':ser})
         
         if transcription.startswith("Google Speech Recognition could not understand"):
             return jsonify({'status': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
@@ -324,7 +348,7 @@ def shutdown():
 
 @app.route('/submit_pss4', methods=['POST'])
 def submit_pss4():
-    global subject
+    global subject_manager
     try:
         pss4 = {
             'response_1': request.form.get('controlFeeling1'),
@@ -334,7 +358,7 @@ def submit_pss4():
             'response_4': request.form.get('controlFeeling4')
         }
 
-        subject.subject_data['pss4_data'] = pss4
+        subject_manager.subject_data['pss4_data'] = pss4
 
         return jsonify({'message': 'PSS-4 submitted successfully.'}), 200
     
@@ -343,7 +367,7 @@ def submit_pss4():
 
 @app.route('/submit_background', methods=['POST'])
 def submit_background():
-    global subject
+    global subject_manager
     try:
         background_data = {
             'rush_caffeine': request.form.get('rush_caffeine'),
@@ -359,7 +383,7 @@ def submit_background():
             'glasses': request.form.get('glasses'),
         }
 
-        subject.subject_data['background_data'] = background_data 
+        subject_manager.subject_data['background_data'] = background_data 
 
         return jsonify({'message': 'Background data submitted successfully.'}), 200
     
@@ -368,7 +392,7 @@ def submit_background():
 
 @app.route('/submit_exit', methods=['POST'])
 def submit_exit():
-    global subject
+    global subject_manager
     try:
         exit_survey_data = {
             'main_purpose': request.form.get('purpose'),
@@ -383,7 +407,7 @@ def submit_exit():
             'feedback': request.form.get('feedback')
         }
 
-        subject.subject_data['exit_survey_data'] = exit_survey_data 
+        subject_manager.subject_data['exit_survey_data'] = exit_survey_data 
 
         return jsonify({'message': 'Exit survey data submitted successfully.'}), 200
     
@@ -392,7 +416,7 @@ def submit_exit():
 
 @app.route('/submit_demographics', methods=['POST'])
 def submit_demographics():
-    global subject
+    global subject_manager
     try:
         demographics_data = {
             'age': request.form.get('age'),
@@ -414,7 +438,7 @@ def submit_demographics():
             'comfort_with_vr': request.form.get('comfort_with_vr'),
         }
 
-        subject.subject_data['demographics_data'] = demographics_data
+        subject_manager.subject_data['demographics_data'] = demographics_data
 
         return jsonify({'message': 'Demographics data submitted successfully.'}), 200
     
@@ -423,7 +447,7 @@ def submit_demographics():
 
 @app.route('/submit_student_data', methods=['POST'])
 def submit_student_data():
-    global subject
+    global subject_manager
 
     try:
         student_data = {
@@ -431,7 +455,7 @@ def submit_student_data():
             'class': request.form.get('class')
         }
 
-        subject.subject_data['student_data'] = student_data
+        subject_manager.subject_data['student_data'] = student_data
 
         return jsonify({'message': 'Student data submitted successfully.'}), 200
     
@@ -440,10 +464,10 @@ def submit_student_data():
 
 @app.route('/upload_subject_data', methods=['POST'])    
 def upload_subject_data():
-    global subject, csv_handler
+    global subject_manager, csv_handler
 
     try:
-        csv_handler = CSVHandler(subject)
+        csv_handler = CSVHandler(subject_manager)
         csv_handler.create_csv()
 
     except Exception as e:
@@ -451,7 +475,7 @@ def upload_subject_data():
 
 @app.route('/submit', methods=['POST'])    
 def submit():
-    global subject
+    global subject_manager
     
     try:
         if request.method == 'POST':
@@ -464,10 +488,10 @@ def submit():
             # at the end of the test session
             unique_id = get_available_id()
             
-            subject.subject_data['Name'] = participant_name
-            subject.subject_data['Email'] = email
-            subject.subject_data['ID'] = unique_id
-            subject.subject_data['Date'] = current_date
+            subject_manager.subject_data['Name'] = participant_name
+            subject_manager.subject_data['Email'] = email
+            subject_manager.subject_data['ID'] = unique_id
+            subject_manager.subject_data['Date'] = current_date
 
             return jsonify({'message': 'User information submitted.'}), 200
         
@@ -530,7 +554,7 @@ def record_vr_task():
                    with a 400 HTTP status code.
     """
 
-    global recording_manager, ser_manager, subject
+    global recording_manager, ser_manager, subject_manager, audio_file_manager
     global RECORDING_FILE
 
     try:
@@ -546,7 +570,7 @@ def record_vr_task():
         elif action == 'stop':
             recording_manager.stop_recording()
             
-            audio_segments = split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
+            audio_segments = audio_file_manager.split_wav_to_segments(task_id, RECORDING_FILE, 20, "tmp/")
 
             # Extract the index number from the filename to enforce sorting order
             audio_segments = sorted(audio_segments, key=lambda x: 
@@ -571,12 +595,12 @@ def record_vr_task():
                     for ts, tr, ser in zip(timestamps, transcriptions, ser_predictions)]
             
             if task_id == 'taskID1':
-                subject.subject_data["VR_Transcriptions_1"] = vr_data
+                subject_manager.subject_data["VR_Transcriptions_1"] = vr_data
                 
             elif task_id == 'taskID2':
-                subject.subject_data["VR_Transcriptions_2"] = vr_data
+                subject_manager.subject_data["VR_Transcriptions_2"] = vr_data
 
-            backup_tmp_audio_files()
+            audio_file_manager.backup_tmp_audio_files()
 
             return jsonify({'message': 'Audio successfully processed.', 'task_id': task_id}), 200
         else:
@@ -642,6 +666,18 @@ def exit_survey():
 ##################################################################
 ## Helper Functions 
 ##################################################################
+def calculate_biometric_mean(data_list, key):
+    global subject
+    try:
+        values = [value for record in data_list for value in record[key]]
+        
+        if not values:
+            return None
+        return sum(value[1] for value in values) / len(values)
+    
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return None
 
 # Emotibit #######################################################
 def start_emotibit():
@@ -728,135 +764,6 @@ def prime_ser_task():
         return ser_questions
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-
-##################################################################
-## Audio 
-##################################################################
-def split_wav_to_segments(task_id, input_wav, segment_duration=20, output_folder="tmp/"):
-    """
-    Splits a WAV file into 20-second segments and saves each segment in the specified output folder.
-
-    Args:
-    - input_wav (str): Path to the input WAV file.
-    - segment_duration (int): Duration of each segment in seconds. Default is 20 seconds.
-    - output_folder (str): Folder to save the output segments. Default is 'tmp'.
-
-    Returns:
-    - List of paths to the saved segment files.
-    """
-    # Ensure the output folder exists
-    if not output_folder or not isinstance(output_folder, str):
-        raise ValueError("Invalid output folder path.")
-    
-    os.makedirs(output_folder, exist_ok=True)
-    
-    segment_files = []
-    try:
-        with wave.open(input_wav, 'rb') as wf:
-            sample_rate = wf.getframerate()
-            channels = wf.getnchannels()
-            sample_width = wf.getsampwidth()
-            total_frames = wf.getnframes()
-            duration = total_frames / sample_rate
-            
-            print(f"Total frames: {total_frames}, Sample rate: {sample_rate}, Duration: {duration:.2f} seconds")
-
-            # Calculate frames per segment
-            segment_frames = int(segment_duration * sample_rate)
-            total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
-            
-            for i in range(total_segments):
-                wf.setpos(i * segment_frames)
-            
-                frames = wf.readframes(segment_frames)
-
-                segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
-                print(f"Creating segment file: {segment_file}")  # Debugging statement
-                
-                with wave.open(segment_file, 'wb') as segment_wf:
-                    segment_wf.setnchannels(channels)
-                    segment_wf.setsampwidth(sample_width)
-                    segment_wf.setframerate(sample_rate)
-                    segment_wf.writeframes(frames)
-                
-                segment_files.append(segment_file)
-                print(f"Segment {i} saved as {segment_file}")
-                
-        return segment_files
-    except Exception as e:
-        print(f"An error occurred while splitting the WAV file: {str(e)}")
-    
-    return segment_files
-def get_audio_duration(file_path):
-    """
-    Calculate the duration of an audio file.
-    This function opens an audio file specified by the file_path, reads the number of frames and the frame rate,
-    and calculates the duration of the audio in seconds.
-    Parameter:
-    - file_path (str): The path/filename of the audio file.
-    Returns:
-    - float: The duration of the audio file in seconds.
-    """
-
-    with wave.open(file_path, 'rb') as wf:
-        frames = wf.getnframes()          
-        rate = wf.getframerate()          
-        duration = frames / float(rate)
-
-    return duration
-
-def rename_audio_file(id, name_param1, name_param2):
-    filename = f"ID_{id}_{name_param1}_{name_param2}.wav"
-
-    return filename
-
-def backup_tmp_audio_files():
-    # Copy contents of tmp folder to audio_files folder
-    tmp_folder = "tmp/"
-    audio_files_folder = "audio_files/"
-    for file_name in os.listdir(tmp_folder):
-        full_file_name = os.path.join(tmp_folder, file_name)
-        if os.path.isfile(full_file_name):
-            shutil.copy(full_file_name, audio_files_folder)
-    
-    # Delete contents of tmp folder
-    for file_name in os.listdir(tmp_folder):
-        full_file_name = os.path.join(tmp_folder, file_name)
-        if os.path.isfile(full_file_name):
-            os.remove(full_file_name)
-
-def save_audio_file(old_path_filename, new_filename, save_folder):
-    try:
-        os.makedirs(save_folder, exist_ok=True)
-        new_filename = os.path.join(save_folder, new_filename)
-        #TODO: change function so that source folder and filename are separate. Get rid of global filename.
-        shutil.copy(old_path_filename, new_filename)
-
-        print(f"File '{old_path_filename}' saved successfully.")
-    except PermissionError:
-        print(f"Permission denied: Unable to save file '{old_path_filename}'. Check file permissions.")
-    except FileNotFoundError:
-        print(f"File not found: '{old_path_filename}' might have already been deleted.")
-    except Exception as e:
-        print(f"An error occurred while trying to save the file '{old_path_filename}': {str(e)}")
-
-def delete_recording_file(file_path):
-    try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"File '{file_path}' deleted successfully.")
-        else:
-            print(f"File '{file_path}' does not exist.")
-    except PermissionError:
-        print(f"Permission denied: Unable to delete file '{file_path}'. Check file permissions.")
-    except FileNotFoundError:
-        print(f"File not found: '{file_path}' might have already been deleted.")
-    except Exception as e:
-        print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
-
-def normalize_audio(audio): # Necessary for SER task
-    audio_array = audio / np.max(np.abs(audio))
-    return audio_array
 
 def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/"):
     """
@@ -996,8 +903,6 @@ if __name__ == '__main__':
     # AUDONNX_MODEL = ser_manager.set_aud_mode()
 
     CLF = joblib.load('classifier/emotion_classifier.joblib')
-
-    
 
     # Debug must be set to false when Emotibit streaming code is active
     app.run(port=PORT_NUMBER,debug=False)
