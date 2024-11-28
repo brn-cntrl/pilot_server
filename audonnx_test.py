@@ -1,12 +1,15 @@
 import audonnx
 import audinterface
-import audeer
+# import audeer
 import numpy as np
 import joblib
-import os
+# import os
 import pandas as pd
-import wave
+# import wave
 import librosa
+from scipy.special import softmax
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import classification_report
 
 # # download the model from the notebook
 # model_root = 'model'
@@ -72,7 +75,19 @@ AUDONNX_MODEL = audonnx.load(MODEL_ROOT)
 #     except Exception as e:
 #         print("Couldn't locate an audio file.")
 #         return None
-    
+
+def get_confidence_from_decision_function(classifier, features):
+    """
+    Calculates confidence levels using the decision_function() of the classifier.
+    """
+    if hasattr(classifier, 'decision_function'):
+        decision_scores = classifier.decision_function(features)
+        if decision_scores.ndim == 1:  # Binary classification
+            decision_scores = np.vstack([decision_scores, -decision_scores]).T
+        probabilities = softmax(decision_scores, axis=1)
+        return probabilities
+    return None  # If decision_function is not available
+ 
 def predict_emotion(audio_chunk):
     """
     Predicts the emotion from an audio chunk using a pre-trained classifier and an ONNX model.
@@ -88,7 +103,6 @@ def predict_emotion(audio_chunk):
         - The function extracts hidden states from the audio chunk using the ONNX model and then uses these features to predict the emotion using the classifier.
     """
 
-    import pandas as pd
     global CLF, AUDONNX_MODEL
 
     #################### ONLY FOR TESTING #######################
@@ -125,12 +139,30 @@ def predict_emotion(audio_chunk):
     hidden_states_df.columns = [f'hidden_states-{i}' for i in range(1024)]
 
     prediction = CLF.predict(hidden_states_df)
+    # Use decision_function or predict_proba for confidence
+    if hasattr(CLF, 'decision_function'):
+        decision_scores = CLF.decision_function(hidden_states_df)
+        print("Decision scores:\n", decision_scores)
+        
+        probabilities = softmax(decision_scores, axis=1)
+        print("Probabilities:\n", probabilities)
+        print("Sum of probabilities (should be 1):", probabilities.sum(axis=1))
+        
+        confidence = np.max(probabilities)
+    elif hasattr(CLF, 'predict_proba'):
+        probabilities = CLF.predict_proba(hidden_states_df)
+        print("Probabilities:\n", probabilities)
+        confidence = np.max(probabilities)
+    else:
+        confidence = None
+        print("Warning: Classifier does not support confidence estimation.")
 
-    return prediction[0]
+    return prediction[0], confidence
 
 if __name__ == "__main__":  
     signal, orig_sr = librosa.load(RECORDING_FILE, sr=None)
     print(f"Original sampling rate: {orig_sr} Hz")
     signal_resampled = librosa.resample(signal, orig_sr=orig_sr, target_sr=16000)
-    prediction = predict_emotion(signal_resampled)
-    print(f"Predicted emotion: {prediction}")
+    emotion, confidence = predict_emotion(signal_resampled)
+    print(f"Predicted emotion: {emotion}")
+    print(f"Confidence level: {confidence}")
