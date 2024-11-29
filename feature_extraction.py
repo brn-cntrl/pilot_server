@@ -1,84 +1,75 @@
-import librosa
-import numpy as np
+import os
+import csv
+import subprocess
 
-def features(X, sample_rate: float) -> np.ndarray:
-    stft = np.abs(librosa.stft(X))
+FEATURE_NUM = {
+    'IS09_emotion': 384,
+    'IS10_paraling': 1582,
+    'IS11_speaker_state': 4368,
+    'IS12_speaker_trait': 6125,
+    'IS13_ComParE': 6373,
+    'ComParE_2016': 6373
+}
 
-    # Pitch features
-    pitches, magnitudes = librosa.piptrack(y=X, sr=sample_rate, S=stft, fmin=70, fmax=400)
-    pitch = []
-    for i in range(magnitudes.shape[1]):
-        index = magnitudes[:, i].argmax()
-        pitch.append(pitches[index, i])
-    pitch_tuning_offset = librosa.pitch_tuning(pitches)
-    pitchmean = np.mean(pitch)
-    pitchstd = np.std(pitch)
-    pitchmax = np.max(pitch)
-    pitchmin = np.min(pitch)
+def preprocess_audio(filepath: str, target_path: str):
+    command = [
+        "ffmpeg", "-i", filepath,
+        "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", target_path, "-y"
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    print("FFmpeg STDOUT:", result.stdout)
+    print("FFmpeg STDERR:", result.stderr)
+    if result.returncode != 0:
+        raise ValueError(f"Audio preprocessing failed: {result.stderr}")
 
-    # Spectral centroid
-    cent = librosa.feature.spectral_centroid(y=X, sr=sample_rate)
-    cent = cent / np.sum(cent)
-    meancent = np.mean(cent)
-    stdcent = np.std(cent)
-    maxcent = np.max(cent)
-
-    # Spectral flatness
-    flatness = np.mean(librosa.feature.spectral_flatness(y=X))
-
-    # MFCC features
-    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=50).T, axis=0)
-    mfccsstd = np.std(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=50).T, axis=0)
-    mfccmax = np.max(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=50).T, axis=0)
-
-    # Chroma features
-    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T, axis=0)
-
-    # Mel spectrogram
-    mel = np.mean(librosa.feature.melspectrogram(y=X, sr=sample_rate).T, axis=0)
-
-    # Spectral contrast
-    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T, axis=0)
-
-    # Zero crossing rate
-    zerocr = np.mean(librosa.feature.zero_crossing_rate(X))
-
-    # Magnitude and RMS energy
-    S, phase = librosa.magphase(stft)
-    meanMagnitude = np.mean(S)
-    stdMagnitude = np.std(S)
-    maxMagnitude = np.max(S)
-
-    rmse = librosa.feature.rms(S=S)[0]
-    meanrms = np.mean(rmse)
-    stdrms = np.std(rmse)
-    maxrms = np.max(rmse)
-
-    # Concatenate features into a single array
-    ext_features = np.array([
-        flatness, zerocr, meanMagnitude, maxMagnitude, meancent, stdcent,
-        maxcent, stdMagnitude, pitchmean, pitchmax, pitchstd,
-        pitch_tuning_offset, meanrms, maxrms, stdrms
-    ])
-
-    ext_features = np.concatenate((ext_features, mfccs, mfccsstd, mfccmax, chroma, mel, contrast))
-
-    return ext_features
-
-def extract_features(file: str, pad: bool = False) -> np.ndarray:
+def get_feature_opensmile(config, filepath: str) -> list:
     """
-    Extract features from an audio file.
-    
+    Extract features using OpenSMILE and parse the last row of numerical data from the ARFF output.
+
     Args:
-        file (str): Path to the audio file.
-        pad (bool): Whether to pad the audio signal to a fixed length.
-        
+        config: Configuration object containing paths to OpenSMILE, configuration, and feature folder.
+        filepath (str): Path to the input .wav file.
+
     Returns:
-        np.ndarray: Extracted feature vector.
+        list: Extracted numerical features.
     """
-    X, sample_rate = librosa.load(file, sr=None)
-    max_ = X.shape[0] / sample_rate
-    if pad:
-        length = (max_ * sample_rate) - X.shape[0]
-        X = np.pad(X, (0, int(length)), 'constant')
-    return features(X, sample_rate)
+    # Use the raw chunk path for simplicity
+    preprocessed_path = filepath  
+
+    # Path for storing extracted features
+    single_feat_path = os.path.join(config.feature_folder, f"single_feature_{os.path.basename(filepath)}.csv")
+    os.makedirs(config.feature_folder, exist_ok=True)
+
+    # Ensure OpenSMILE configuration file exists
+    opensmile_config_path = config.opensmile_config
+    if not os.path.exists(opensmile_config_path):
+        raise FileNotFoundError(f"Configuration file not found: {opensmile_config_path}")
+
+    # OpenSMILE command
+    cmd = [
+        config.opensmile_path,
+        "-C", opensmile_config_path,
+        "-I", preprocessed_path,
+        "-O", single_feat_path,
+        "-appendarff", "0"
+    ]
+    print("Executing OpenSMILE command:", " ".join(cmd))
+
+    # Run the OpenSMILE command
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        print(f"OpenSMILE STDERR: {result.stderr.decode()}")
+        raise RuntimeError(f"OpenSMILE execution failed for file {filepath}")
+
+    # Ensure the feature file exists
+    if not os.path.exists(single_feat_path):
+        raise FileNotFoundError(f"{single_feat_path} not found. OpenSMILE execution failed.")
+
+    # Read and parse the ARFF file
+    with open(single_feat_path, 'r') as csv_file:
+            reader = csv.reader(csv_file)
+            rows = list(reader)
+            print(f"Feature file content (first 5 lines): {rows[:5]}")
+            last_line = rows[-1]
+            return last_line[1: FEATURE_NUM[config.opensmile_config] + 1]
+
