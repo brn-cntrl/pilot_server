@@ -8,18 +8,18 @@ import os
 import numpy as np
 
 class SERManager:
-    def __init__(self, app):
+    def __init__(self, app) -> None:
         self.audonnx_model = None
         self.MODEL_ROOT = None
         self.CLF = joblib.load('classifier/emotion_classifier.joblib')
         self.cache_root = None
         self.app = app
 
-    def _is_folder_empty(self, folder_name):
+    def _is_folder_empty(self, folder_name) -> bool:
         folder_path = os.path.join(self.app.root_path, folder_name)
         return not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0   
     
-    def set_aud_model(self):
+    def set_aud_model(self) -> audonnx.Model:
         if self._is_folder_empty('model'):
             url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
             self.cache_root = audeer.mkdir('cache')
@@ -34,7 +34,7 @@ class SERManager:
 
         return model
     
-    def predict_emotion(self, audio_chunk):
+    def predict_emotion(self, audio_chunk) -> str:
         """
         Predicts the emotion from a given audio chunk using a pre-trained AUDONNX model.
         Parameters:

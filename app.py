@@ -795,7 +795,7 @@ def transcribe_audio(file) -> str:
 ##################################################################
 
 #TODO: Delete after SER class is finished
-def set_aud_model(app):
+def set_aud_model(app) -> audonnx.Model:
     if is_folder_empty(app, 'model'):
         url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
         cache_root = audeer.mkdir('cache')

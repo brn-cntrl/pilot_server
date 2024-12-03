@@ -58,8 +58,8 @@ class CSVHandler:
             'PSS4_Natural_Elements', 'PSS4_Interior_Preference','PSS4_Instructions', 'PSS4_Expectations', 'PSS4_Feedback', 
             'Background_Rush_Caffeine','Background_Caffeine_Details', 'Background_Caffeine_Time', 'Background_Thirst_Hunger', 
             'Background_Heart_Rate', 'Background_VR_Experience', 'Background_VR_Experience_Description', 'Background_Balance_Issues', 
-            'Background_Motion_Sickness', 'Background_Neurological_Condition', 'Background_Visual_Impairments', 'Background_Scars_Tattoo',
-            'Background_VR_Conditions', 'Background_VR_Condition_Description', 'Background_Glasses', 
+            'Background_Motion_Sickness', 'Background_Neurological_Condition', 'Background_Visual_Impairments', 'Background_Neurological_Vestibular', 
+            'Background_Movement_Issues', 'Background_Mobility_Issues', 'Background_Scars_Tattoo','Background_Glasses', 
             'Demographics_Age', 'Demographics_Gender', 'Demographics_Education', 'Demographics_Childhood_Setting', 
             'Demographics_Current_Setting', 'Demographics_Nature', 'Demographics_Green_Spaces', 'Demographics_Pref_Natural',
             'Demographics_Env_Prefs', 'Demographics_Pref_Interior', 'Demographics_Work_Study_Env', 'Demographics_Current_Mood',
@@ -156,17 +156,24 @@ class CSVHandler:
                         row['Background_Caffeine_Time'] = self.subject_data['background_data']['caffeine_time']
                         row['Background_Thirst_Hunger'] = self.subject_data['background_data']['thirst_hunger']
                         row['Background_Heart_Rate'] = self.subject_data['background_data']['heart_rate']
+                        row['Background_VR_Experience'] = self.subject_data['background_data']['vr_experience']
+                        row['Background_VR_Experience_Description'] = self.subject_data['background_data']['vr_experience_description']
+                        row['Background_Balance_Issues'] = self.subject_data['background_data']['balance_issues']
+                        row['Background_Motion_Sickness'] = self.subject_data['background_data']['motion_sickness']
                         row['Background_Neurological_Condition'] = self.subject_data['background_data']['neurological_conditions']
-                        row['Background_Neurological_Description'] = self.subject_data['background_data']['neurological_description']
+                        row['Background_Visual_Impairments'] = self.subject_data['background_data']['visual_impairments']
+                        row['Background_Neurological_Vestibular'] = self.subject_data['background_data']['neurological_vestibular']
+                        row['Background_Movement_Issues'] = self.subject_data['background_data']['movement_issues']
+                        row['Background_Mobility_Issues'] = self.subject_data['background_data']['mobility_issues']
                         row['Background_Scars_Tattoo'] = self.subject_data['background_data']['scars_tattoos']
-                        row['Background_VR_Conditions'] = self.subject_data['background_data']['vr_conditions']
-                        row['Background_VR_Condition_Description'] = self.subject_data['background_data']['vr_condition_description']
                         row['Background_Glasses'] = self.subject_data['background_data']['glasses']
                     else:
                         row['Background_Rush_Caffeine'] = row['Background_Caffeine_Details'] = row['Background_Caffeine_Time'] = ''
-                        row['Background_Thirst_Hunger'] = row['Background_Heart_Rate'] = row['Background_Neurological_Condition'] = ''
-                        row['Background_Neurological_Description'] = row['Background_Scars_Tattoo'] = row['Background_VR_Conditions'] = ''
-                        row['Background_VR_Condition_Description'] = row['Background_Glasses'] = ''
+                        row['Background_Thirst_Hunger'] = row['Background_Heart_Rate'] = row['Background_VR_Experience'] = ''
+                        row['Background_VR_Experience_Description'] = row['Background_Balance_Issues'] = row['Background_Motion_Sickness'] = ''
+                        row['Background_Neurological_Condition'] = row['Background_Visual_Impairments'] = row['Background_Neurological_Vestibular'] = ''
+                        row['Background_Movement_Issues'] = row['Background_Mobility_Issues'] = row['Background_Scars_Tattoo'] = ''
+                        row['Background_Glasses'] = ''
 
                     if i == 0 and self.subject_data['demographics_data']:
                         row['Demographics_Age'] = self.subject_data['demographics_data']['age']
