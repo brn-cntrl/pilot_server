@@ -121,9 +121,9 @@ def get_biometric_baseline():
 
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question():
-    global current_ser_question_index, ser_questions
+    global current_ser_question_index, SER_QUESTIONS
     global recording_manager
-    questions = ser_questions.get('questions', [])
+    questions = SER_QUESTIONS.get('questions', [])
     
     try:
         if 0 <= current_ser_question_index < len(questions):
@@ -159,7 +159,7 @@ def process_ser_answer():
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE, subject_manager
+    global RECORDING_FILE, subject_manager, ser_manager
     global current_ser_question_index, recording_manager, audio_file_manager
 
     recording_manager.stop_recording()
@@ -168,7 +168,8 @@ def process_ser_answer():
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
 
-        emotion = predict_emotion(sig_resampled)
+        # emotion = predict_emotion(sig_resampled)
+        emotion = ser_manager.predict_emotion(sig_resampled)
         ts = recording_manager.timestamp
         
         subject_manager.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion})
@@ -285,7 +286,7 @@ def submit_answer():
     """
 
     global current_question_index, current_test_number
-    global recording_manager, subject_manager, audio_file_manager
+    global recording_manager, subject_manager, audio_file_manager, ser_manager
     global TASK_QUESTIONS, RECORDING_FILE
 
     questions = TASK_QUESTIONS.get(current_test_number)
@@ -303,7 +304,8 @@ def submit_answer():
             # Save permanent copies of audio
             sig, sr = librosa.load(RECORDING_FILE, sr=None)
             resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-            ser = predict_emotion(resampled_sig)
+            # ser = predict_emotion(resampled_sig)
+            ser = ser_manager.predict_emotion(resampled_sig)
             audio_file_manager.save_audio_file(RECORDING_FILE, file_name, "audio_files")
 
         except Exception as e:
@@ -375,11 +377,16 @@ def submit_background():
             'caffeine_time': request.form.get('caffeine_time'),
             'thirst_hunger': request.form.get('thirst_hunger'),
             'heart_rate': request.form.get('heart_rate'),
+            'vr_experience': request.form.get('vr_experience'),
+            'vr_experience_description': request.form.get('vr_experience_description'),
+            'balance_issues': request.form.get('balance_issues'),
+            'motion_sickness': request.form.get('motion_sickness'),
             'neurological_conditions': request.form.get('neurological_conditions'),
-            'neurological_description': request.form.get('neurological_description'),
+            'visual_impairments': request.form.get('visual_impairments'),
+            'neurological_vestibular': request.form.get('neurological_vestibular'),
+            'movement_issues': request.form.get('movement_issues'),
+            'mobility_issues': request.form.get('mobility_issues'),
             'scars_tattoos': request.form.get('scars_tattoos'),
-            'vr_conditions': request.form.get('vr_conditions'),
-            'vr_condition_description': request.form.get('vr_condition_description'),
             'glasses': request.form.get('glasses'),
         }
 
@@ -588,7 +595,8 @@ def record_vr_task():
                 # SER
                 sig, sr = librosa.load(segment_file, sr=None)
                 resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-                emotion = predict_emotion(resampled_sig)
+                # emotion = predict_emotion(resampled_sig)
+                emotion = ser_manager.predict_emotion(resampled_sig)
                 ser_predictions.append(emotion)
 
             vr_data = [{'timestamp': ts, 'transcription': tr, 'SER': ser} 
@@ -741,30 +749,6 @@ def shutdown_server():
     pid = os.getpid()
     os.kill(pid, signal.SIGINT)
 
-
-def prime_test():
-    global TASK_QUESTIONS_1, TASK_QUESTIONS_2, TASK_QUESTIONS
-    with open('task_1_data.json', 'r') as f:
-        TASK_QUESTIONS_1 = json.load(f)
-        # print(TASK_QUESTIONS_1)
-    with open('task_2_data.json', 'r') as f:
-        TASK_QUESTIONS_2 = json.load(f)
-        # print(TASK_QUESTIONS_2)
-    TASK_QUESTIONS = {
-        1: TASK_QUESTIONS_1,
-        2: TASK_QUESTIONS_2
-    }
-
-# TODO: Delete this function once test_manager class is finished.
-def prime_ser_task():
-    ser_questions = None
-    try:
-        with open('SER_questions.json', 'r') as f:
-            ser_questions = json.load(f)
-        return ser_questions
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
 def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/"):
     """
     Generates a list of ISO 8601 formatted start timestamps for each audio segment file
@@ -892,15 +876,10 @@ if __name__ == '__main__':
     # TODO: replace this with a call to the AWS server to retrieve the list of available IDs
     initialize_ids()
 
-    # Load in the json data
-    prime_test()
-    
-    # Set up SER
-    ser_questions = prime_ser_task()
-    AUDONNX_MODEL = set_aud_model(app)
+    TASK_QUESTIONS_1 = test_manager.get_task_questions()
+    SER_QUESTIONS = test_manager.ser_questions
 
-    # TODO: Uncomment after ser_manager class is finished and delete global model reference
-    # AUDONNX_MODEL = ser_manager.set_aud_mode()
+    AUDONNX_MODEL = ser_manager.set_aud_model()
 
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 

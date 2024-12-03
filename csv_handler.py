@@ -1,5 +1,5 @@
 import csv
-from subject_manager import Subject
+from subject_manager import SubjectManager
 from aws_handler import AWSHandler
 from datetime import datetime
 

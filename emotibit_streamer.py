@@ -99,16 +99,9 @@ class EmotiBitStreamer:
 
         rmssd_values = []
         for i in range(1, len(intervals)):
-            diff = intervals[i] - intervals[i - 1]
-            rmssd = np.sqrt(diff ** 2)
-            rmssd_values.append((timestamps[i].isoformat(), rmssd))
+            rmssd_values.append((timestamps[i].isoformat(), np.sqrt((intervals[i] - intervals[i - 1]) ** 2)))
 
         return rmssd_values
-    
-    # def calculate_hrv_from_hr(self, hr_values):
-    #     # Convert HR to IBI
-    #     ibi_values = 60000 / np.array(hr_values)  # Converts HR (bpm) to IBI (ms)
-    #     return self.calculate_hrv_from_bi(ibi_values)  # Use BI-based HRV calculation
     
     def print_osc_message(address, *args):
         """This function is for debugging the incoming messages"""

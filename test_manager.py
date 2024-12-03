@@ -7,27 +7,51 @@ class TestManager:
             with open('SER_questions.json') as f:
                 self.questions = json.load(f)
         except FileNotFoundError:
-            self.ser_questions = {}
+            self._ser_questions = {}
             print("SER_questions.json not found")
 
         try:
             with open('task_1_data.json') as f:
-                self.task_1_questions = json.load(f)
+                self._task_1_questions = json.load(f)
         except FileNotFoundError:
-            self.task_1_questions = {}
+            self._task_1_questions = {}
             print("task_1_data.json not found")
 
         try:
             with open('task_2_data.json') as f:
-                self.task_2_questions = json.load(f)
+                self._task_2_questions = json.load(f)
         except FileNotFoundError:
-            self.task_2_questions = {}
+            self._task_2_questions = {}
             print("task_2_data.json not found")
 
         self._current_question_index = 0  
         self._current_test_index = 0
         self._current_ser_question_index = 0
     
+    @property
+    def ser_questions(self):
+        return self._ser_questions
+    
+    @ser_questions.setter
+    def ser_questions(self, ser_questions):
+        self._ser_questions = ser_questions
+
+    @property
+    def task_1_questions(self):
+        return self._task_1_questions
+    
+    @task_1_questions.setter
+    def task_1_questions(self, task_1_questions):
+        self._task_1_questions = task_1_questions
+
+    @property
+    def task_2_questions(self):
+        return self._task_2_questions
+    
+    @task_2_questions.setter
+    def task_2_questions(self, task_2_questions):
+        self._task_2_questions = task_2_questions
+
     @property
     def current_question_index(self):
         return self._current_question_index
@@ -52,7 +76,10 @@ class TestManager:
     def current_ser_question_index(self, index):
         self._current_ser_question_index = index
     
-    def incement_ser_question_index(self):
+    def get_task_questions(self):
+        return {1: self.task_1_questions, 2: self.task_2_questions}
+    
+    def increment_ser_question_index(self):
         self.current_ser_question_index += 1
 
     def increment_question_index(self):
@@ -60,7 +87,7 @@ class TestManager:
     
     def increment_test_index(self):
         self.current_test_index += 1
-        
+
     def get_next_question(self, task_number, index):
         if task_number == 1:
             return self.task_1_questions[index]

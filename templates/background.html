@@ -66,24 +66,98 @@
             <p id="elevated_message" style="display: none">If you wish to continue with the experiment, please sit here for a few minutes to enter a more relaxed state.</p>
             <label>
                 <input type="radio" name="heart_rate" value="No" required> No
-            </label>
-
-            <h3>Do you have any underlying neurological or neuropsychological conditions?<span class="required">*</span></h3>
-            <label>
-                <input type="radio" name="neurological_conditions" value="Yes" id="neuro_yes" required>Yes
-            </label><br>
-            <p id="neuro_message" style="display: none">For your safety, we cannot include you in this study. Thank you for your understanding</p>
-            <label>
-                <input type="radio" name="neurological_conditions" value="No" id="neuro_no" required>No
             </label><br><br>
-            <label for="neurological_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
-            <select id="neurological_description" name="neurological_description" disabled>
-                <option value="" disabled selected>Select your condition</option>
-                <option value="Condition1">Condition 1</option>
-                <option value="Condition2">Condition 2</option>
-                <option value="Condition3">Condition 3</option>
-            </select><br><br>
 
+            <h3>Have you used VR before?</h3>
+            <label>
+                <input type="radio" name="vr_experience" value="Yes" id="use_vr_yes" required> Yes
+            </label><br>
+            <div id="experienceQuestion" style="display:none;">
+                <h3>How was your experience?</h3>
+                <label>
+                     <select id="experienceDropdown" onchange="handleDropdownChange()" name="vr_experience_description">
+                         <option value="" disabled selected>Select an option</option>
+                         <option value="No_side_effects">No physical side effects</option>
+                         <option value="Side_effects">Some physical side effects (e.g., dizziness, nausea, or other discomfort)</option>
+                     </select>
+                </label><br>
+                <p id="vrMessage" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p><br>
+             </div>
+             
+            <label>
+                <input type="radio" name="vr_experience" value="No" required> No
+            </label><br><br>
+
+            <h3>Have you ever had any issues with your balance?</h3>
+            <label>
+                <input type="radio" name="balance_issues" value="Never" required> Never
+            </label><br>
+            <label>
+                <input type="radio" name="balance_issues" value="Rarely" required> Rarely (Once or twice)
+            </label><br>
+            <label>
+                <input type="radio" name="balance_issues" value="Sometimes" id="balance_yes" required> Sometimes / Often
+            </label><br>
+            <p id="balanceMessage" style="display: none;">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+            
+            <h3>Have you ever experienced motion sickness?</h3>
+            <label>
+                <input type="radio" name="motion_sickness" value="Never" required> Never
+            </label><br>
+            <label>
+                <input type="radio" name="motion_sickness" value="Rarely" required> Rarely (Once or twice)
+            </label><br>
+            <label>
+                <input type="radio" name="motion_sickness" value="Sometimes" id="motion_yes" required> Sometimes / Often
+            </label><br>
+            <p id="sicknessMessage" style="display: none;">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+        
+            <h3>Have you been diagnosed with any medical conditions that will be affected by flashing light or any sort of visual effects such as migraines, epilepsy, recurrent seizures, concussion, head trauma, etc?</h3>
+            <label>
+                <input type="radio" name="neurological_conditions" value="Yes" id="neuro_no" required> No
+            </label><br>
+            <label>
+                <input type="radio" name="neurological_conditions" value="No" id="neuro_yes" required> Yes
+            </label><br>
+            <p id="neuro_message" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+           
+            <h3>Have you been diagnosed with any uncorrected visual impairments such as partial blindness, color blindness, blurred vision, stereoblindness etc? These do not include issues that are corrected by wearing glasses, lenses, etc.
+            </h3>
+            <label>
+                <input type="radio" name="visual_impairments" value="No" required> No
+            </label><br>
+            <label>
+                <input type="radio" name="visual_impairments" value="Yes" id="visual_yes" required> Yes
+            </label><br>
+            <p id="visual_message" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+
+            <h3>Have you ever been diagnosed with any neurological/vestibular issues that affect your balance?</h3>
+            <label>
+                <input type="radio" name="neurological_vestibular" value="No" required> No
+            </label><br>
+            <label>
+                <input type="radio" name="neurological_vestibular" value="Yes" id="vestibular_yes" required> Yes
+            </label><br>
+            <p id="neuro_vestibular_message" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+           
+            <h3>Do you have any issues with body movements, head movements, and/or hand and finger movements (such as grabbing objects, lifting arms, holding objects, etc.)?</h3>
+            <label>
+                <input type="radio" name="movement_issues" value="No" required> No
+            </label><br>
+            <label>
+                <input type="radio" name="movement_issues" value="Yes" id="movement_yes" required> Yes
+            </label><br>
+            <p id="movement_message" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+
+            <h3>Do you have any issues with physical mobility and/or the ability to walk?</h3>
+            <label>
+                <input type="radio" name="mobility_issues" value="No" required> No
+            </label><br>
+            <label>
+                <input type="radio" name="mobility_issues" value="Yes" id="walk_yes" required> Yes
+            </label><br>
+            <p id="mobility_message" style="display: none">Thank you for your time. Unfortunately, we cannot include you in this study.</p>
+          
             <h3>Do you have any scars or tattoos on your non-dominant wrist?<span class="required">*</span></h3>
             <label>
                 <input type="radio" name="scars_tattoos" value="Yes" id="tattoo_yes" required>Yes
@@ -91,31 +165,13 @@
             <p id="tattoo_message" style="display: none">Unfortunately, we cannot include you in this study. Thank you for your understanding</p>
             <label>
                 <input type="radio" name="scars_tattoos" value="No" required>No
-            </label><br><br>
-
-            <h3>Do you have any health conditions that might prevent you from using virtual reality equipment, such as severe motion sickness, epilepsy, or any other condition that could be triggered by VR?<span class="required">*</span></h3>
-            <label>
-                <input type="radio" name="vr_conditions" value="Yes" id="condition_yes" required>Yes
             </label><br>
-            <p id="condition_message" style="display: none">For your safety, we cannot include you in this study. Thank you for your understanding</p>
-            <label>
-                <input type="radio" name="vr_conditions" value="No" required>No
-            </label><br><br>
-            <label for="vr_condition_description">If yes, please describe the condition.<span class="required">*</span></label><br><br>
-            <select id="vr_condition_description" name="vr_condition_description" required>
-                <option value="" disabled selected>Select your condition</option>
-                <option value="Motion Sickness">Motion Sickness</option>
-                <option value="Epilepsy">Epilepsy</option>
-                <option value="Vertigo">Vertigo</option>
-                <option value="Other">Other</option>
-            </select><br><br>
 
             <h3>Do you require glasses to participate in the experiment?<span class="required">*</span></h3>
             <label>
                 <input type="radio" name="glasses" value="Yes, I'll be wearing glasses" id="glasses_yes" required> Yes, I'll be wearing glasses
             </label><br>
-            <p id="glasses_message" style="display: none">We’re sorry, but normal or corrected-to-normal vision is required to participate in this study. Thank you for your time.
-            </p>
+            <p id="glasses_message" style="display: none">We’re sorry, but normal or corrected-to-normal vision is required to participate in this study. Thank you for your time.</p>
             <label>
                 <input type="radio" name="glasses" value="Yes, I'll be wearing contacts" required> Yes, I'll be wearing contacts
             </label><br>
@@ -127,84 +183,8 @@
         </form>
         <div id="feedback" style="display:none; margin-top: 20px;"></div>
     </div>
+
     <script>
-        // document.getElementById('rush_caffeine_yes').addEventListener('change', function() {
-        //     var rushMessage = document.getElementById('rush_message');
-        //     if (this.checked) {
-        //         rushMessage.style.display = 'block';
-        //     } else {
-        //         rushMessage.style.display = 'none';
-        //     }
-        // });
-
-        // document.getElementById('thirsty_yes').addEventListener('change', function() {
-        //     var thirstyMessage = document.getElementById('thirsty_message');
-        //     if (this.checked) {
-        //         thirstyMessage.style.display = 'block';
-        //     } else {
-        //         thirstyMessage.style.display = 'none';
-        //     }
-        // });
-
-        // document.getElementById('hungry_yes').addEventListener('change', function() {
-        //     var hungryMessage = document.getElementById('hungry_message');
-        //     if (this.checked) {
-        //         hungryMessage.style.display = 'block';
-        //     } else {
-        //         hungryMessage.style.display = 'none';
-        //     }
-        // });
-
-        // document.getElementById('both_yes').addEventListener('change', function() {
-        //     var bothMessage = document.getElementById('both_message');
-        //     if (this.checked) {
-        //         bothMessage.style.display = 'block';
-        //     } else {
-        //         bothMessage.style.display = 'none';
-        //     }
-        // });
-
-        // document.getElementById('elevated_yes').addEventListener('change', function() {
-        //     var elevatedMessage = document.getElementById('elevated_message');
-        //     if (this.checked) {
-        //         elevatedMessage.style.display = 'block';
-        //     } else {
-        //         elevatedMessage.style.display = 'none';
-        //     }
-        // });
-
-        // document.getElementById('glasses_yes').addEventListener('change', function() {
-        //     var glassesMessage = document.getElementById('glasses_message');
-        //     if (this.checked) {
-        //         glassesMessage.style.display = 'block';
-        //     } else {
-        //         glassesMessage.style.display = 'none';
-        //     }
-        // });
-        document.addEventListener('DOMContentLoaded', function () {
-            const neuroYes = document.getElementById('neuro_yes');
-            const neuroNo = document.getElementById('neuro_no');
-            const neuroDescription = document.getElementById('neurological_description');
-            const neuroMessage = document.getElementById('neuro_message');
-
-            neuroYes.addEventListener('change', function () {
-                if (neuroYes.checked) {
-                    neuroDescription.disabled = false;  
-                    neuroDescription.required = true;
-                    neuroMessage.style.display = 'block'; 
-                }
-            });
-
-            neuroNo.addEventListener('change', function () {
-                if (neuroNo.checked) {
-                    neuroDescription.disabled = true; 
-                    neuroDescription.required = false;
-                    neuroDescription.value = ""; 
-                    neuroMessage.style.display = 'none';
-                }
-            });
-        });
-
         function toggleMessage(radioId, messageId) {
             const radioButton = document.getElementById(radioId);
             const message = document.getElementById(messageId);
@@ -215,19 +195,34 @@
             }
         }
 
-        // Add event listeners to each radio button group
+        function handleDropdownChange() {
+            const dropdown = document.getElementById('experienceDropdown');
+            const vrMessage = document.getElementById('vrMessage');
+
+            if (dropdown.value === 'Side_effects') {
+                vrMessage.style.display = 'block';
+            } else {
+                vrMessage.style.display = 'none';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('input[type="radio"]').forEach(radio => {
                 radio.addEventListener('change', function () {
-                    // Call toggleMessage for each message based on respective radio button
                     toggleMessage('rush_caffeine_yes', 'rush_message');
                     toggleMessage('thirsty_yes', 'thirsty_message');
                     toggleMessage('hungry_yes', 'hungry_message');
                     toggleMessage('both_yes', 'both_message');
                     toggleMessage('elevated_yes', 'elevated_message');
+                    toggleMessage('use_vr_yes', 'experienceQuestion');
+                    toggleMessage('balance_yes', 'balanceMessage');
+                    toggleMessage('motion_yes', 'sicknessMessage');
                     toggleMessage('neuro_yes', 'neuro_message');
+                    toggleMessage('visual_yes', 'visual_message');
+                    toggleMessage('vestibular_yes', 'neuro_vestibular_message');
+                    toggleMessage('movement_yes', 'movement_message');
+                    toggleMessage('walk_yes', 'mobility_message');
                     toggleMessage('tattoo_yes', 'tattoo_message');
-                    toggleMessage('condition_yes', 'condition_message');
                     toggleMessage('glasses_yes', 'glasses_message');
                 });
             });
