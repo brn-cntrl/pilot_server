@@ -25,11 +25,11 @@ class SERManager:
             self.cache_root = audeer.mkdir('cache')
             self.MODEL_ROOT = audeer.mkdir('model')
             archive_path = audeer.download_url(url, cache_root, verbose=True)
-            audeer.extract_archive(archive_path, MODEL_ROOT)
-            model = audonnx.load(MODEL_ROOT)
+            audeer.extract_archive(archive_path, self.MODEL_ROOT)
+            model = audonnx.load(self.MODEL_ROOT)
         else:
             cache_root = os.path.join(self.app.root_path, 'cache')
-            MODEL_ROOT = os.path.join(self.app.root_path, 'model')
+            self.MODEL_ROOT = os.path.join(self.app.root_path, 'model')
             model = audonnx.load(self.MODEL_ROOT)
 
         return model

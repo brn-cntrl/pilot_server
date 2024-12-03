@@ -15,7 +15,7 @@ https://github.com/EmotiBit/EmotiBit_Docs/blob/master/Working_with_emotibit_data
 
 """
 class EmotiBitStreamer:
-    def __init__(self, port):
+    def __init__(self, port) -> None:
         self._ip = "127.0.0.1"
         self._port = port
 
@@ -59,7 +59,7 @@ class EmotiBitStreamer:
     ###########################################
     # Methods
     ###########################################
-    def start(self):
+    def start(self) -> None:
         if self.server_thread is not None and self.server_thread.is_alive():
             print("Server is already running.")
             return
@@ -70,7 +70,7 @@ class EmotiBitStreamer:
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
         
-    def stop(self):
+    def stop(self) -> None:
         if self.server_thread is not None:
             print(f"Stopping server at {self.ip}:{self.port}")
             self.shutdown_event.set()  
@@ -90,7 +90,7 @@ class EmotiBitStreamer:
         else:
             return None
 
-    def calculate_hrv_from_bi(self, bi_values):
+    def calculate_hrv_from_bi(self, bi_values) -> list:
         # Convert ISO timestamps to datetime objects for sorting or other operations
         timestamps = [datetime.fromisoformat(ts.replace("Z", "+00:00")) for ts, _ in bi_values]
 
@@ -103,15 +103,15 @@ class EmotiBitStreamer:
 
         return rmssd_values
     
-    def print_osc_message(address, *args):
+    def print_osc_message(address, *args) -> None:
         """This function is for debugging the incoming messages"""
         print(f"Received OSC message on {address}: {args}")
     
-    def get_current_iso_time(self):
+    def get_current_iso_time(self) -> str:
         """Returns the current time in ISO 8601 format."""
         return datetime.now().isoformat()
     
-    def record_null_values(self):
+    def record_null_values(self) -> None:
         """Records null values for each stream type if no values are incoming from the EmotiBit."""
         current_time = time.time()
 
@@ -126,13 +126,13 @@ class EmotiBitStreamer:
     ###########################################
     # Handlers
     ###########################################
-    def add_handler(self, address, handler):
+    def add_handler(self, address, handler) -> None:
         self.dispatcher.map(address, handler)
         
-    def remove_handler(self, address):
+    def remove_handler(self, address) -> None:
         self.dispatcher.unmap(address)
     
-    def generic_handler(self, address, *args):
+    def generic_handler(self, address, *args) -> None:
         """Generic handler for all incoming OSC messages."""
         print(f"Received data at {address}: {args}")
 
@@ -153,11 +153,11 @@ class EmotiBitStreamer:
     # Getters 
     ###########################################
     @property
-    def data(self):
+    def data(self) -> dict:
         return self._data
     
     @property
-    def baseline_data(self):
+    def baseline_data(self) -> dict:
         if all(len(v) == 0 for v in self._baseline_data.values()):
             print("All baseline data arrays are empty")
             return {}
@@ -165,14 +165,14 @@ class EmotiBitStreamer:
             return self._baseline_data
 
     @property   
-    def ip(self):
+    def ip(self) -> str:
         return self._ip
     
     @property
-    def port(self):
+    def port(self) -> int:
         return self._port
     
-    def get_biometric_baseline(self):
+    def get_biometric_baseline(self) -> dict:
         print("Retrieving biometric baseline data...")
         self.set_biometric_baseline()
         return self.baseline_data
@@ -181,12 +181,12 @@ class EmotiBitStreamer:
     # Deleters
     ############################################
     @data.deleter
-    def data(self):
+    def data(self) -> None:
         for key in self._data.keys():
             self._data[key] = []
 
     @baseline_data.deleter
-    def baseline_data(self):
+    def baseline_data(self) -> None:
         for key in self._baseline_data.keys():
             self._baseline_data[key] = []
 
@@ -194,22 +194,22 @@ class EmotiBitStreamer:
     # Setters
     ############################################
     @data.setter
-    def data(self, data):
+    def data(self, data) -> None:
         self._data = data
     
     @baseline_data.setter
-    def baseline_data(self, value):
+    def baseline_data(self, value) -> None:
         self._baseline_data = copy.deepcopy(value)
 
     @ip.setter
-    def ip(self, ip):
+    def ip(self, ip) -> None:
         self._ip = ip
     
     @port.setter
-    def port(self, port):
+    def port(self, port) -> None:
         self._port = port
 
-    def set_biometric_baseline(self):
+    def set_biometric_baseline(self) -> None:
         del self.baseline_data
 
         if all(len(v) == 0 for v in self.data.values()):

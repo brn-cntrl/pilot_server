@@ -20,7 +20,7 @@ from aws_handler import AWSHandler
 # A CSV file will also be created for the subject
 
 class SubjectManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self._subject_data = {
             'ID': '',
             'Date': '',
@@ -47,9 +47,9 @@ class SubjectManager:
 
     ######################## GETTERS / SETTERS ########################
     @property
-    def subject_data(self):
+    def subject_data(self) -> dict:
         return self._subject_data
     
     @subject_data.setter
-    def subject_data(self, subject_data):
+    def subject_data(self, subject_data) -> None:
         self._subject_data = subject_data

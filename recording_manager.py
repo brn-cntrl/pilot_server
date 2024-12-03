@@ -11,7 +11,7 @@ class RecordingManager():
     is handled in the app.py file. Audio processing is handled in the 
     audio_processor.py file.
     """
-    def __init__(self, recording_file, audio_save_folder): 
+    def __init__(self, recording_file, audio_save_folder) -> None: 
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
         self.recording_thread = None
@@ -26,30 +26,30 @@ class RecordingManager():
     ## GENERAL METHODS
     ##################################################################
     @property
-    def timestamp(self):
+    def timestamp(self) -> str:
         return self._timestamp
     
     @timestamp.setter
-    def timestamp(self, value):
+    def timestamp(self, value) -> None:
         self._timestamp = value
     
     @property
-    def recording_file(self):
+    def recording_file(self) -> str:
         return self._recording_file
     
     @recording_file.setter
-    def recording_file(self, recording_file):
+    def recording_file(self, recording_file) -> None:
         self._recording_file = recording_file
     
     @property
-    def audio_folder(self):
+    def audio_folder(self) -> str:
         return self._audio_folder
     
     @audio_folder.setter
-    def audio_folder(self, audio_save_folder):
+    def audio_folder(self, audio_save_folder) -> None:
         self._audio_folder = audio_save_folder
 
-    def start_recording(self):
+    def start_recording(self) -> None:
         self.stop_event.clear()
         self.recording_started_event.set()
 
@@ -62,14 +62,14 @@ class RecordingManager():
 
         print("Recording thread started")   
 
-    def stop_recording(self):
+    def stop_recording(self) -> None:
         self.stop_event.set()
         self.recording_thread.join()
         self.recording_started_event.clear()
         self.stream_is_active = False
         print("Recording thread stopped")
 
-    def record_thread(self):
+    def record_thread(self) -> None:
         audio = pyaudio.PyAudio()
         stream = audio.open(format=pyaudio.paInt16, 
                             channels=1, 
@@ -101,17 +101,17 @@ class RecordingManager():
     ##################################################################
     ## GETTERS
     ##################################################################
-    def get_stream_is_active(self):
+    def get_stream_is_active(self) -> bool:
         return self.stream_is_active    
     
-    def get_stop_event(self):
+    def get_stop_event(self) -> threading.Event:
         return self.stop_event
     
-    def get_audio_devices(self):
+    def get_audio_devices(self) -> list:
         return self.audio_devices
     
     ## System call to get audio devices
-    def fetch_audio_devices(self):
+    def fetch_audio_devices(self) -> list:
         p = pyaudio.PyAudio()
         audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
                         for i in range(p.get_device_count())
@@ -123,7 +123,7 @@ class RecordingManager():
     ##################################################################
     ## SETTERS
     ##################################################################
-    def set_device(self, index):
+    def set_device(self, index) -> None:
         self.device_index = index
         print(f"Device set to {self.audio_devices[index]['name']}")
 

@@ -13,25 +13,25 @@ class CSVHandler:
         self.aws_handler = AWSHandler('session_a') # TODO: Get rid of the session parameter
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._path
     
     @path.setter
-    def path(self, path):
+    def path(self, path) -> None:
         self._path = path
     
     @property
-    def subject_data(self):
+    def subject_data(self) -> dict:
         return self._subject_data
     
     @subject_data.setter
-    def subject_data(self, subject_data):
+    def subject_data(self, subject_data) -> None:
         self._subject_data = subject_data
 
-    def create_path(self):
+    def create_path(self) -> None:
         self.path = f'{self._id}_{self._name}_{self._date}.csv'
 
-    def create_csv(self):
+    def create_csv(self) -> None:
         max_rows = max(len(self.subject_data['Test_Transcriptions']),
             len(self.subject_data['VR_Transcriptions_1']),
             len(self.subject_data['VR_Transcriptions_2']),
@@ -57,7 +57,8 @@ class CSVHandler:
             'PSS4_Purpose', 'PSS4_Time_Nature', 'PSS4_Access_Gardens', 'PSS4_Enjoy_Time_Natural', 'PSS4_Environmental_Preference',
             'PSS4_Natural_Elements', 'PSS4_Interior_Preference','PSS4_Instructions', 'PSS4_Expectations', 'PSS4_Feedback', 
             'Background_Rush_Caffeine','Background_Caffeine_Details', 'Background_Caffeine_Time', 'Background_Thirst_Hunger', 
-            'Background_Heart_Rate', 'Background_Neurological_Condition', 'Background_Neurological_Description', 'Background_Scars_Tattoo',
+            'Background_Heart_Rate', 'Background_VR_Experience', 'Background_VR_Experience_Description', 'Background_Balance_Issues', 
+            'Background_Motion_Sickness', 'Background_Neurological_Condition', 'Background_Visual_Impairments', 'Background_Scars_Tattoo',
             'Background_VR_Conditions', 'Background_VR_Condition_Description', 'Background_Glasses', 
             'Demographics_Age', 'Demographics_Gender', 'Demographics_Education', 'Demographics_Childhood_Setting', 
             'Demographics_Current_Setting', 'Demographics_Nature', 'Demographics_Green_Spaces', 'Demographics_Pref_Natural',
@@ -231,15 +232,15 @@ class CSVHandler:
         #     return jsonify({"status": "error", "message": "Failed to upload data"}), 400
         print("Data uploaded successfully")
         
-    def read(self):
+    def read(self) -> str:
         with open(self.path, 'r') as file:
             return file.read()
 
-    def write(self, data):
+    def write(self, data) -> None:
         with open(self.path, 'w') as file:
             file.write(data)
 
-    def set_csv_filename(self):
+    def set_csv_filename(self) -> None:
             if self._subject_data['ID'] == '' or self._subject_data['Name'] == '' or self._date == '':
                 raise ValueError('Cannot create CSV filename without all information')
             else:

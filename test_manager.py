@@ -2,10 +2,10 @@ import json
 import re
 
 class TestManager:
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             with open('SER_questions.json') as f:
-                self.questions = json.load(f)
+                self._ser_questions = json.load(f)
         except FileNotFoundError:
             self._ser_questions = {}
             print("SER_questions.json not found")

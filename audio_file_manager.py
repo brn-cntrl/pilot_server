@@ -7,27 +7,27 @@ class AudioFileManager:
     """
     The audio processor class is responsible for handling audio processing functions.
     """
-    def __init__(self, recording_file, audio_save_folder):
+    def __init__(self, recording_file, audio_save_folder) -> None:
         self._recording_file = recording_file
         self._audio_folder = audio_save_folder
 
     @property
-    def recording_file(self):
+    def recording_file(self) -> str:
         return self._recording_file
     
     @recording_file.setter
-    def recording_file(self, recording_file):
+    def recording_file(self, recording_file) -> None:
         self._recording_file = recording_file
 
     @property
-    def audio_folder(self):
+    def audio_folder(self) -> str:
         return self._audio_folder
     
     @audio_folder.setter
-    def audio_folder(self, audio_save_folder):
+    def audio_folder(self, audio_save_folder) -> None:
         self._audio_folder = audio_save_folder
 
-    def save_audio_file(self, old_path_filename, new_filename, save_folder):
+    def save_audio_file(self, old_path_filename, new_filename, save_folder) -> None:
         try:
             os.makedirs(save_folder, exist_ok=True)
             new_filename = os.path.join(save_folder, new_filename)
@@ -42,7 +42,7 @@ class AudioFileManager:
         except Exception as e:
             print(f"An error occurred while trying to save the file '{old_path_filename}': {str(e)}")
 
-    def delete_recording_file(self, file_path):
+    def delete_recording_file(self, file_path) -> None:
         try:
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -56,12 +56,12 @@ class AudioFileManager:
         except Exception as e:
             print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
 
-    def rename_audio_file(self, id, name_param1, name_param2):
+    def rename_audio_file(self, id, name_param1, name_param2) -> str:
         filename = f"ID_{id}_{name_param1}_{name_param2}.wav"
 
         return filename
 
-    def backup_tmp_audio_files(self):
+    def backup_tmp_audio_files(self) -> None:
         # Copy contents of tmp folder to audio_files folder
         tmp_folder = "tmp/"
         audio_files_folder = "audio_files/"
@@ -76,7 +76,7 @@ class AudioFileManager:
             if os.path.isfile(full_file_name):
                 os.remove(full_file_name)
 
-    def get_audio_chunk_as_np(self, offset=0, duration=None, sample_rate=16000):
+    def get_audio_chunk_as_np(self, offset=0, duration=None, sample_rate=16000) -> np.array:
         """
         Returns the section of audio specified by the offset and duration parameters as a normalized 
         numpy array. This is necessary for the current SER classifier and is subject to change when 
@@ -118,7 +118,7 @@ class AudioFileManager:
             print(f"An error occurred while processing the audio: {e}")
             return None
 
-    def resample_audio(signal, original_sample_rate, target_sample_rate):
+    def resample_audio(signal, original_sample_rate, target_sample_rate) -> np.array:
         """
         Resamples the signal to match the target sample rate using linear interpolation.
 
@@ -136,7 +136,7 @@ class AudioFileManager:
         )
         return resampled_signal
 
-    def get_audio_duration(self):
+    def get_audio_duration(self) -> float:
         """
         Calculate the duration of an audio file.
         This function opens an audio file specified by the file_path, reads the number of frames and the frame rate,
@@ -152,11 +152,12 @@ class AudioFileManager:
             duration = frames / float(rate)   
         return duration
 
-    def normalize_audio(self, audio): # Necessary for SER task
+    # NOTE: This function is not used in the current implementation
+    def normalize_audio(self, audio) -> np.array: 
         audio_array = audio / np.max(np.abs(audio))
         return audio_array
     
-    def split_wav_to_segments(self, task_id, input_wav, segment_duration=20, output_folder="tmp/"):
+    def split_wav_to_segments(self, task_id, input_wav, segment_duration=20, output_folder="tmp/") -> list:
         """
         Splits a WAV file into user defined number of segments and saves each segment in the specified output folder.
 

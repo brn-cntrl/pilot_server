@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, send_file
+from flask import Flask, request, jsonify, render_template, redirect, send_file, Response
 import webview
 import warnings
 import threading
@@ -70,7 +70,7 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 ## Routes 
 ##################################################################
 @app.route('/baseline_comparison', methods=['POST'])
-def baseline_comparison():
+def baseline_comparison() -> Response:
     global subject_manager
     try:
         bio_baseline_data = subject_manager.subject_data.get('Biometric_Baseline', [])
@@ -87,7 +87,7 @@ def baseline_comparison():
         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 @app.route('/reset_ser_question_index', methods=['POST'])
-def reset_ser_question_index():
+def reset_ser_question_index() -> Response:
     # TODO: implement test manager class and remove global reference
     global current_ser_question_index
     current_ser_question_index = 0
@@ -97,7 +97,7 @@ def reset_ser_question_index():
     return jsonify({'status': 'SER questions reset'})
 
 @app.route('/start_emotibit_stream', methods=['POST'])
-def start_emotibit_stream():
+def start_emotibit_stream() -> Response:
     start_emotibit()
 
     try:
@@ -107,7 +107,7 @@ def start_emotibit_stream():
         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
 @app.route('/get_biometric_baseline', methods=['POST'])
-def get_biometric_baseline():
+def get_biometric_baseline() -> Response:
     try:
         stop_emotibit()
         data = emotibit_streamer.get_biometric_baseline()
@@ -120,7 +120,7 @@ def get_biometric_baseline():
         return jsonify({'status': 'error', 'message': str(e)}), 400 
 
 @app.route('/get_ser_question', methods=['GET'])
-def get_ser_question():
+def get_ser_question() -> Response:
     global current_ser_question_index, SER_QUESTIONS
     global recording_manager
     questions = SER_QUESTIONS.get('questions', [])
@@ -141,7 +141,7 @@ def get_ser_question():
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 @app.route('/process_ser_answer', methods=['POST'])  
-def process_ser_answer():
+def process_ser_answer() -> Response:
     """
     Processes the user's spoken answer for a SER (Speech Emotion Recognition) question.
     This function performs the following steps:
@@ -185,7 +185,7 @@ def process_ser_answer():
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 @app.route('/get_question', methods=['POST'])
-def get_question():
+def get_question() -> Response:
     """
     Retrieve the current question for the ongoing test.
     This route fetches the current question based on the global variables
@@ -218,7 +218,7 @@ def get_question():
     return jsonify({'question': question['question'], "test_number": current_test_number})
 
 @app.route('/get_next_test', methods=['POST'])
-def get_next_test():
+def get_next_test() -> Response:
     global current_test_number, current_question_index, TASK_QUESTIONS
 
     if current_test_number >= 2:
@@ -234,13 +234,13 @@ def get_next_test():
         return jsonify({"message": "Next test initiated.", "test_number": current_test_number})
 
 @app.route('/get_stream_active', methods=['GET'])
-def get_stream_active():
+def get_stream_active() -> Response:
     global recording_manager
     stream_is_active = recording_manager.get_stream_is_active()
     return jsonify({'stream_active': stream_is_active})
 
 @app.route('/test_audio', methods=['POST'])
-def test_audio():
+def test_audio() -> Response:
     global RECORDING_FILE, recording_manager
     try:
         # stop_recording()
@@ -267,7 +267,7 @@ def test_audio():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/submit_answer', methods=['POST'])
-def submit_answer():
+def submit_answer() -> Response:
     """
     Route to submit an answer for the current question in the test.
     This function handles the submission of an answer by performing the following steps:
@@ -341,7 +341,7 @@ def submit_answer():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/shutdown', methods=['POST'])
-def shutdown():
+def shutdown() -> Response:
     response = jsonify ({'message': 'Server shutting down...'})
     response.status_code = 200
     threading.Thread(target=shutdown_server).start() 
@@ -368,7 +368,7 @@ def submit_pss4():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_background', methods=['POST'])
-def submit_background():
+def submit_background() -> Response:
     global subject_manager
     try:
         background_data = {
@@ -398,7 +398,7 @@ def submit_background():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_exit', methods=['POST'])
-def submit_exit():
+def submit_exit() -> Response:
     global subject_manager
     try:
         exit_survey_data = {
@@ -422,7 +422,7 @@ def submit_exit():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_demographics', methods=['POST'])
-def submit_demographics():
+def submit_demographics() -> Response:
     global subject_manager
     try:
         demographics_data = {
@@ -453,7 +453,7 @@ def submit_demographics():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_student_data', methods=['POST'])
-def submit_student_data():
+def submit_student_data() -> Response:
     global subject_manager
 
     try:
@@ -470,7 +470,7 @@ def submit_student_data():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/upload_subject_data', methods=['POST'])    
-def upload_subject_data():
+def upload_subject_data() -> Response:
     global subject_manager, csv_handler
 
     try:
@@ -481,7 +481,7 @@ def upload_subject_data():
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit', methods=['POST'])    
-def submit():
+def submit() -> Response:
     global subject_manager
     
     try:
@@ -509,13 +509,13 @@ def submit():
 ## Audio Routes
 ##################################################################
 @app.route('/get_audio_devices', methods=['GET'])
-def get_audio_devices():
+def get_audio_devices() -> Response:
     global recording_manager
     audio_devices = recording_manager.get_audio_devices()
     return jsonify(audio_devices)
 
 @app.route('/set_device', methods=['POST'])
-def set_device():
+def set_device() -> Response:
     global device_index
     global recording_manager
     data = request.get_json()
@@ -544,7 +544,7 @@ def set_device():
         return jsonify({'message': 'Device index not provided.'}), 400
     
 @app.route('/record_vr_task', methods=['POST'])
-def record_vr_task():
+def record_vr_task() -> Response:
     """
     Endpoint to handle VR task recording actions.
     This function processes incoming JSON requests to start or stop a VR task recording.
@@ -619,7 +619,7 @@ def record_vr_task():
         return jsonify({'message': 'Error processing request.'}), 400
 
 @app.route('/start_recording', methods=['POST'])    
-def start_recording():
+def start_recording() -> Response:
     global recording_manager
     try:
         recording_manager.start_recording()
@@ -631,20 +631,20 @@ def start_recording():
 ## Views 
 ##################################################################
 @app.route('/')
-def home():
+def home() -> Response:
     return render_template('index.html')
 
 @app.route('/break_page', methods=['GET'])
-def break_page():
+def break_page() -> Response:
     return render_template('break_page.html')
 
 @app.route('/video/<filename>')
-def video(filename):
+def video(filename) -> Response:
     video_path = os.path.join('static', 'videos', filename)
     return send_file(video_path)
 
 @app.route('/test_page', methods=['GET'])
-def test_page():
+def test_page() -> Response:
     global current_question_index, current_test_number, TASK_QUESTIONS
     current_question_index = 0
     current_test_number = 1
@@ -652,29 +652,29 @@ def test_page():
     return render_template('test_page.html')
 
 @app.route('/vr_task', methods=['GET'])
-def vr_task():
+def vr_task() -> Response:
     return render_template('vr_task.html')
 
 @app.route('/pss4', methods=['GET'])
-def pss4():
+def pss4() -> Response:
     return render_template('pss4.html')
 
 @app.route('/demographic_survey', methods=['GET'])
-def demographic_survey():
+def demographic_survey() -> Response:
     return render_template('demographic_survey.html')
 
 @app.route('/background', methods=['GET'])
-def background():
+def background() -> Response:
     return render_template('background.html')
 
 @app.route('/exit_survey', methods=['GET'])
-def exit_survey():
+def exit_survey() -> Response:
     return render_template('exit_survey.html')
 
 ##################################################################
 ## Helper Functions 
 ##################################################################
-def calculate_biometric_mean(data_list, key):
+def calculate_biometric_mean(data_list, key) -> float:
     global subject
     try:
         values = [value for record in data_list for value in record[key]]
@@ -688,7 +688,7 @@ def calculate_biometric_mean(data_list, key):
         return None
 
 # Emotibit #######################################################
-def start_emotibit():
+def start_emotibit() -> None:
     global emotibit_streamer
 
     try:
@@ -698,7 +698,7 @@ def start_emotibit():
     except Exception as e:
         print(f"An error occurred while trying to start OSC stream: {str(e)}")
 
-def stop_emotibit():
+def stop_emotibit() -> None:
     global emotibit_streamer
 
     try:
@@ -708,29 +708,29 @@ def stop_emotibit():
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
 
 ##################################################################
-def preprocess_text(text):
+def preprocess_text(text) -> str:
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)
     return text.strip()
 
-def check_answer(transcription, correct_answers):
+def check_answer(transcription, correct_answers) -> bool:
     print(f"Transcription: {transcription}")
     transcription = preprocess_text(transcription)
 
     return any(word in correct_answers for word in transcription.split())
 
-def is_folder_empty(app, folder_name):
+def is_folder_empty(app, folder_name) -> bool:
     folder_path = os.path.join(app.root_path, folder_name)
     return not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0
 
-def initialize_ids(filename="available_ids.txt"):
+def initialize_ids(filename="available_ids.txt") -> None:
     if not os.path.exists(filename):
         with open(filename, 'w') as f:
             for i in range (1, 501):
                 f.write(f"1_1_{i}\n")
 
 # NOTE: This function only for test purposes
-def get_available_id(filename='available_ids.txt'):
+def get_available_id(filename='available_ids.txt') -> str:
     # TODO: The list of available ids should be determined by a call to the AWS server
     # and not by a txt file. This is a temporary solution until the server is set up.
 
@@ -744,12 +744,12 @@ def get_available_id(filename='available_ids.txt'):
         else:
             raise Exception('No more IDs available')
     
-def shutdown_server():
+def shutdown_server() -> None:
     time.sleep(1)
     pid = os.getpid()
     os.kill(pid, signal.SIGINT)
 
-def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/"):
+def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/") -> list:
     """
     Generates a list of ISO 8601 formatted start timestamps for each audio segment file
     in the specified output folder, assuming they were created sequentially.
@@ -773,7 +773,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
 ##################################################################
 ## Speech Recognition 
 ##################################################################
-def transcribe_audio(file):
+def transcribe_audio(file) -> str:
     #TODO: Remove global reference and uncomment below when recording_manager is implemented
     global recording_manager
     # RECORDING_FILE = recording_manager.get_recording_file() 
@@ -811,7 +811,7 @@ def set_aud_model(app):
     return model
 
 # TODO: Delete after SER class is finished
-def predict_emotion(audio_chunk):
+def predict_emotion(audio_chunk) -> str:
     """
     Predicts the emotion from an audio chunk using a pre-trained classifier and an ONNX model.
     Args:
