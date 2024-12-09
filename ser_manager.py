@@ -19,26 +19,24 @@ class SERManager:
         folder_path = os.path.join(self.app.root_path, folder_name)
         return not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0   
     
-    def set_aud_model(self) -> audonnx.Model:
+    def set_aud_model(self) -> None:
         if self._is_folder_empty('model'):
             url = 'https://zenodo.org/record/6221127/files/w2v2-L-robust-12.6bc4a7fd-1.1.0.zip'
             self.cache_root = audeer.mkdir('cache')
             self.MODEL_ROOT = audeer.mkdir('model')
             archive_path = audeer.download_url(url, cache_root, verbose=True)
             audeer.extract_archive(archive_path, self.MODEL_ROOT)
-            model = audonnx.load(self.MODEL_ROOT)
+            self.audonnx_model = audonnx.load(self.MODEL_ROOT)
         else:
             cache_root = os.path.join(self.app.root_path, 'cache')
             self.MODEL_ROOT = os.path.join(self.app.root_path, 'model')
-            model = audonnx.load(self.MODEL_ROOT)
-
-        return model
+            self.audonnx_model = audonnx.load(self.MODEL_ROOT)
     
-    def predict_emotion(self, audio_chunk) -> str:
+    def predict_emotion(self, audio_chunk):
         """
         Predicts the emotion from a given audio chunk using a pre-trained AUDONNX model.
         Parameters:
-            - audio_chunk (numpy.ndarray): The input audio data in numpy array format. The data type should be np.float32.
+            - audio_chunk: audio file in wav format. 
         Returns:
             - str: The predicted emotion label.
         Raises:
@@ -75,6 +73,12 @@ class SERManager:
         hidden_states_df = pd.DataFrame(hidden_states)
         hidden_states_df.columns = [f'hidden_states-{i}' for i in range(1024)]
 
-        prediction = self.CLF.predict(hidden_states_df)
+        predicted_label = self.CLF.predict(hidden_states_df)[0]
+        probabilities = self.CLF.predict_proba(hidden_states_df)[0]
 
-        return prediction[0]
+        # Find the confidence value of the predicted label
+        label_index = self.CLF.classes_.tolist().index(predicted_label)
+        confidence = probabilities[label_index]
+        confidence = round(confidence, 4)
+        
+        return predicted_label, confidence

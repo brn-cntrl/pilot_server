@@ -24,23 +24,29 @@
         </ul>
     </div><br>
     <button id="startTestButton" style="display:none;">Start Test 1</button> <br>
-    <p id="loadingMessage"></p>
-    <div id="clock">05:00</div><br><br>
-    <div id="accountBalance">$0</div><br><br>
-    <div id="test_1_container"></div> <br>
-    <div id="test_2_container"></div> <br>
-
-    <button id="submitAnswerButton" disabled>Submit Answer</button> <br>
-    <button id="uploadData" disabled>Upload Results</button>
-
-    <p id="result"></p> <br>
-    <p id="status"></p>
-
-    <!-- <script src="/static/js/scripts.js"></script> -->
+    <div class="testModule">
+        <p id="loadingMessage"></p>
+        <div id="clock">05:00</div><br><br>
+        <div id="accountBalance">$0</div><br><br>
+        <div id="test_1_container"></div> <br>
+        <div id="test_2_container"></div> <br>
+    
+        <button id="submitAnswerButton" disabled>Submit Answer</button> <br>
+        <button id="uploadData" disabled>Upload Results</button>
+        <p id="result"></p> <br>
+        <p id="status"></p><br><br>
+    </div>
+    
+    <div class="emotibitModule">
+        <button id="startEmotibitButton" style="display:none;">Start Emotibit</button><br>
+        <p id="emotibitStatus" style="display:none;">Please wait...</p><br><br>
+        <button id="compareToBaseline" style="display:none;">Compare to Baseline</button><br>
+        <p id="baselineStatus" style="display:none;">Please wait...</p><br><br>
+    </div>
+    
     <script>
         let testNumber = 1;
         let startTime;
-        // let clockInterval;
         let elapsedTime = 0;
         let initialTime = 300;  // 5 minutes
         let timeLeft = initialTime;
@@ -48,6 +54,11 @@
         let account = .00;
         const timeDisplay = document.getElementById('clock');
         const accountBalance = document.getElementById('accountBalance');
+        
+        let startEmotibitButton = document.getElementById('startEmotibitButton');
+        let baselineButton = document.getElementById('compareToBaseline');
+        let emotibitStatus = document.getElementById('emotibitStatus');
+        let baselineStatus = document.getElementById('baselineStatus');
         
         function getNextTest(){
             fetch('/get_next_test', {
@@ -165,7 +176,6 @@
                             let testNumber = data.test_number;
                             // let testContainerId = `test_${testNumber}_container`;
                             let testContainerId = "test_1_container";
-                            
 
                             document.getElementById('loadingMessage').style.display = 'none';
                             document.getElementById('startTestButton').disabled = true;
@@ -196,7 +206,6 @@
             }
         });
     
-        
         document.getElementById('submitAnswerButton').addEventListener('click', function() {
             submitAnswer();
         });

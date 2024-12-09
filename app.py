@@ -53,8 +53,6 @@ recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 audio_file_manager = AudioFileManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
-
-#TODO: IMPLEMENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ser_manager = SERManager(app)
 
 TASK_QUESTIONS = {}
@@ -106,11 +104,33 @@ def start_emotibit_stream() -> Response:
     except Exception as e:
         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
+@app.route('/push_emotibit_data', methods=['POST'])
+def push_emotibit_data() -> Response:
+    global subject_manager, emotibit_streamer
+
+    try:
+        data = request.get_json()
+        label = data.get('label')
+        labeled_data = {"label": label, **emotibit_streamer.data}
+        subject_manager.subject_data['Biometric_Data'].push(labeled_data)
+
+        # Flush the streamer data
+        if labeled_data in subject_manager.subject_data['Biometric_Data'] and labeled_data:
+            del emotibit_streamer.data
+            return jsonify({'message': f'Biometric data pushed to array with label: {label}, and streamer is flushed.'}), 200
+        
+        else:
+            return jsonify({'message': f"The entry, {labeled_data}, does not exist or is empty, not deleting emotibit_streamer.data"}), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
 @app.route('/get_biometric_baseline', methods=['POST'])
 def get_biometric_baseline() -> Response:
     try:
         stop_emotibit()
         data = emotibit_streamer.get_biometric_baseline()
+
         # Debug statement
         print(data)
 
@@ -146,9 +166,9 @@ def process_ser_answer() -> Response:
     Processes the user's spoken answer for a SER (Speech Emotion Recognition) question.
     This function performs the following steps:
     1. Stops the current audio recording.
-    2. Converts the recorded audio file to a numpy array.
-    3. Normalizes the audio signal.
-    4. Predicts the emotion from the normalized audio signal.
+    2. Loads the audio file with librosa.
+    3. Resamples the audio signal.
+    4. Predicts the emotion from the normalized audio signal with call to the ser_manager.
     5. Appends the predicted emotion to the subject's SER baseline data.
     6. Renames the audio file based on the subject's ID and the current question index.
     7. Saves the renamed audio file to the 'audio_files' directory.
@@ -167,12 +187,12 @@ def process_ser_answer() -> Response:
     try:
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
-
-        # emotion = predict_emotion(sig_resampled)
-        emotion = ser_manager.predict_emotion(sig_resampled)
-        ts = recording_manager.timestamp
         
-        subject_manager.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion})
+        emotion, confidence = ser_manager.predict_emotion(sig_resampled)
+
+        print(f"Predicted emotion: {emotion}, Confidence: {confidence}")
+        ts = recording_manager.timestamp
+        subject_manager.subject_data['SER_Baseline'].append({'timestamp': ts, 'emotion': emotion, 'confidence': confidence})
         
         id = subject_manager.subject_data['ID']
         file_name = f"ID_{id}_SER_question_{current_ser_question_index}.wav"
@@ -296,15 +316,13 @@ def submit_answer() -> Response:
     file_name = f"ID_{id}_test_{current_test_number}_question_{current_question_index}.wav"
 
     try:
-        # stop_recording()
         recording_manager.stop_recording()
         transcription = transcribe_audio(RECORDING_FILE)
         ts = recording_manager.timestamp
         try:
-            # Save permanent copies of audio
             sig, sr = librosa.load(RECORDING_FILE, sr=None)
             resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-            # ser = predict_emotion(resampled_sig)
+
             ser = ser_manager.predict_emotion(resampled_sig)
             audio_file_manager.save_audio_file(RECORDING_FILE, file_name, "audio_files")
 
@@ -675,7 +693,7 @@ def exit_survey() -> Response:
 ## Helper Functions 
 ##################################################################
 def calculate_biometric_mean(data_list, key) -> float:
-    global subject
+    global subject_manager
     try:
         values = [value for record in data_list for value in record[key]]
         
@@ -878,8 +896,8 @@ if __name__ == '__main__':
 
     TASK_QUESTIONS_1 = test_manager.get_task_questions()
     SER_QUESTIONS = test_manager.ser_questions
-
-    AUDONNX_MODEL = ser_manager.set_aud_model()
+    AUDONNX_MODEL = set_aud_model(app)
+    ser_manager.set_aud_model()
 
     CLF = joblib.load('classifier/emotion_classifier.joblib')
 

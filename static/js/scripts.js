@@ -120,13 +120,6 @@ function updateClock() {
         timer.textContent = 'Time is up!';
         endTest();
     }
-    // const now = Date.now();
-    // const totalElapsedTime = now - startTime;  
-    // const seconds = Math.floor(totalElapsedTime / 1000);  
-    // const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');  
-    // const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');  
-    // const secs = String(seconds % 60).padStart(2, '0');  
-    // document.getElementById('clock').innerText = `${hours}:${minutes}:${secs}`;
 }
 
 function playTickSound() {
@@ -267,5 +260,99 @@ function handleOtherOption() {
         otherText.style.display = 'block'; 
     } else {
         otherText.style.display = 'none';  
+    }
+}
+
+function emotibitRecording(button, action){
+    /*
+    Function to start or stop recording from EmotiBit
+    Requires taskID to identify label of particular task. 
+    This is used to label the EmotiBit data in the database.
+    */
+    const taskID = button.id;
+    statusId1 = document.getElementById("emotibitStatus1");
+    statusId2 = document.getElementById("emoitbitStatus2");
+    if(action == 'start'){
+        fetch('/start_emotibit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        if (taskID == 'taskID1'){
+            statusId1.style.display = 'block';
+        } else if (taskID == 'taskID2'){
+            statusId2.style.display = 'block';
+        }
+
+    } else if (action == 'stop'){
+        fetch('/stop_emotibit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        fetch('/push_emotibit_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                task_id: taskID
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+
+            if (taskID == 'taskID1'){
+                statusId1.style.display = 'block';
+                statusId1.innerHTML = 'EmotiBit data saved.';
+            } else if (taskID == 'taskID2'){
+                statusId2.style.display = 'block';
+                statusId2.innerHTML = 'EmotiBit data saved.';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (taskID == 'taskID1'){
+                statusId1.style.display = 'block';
+                statusId1.innerHTML = 'An error occurred. EmotiBit data not saved.';
+            } else if (taskID == 'taskID2'){
+                statusId2.style.display = 'block';
+                statusId2.innerHTML = 'An error occurred. EmotiBit data not saved.';
+            }
+        });
     }
 }
