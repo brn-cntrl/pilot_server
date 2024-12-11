@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositionable Divs</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            height: 100vh;
+            overflow: hidden; /* Prevent body from scrolling */
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background-color: #f4f4f4;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid #ddd;
+        }
+
+        .buttons button {
+            margin: 10px;
+        }
+
+        .main {
+            flex: 1; /* Make it take up the remaining height */
+            padding: 10px;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto; /* Allow scrolling if content overflows */
+            margin-bottom: 60px; /* Leave space for the buttons at the bottom */
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-left: 1px solid #ddd;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            padding: 10px;
+            background-color: #eaeaea;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background-color: #ddd;
+        }
+
+        .content-div {
+            padding: 10px;
+            background-color: #e7f3ff;
+            border: 1px solid #d0e2f4;
+            cursor: grab;
+        }
+
+        .content-div.selected {
+            outline: 3px solid #4CAF50; /* Green outline */
+            outline-offset: 2px; /* Spacing between the outline and the element */
+        }
+
+        .content-div.dragging {
+            opacity: 0.5;
+        }
+
+        .selection {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #d4f1d4;
+            border: 1px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main content area for dynamic divs -->
+    <div class="main" id="main-content">
+        <!-- Dynamic divs appear here -->
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-item" data-item="Option 1">Option 1</div>
+        <div class="sidebar-item" data-item="Option 2">Option 2</div>
+        <div class="sidebar-item" data-item="Option 3">Option 3</div>
+    </div>
+
+    <!-- Buttons for actions -->
+    <div class="buttons">
+        <button id="save-experiment">Generate Experiment</button>
+        <button id="load-experiment">Load Experiment</button>
+        <button id="go-experiment">Go to Experiment</button>
+    </div>
+
+    <script>
+        const mainContent = document.getElementById('main-content');
+        const sidebar = document.getElementById('sidebar');
+        const state = {}; // Store dropdown state for each div
+
+        const optionsMap = {
+            'Option 1': ['Option 1.1', 'Option 1.2', 'Option 1.3'],
+            'Option 2': ['Option 2.1', 'Option 2.2'],
+            'Option 3': ['Option 3.1', 'Option 3.2', 'Option 3.3'],
+        };
+
+        sidebar.addEventListener('click', (event) => {
+            if (event.target.classList.contains('sidebar-item')) {
+                const item = event.target.dataset.item;
+                createDiv(item);
+            }
+        });
+
+        function createDiv(item) {
+            const id = `${item}-${Date.now()}`;
+            const newDiv = document.createElement('div');
+            newDiv.classList.add('content-div');
+            newDiv.textContent = `Content for ${item}`;
+            newDiv.setAttribute('data-id', id);
+            newDiv.setAttribute('data-item', item);
+            newDiv.setAttribute('draggable', 'true'); // Make it draggable
+
+            state[id] = { dropdowns: {} };
+
+            addDragAndDrop(newDiv);
+
+            // Add click listener to update sidebar with dropdowns and highlight the div
+            newDiv.addEventListener('click', () => {
+                clearSelectedClass(); // Remove selection from other divs
+                newDiv.classList.add('selected'); // Highlight the current div
+                updateSidebarWithDropdowns(id, item);
+            });
+
+            // Add right-click listener to delete the div
+            newDiv.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                delete state[id];
+                newDiv.remove();
+            });
+
+            mainContent.appendChild(newDiv);
+        }
+
+        function clearSelectedClass() {
+            const allDivs = document.querySelectorAll('.content-div');
+            allDivs.forEach(div => div.classList.remove('selected'));
+        }
+
+        function addDragAndDrop(div) {
+            let draggingDiv = null;
+
+            div.addEventListener('dragstart', () => {
+                draggingDiv = div;
+                div.classList.add('dragging');
+            });
+
+            div.addEventListener('dragend', () => {
+                draggingDiv = null;
+                div.classList.remove('dragging');
+            });
+
+            mainContent.addEventListener('dragover', (e) => {
+                e.preventDefault();
+
+                const afterElement = getDragAfterElement(mainContent, e.clientY);
+                if (afterElement == null) {
+                    mainContent.appendChild(draggingDiv);
+                } else {
+                    mainContent.insertBefore(draggingDiv, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.content-div:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateSidebarWithDropdowns(id, item) {
+            const options = optionsMap[item] || [];
+            sidebar.innerHTML = '';
+
+            options.forEach((option, index) => {
+                const dropdownContainer = document.createElement('div');
+                dropdownContainer.style.marginBottom = '10px';
+
+                const label = document.createElement('label');
+                label.textContent = `Dropdown ${index + 1}: `;
+
+                const select = document.createElement('select');
+                select.innerHTML = `
+                    <option value="">-- Select an Option --</option>
+                    ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                `;
+                select.value = state[id].dropdowns[index] || ''; // Restore the saved value
+
+                select.addEventListener('change', () => {
+                    state[id].dropdowns[index] = select.value; // Save the value
+                    displaySelectedOption(id, index, select.value); // Display selected option in the div
+                });
+
+                dropdownContainer.appendChild(label);
+                dropdownContainer.appendChild(select);
+                sidebar.appendChild(dropdownContainer);
+            });
+
+            const backButton = document.createElement('button');
+            backButton.textContent = 'Back';
+            backButton.style.marginTop = '10px';
+            backButton.addEventListener('click', resetSidebar);
+            sidebar.appendChild(backButton);
+        }
+
+        function displaySelectedOption(id, index, value) {
+            const div = document.querySelector(`[data-id="${id}"]`);
+            const optionText = value ? `Option ${index + 1}: ${value}` : 'No option selected';
+            let optionElement = div.querySelector(`.option-${index}`);
+            
+            if (!optionElement) {
+                optionElement = document.createElement('div');
+                optionElement.classList.add(`option-${index}`, 'selection');
+                div.appendChild(optionElement);
+            }
+            
+            optionElement.textContent = optionText;
+        }
+
+        function resetSidebar() {
+            sidebar.innerHTML = `
+                <div class="sidebar-item" data-item="Option 1">Option 1</div>
+                <div class="sidebar-item" data-item="Option 2">Option 2</div>
+                <div class="sidebar-item" data-item="Option 3">Option 3</div>
+            `;
+        }
+
+        // Save experiment function
+        document.getElementById('save-experiment').addEventListener('click', generateExperiment);
+
+        function generateExperiment() {
+            const divs = document.querySelectorAll('.content-div');
+            const experimentData = [];
+
+            divs.forEach(div => {
+                const divData = {
+                    content: div.textContent.trim(),
+                    options: []
+                };
+
+                const id = div.getAttribute('data-id');
+                const dropdowns = state[id].dropdowns;
+                divData.options = Object.values(dropdowns); // Get the selected options
+
+                experimentData.push(divData);
+            });
+
+            const jsonData = JSON.stringify(experimentData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'experiment.json';
+            link.click();
+
+            URL.revokeObjectURL(url); // Cleanup
+        }
+
+        // Load experiment functionality (still a placeholder)
+        document.getElementById('load-experiment').addEventListener('click', loadExperiment);
+
+        function loadExperiment() {
+            alert('Load experiment functionality is not yet implemented');
+        }
+
+        // Go to experiment functionality
+        document.getElementById('go-experiment').addEventListener('click', () => {
+            window.location.href = '/experiment'; // Replace with the actual URL
+        });
+    </script>
+</body>
+</html>

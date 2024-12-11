@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Survey</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Add Google Form Surveys</h1>
+    <h3>Instructions</h3>
+    <p>1. Click the "Add Survey" button to add a new survey.</p> <br>
+    <p>2. Enter the survey name (no spaces) in the first field.</p><br>
+    <p>3. In Google Forms, Be sure to create "Name" and "ID" fields at the top of the survey.</p><br>
+    <p>4. Prefill each of these with dummy values (e.g. "Name", and "ID number")</p><br>
+    <p>5. In "Edit" mode, select "more" in the upper right corner (three pip menu)</p><br>
+    <p>6. Select "Get prefilled link" and copy the generated link</p>
+    <p>7. Paste the link in the URL field of this form.</p><br>
+    <p>8. Click "Submit" to add the survey to the list of surveys.</p><br>
+
+    <button id="addSurvey">Add Survey</button><br>
+    <div class="testModule" id="addSurveyDiv" style="display:none" disabled>
+        <form id="addSurveyForm">
+            <label>
+                <input type="text" name="surveyName" placeholder="Survey Name">
+            </label>
+            <label>
+                <input type="text" name="URL" placeholder="Enter URL">
+            </label>
+
+            <button type="submit">Submit</button>
+        </form>
+
+         <div id="otherTextbox" style="display: none;">
+             <label>Please specify: <input type="text" id="otherText" name="otherText"></label>
+         </div><br><br>
+    </div>
+
+    <script>
+        document.getElementById("addSurvey").addEventListener("click", function() {
+            toggleVis("addSurveyDiv");
+        });
+        document.getElementById("addSurveyForm").addEventListener("submit", submitForm);
+
+        function submitForm(event) {
+                event.preventDefault();
+                const form = document.getElementById("addSurveyForm");
+                const formData = new FormData(form);
+                fetch('/submit_new_survey', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Survey added successfully!");
+                        form.reset();
+                        document.getElementById("addSurveyDiv").style.display = "none";
+                    } else {
+                        alert("Error adding survey.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Error adding survey.");
+                });
+            }
+
+    </script>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>

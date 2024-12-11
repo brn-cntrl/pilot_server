@@ -26,6 +26,7 @@ from emotibit_streamer import EmotiBitStreamer
 from ser_manager import SERManager
 from csv_handler import CSVHandler
 from audio_file_manager import AudioFileManager
+from form_manager import FormManager
 
 ##################################################################
 ## Globals 
@@ -54,6 +55,7 @@ test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 audio_file_manager = AudioFileManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
 ser_manager = SERManager(app)
+form_manager = FormManager()
 
 TASK_QUESTIONS = {}
 MODEL_ROOT = "model"
@@ -366,6 +368,19 @@ def shutdown() -> Response:
 
     return response
 
+@app.route('/submit_new_survey', methods=['POST'])
+def submit_new_survey() -> Response:
+    global subject_manager, form_manager
+    try:
+        survey_name = request.form.get('surveyName')
+        url = request.form.get('URL')
+        form_manager.add_survey(survey_name, url)
+
+        return jsonify({'message': 'Survey added successfully.'}), 200
+  
+    except Exception as e:
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
+    
 @app.route('/submit_pss4', methods=['POST'])
 def submit_pss4():
     global subject_manager
@@ -500,7 +515,7 @@ def upload_subject_data() -> Response:
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
-    global subject_manager
+    global subject_manager, form_manager
     
     try:
         if request.method == 'POST':
@@ -518,6 +533,10 @@ def submit() -> Response:
             subject_manager.subject_data['ID'] = unique_id
             subject_manager.subject_data['Date'] = current_date
 
+            # Prep all forms with username and unique id
+            form_manager.autofill_forms(participant_name, unique_id)
+            form_manager.generate_embed_codes()
+            
             return jsonify({'message': 'User information submitted.'}), 200
         
     except Exception as e:
