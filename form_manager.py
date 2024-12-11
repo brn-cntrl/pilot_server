@@ -6,8 +6,6 @@ class FormManager:
     def __init__(self) -> None:
         self._surveys_file = "surveys.json"
         self._surveys = self.load_surveys()
-        self._formatted_surveys = []
-        self._embed_codes = []
 
     @property
     def embed_codes(self) -> list:
@@ -69,6 +67,7 @@ class FormManager:
         return f"{base_url}?{updated_query_string}"
     
     def autofill_forms(self, subject_name, subject_id) -> None:
+        formatted_surveys = []
         if self.surveys:
             for survey in self.surveys:
                 url = self.customize_form_url(survey["url"], subject_name, subject_id)
@@ -76,23 +75,23 @@ class FormManager:
                     "name": survey["name"],
                     "url": url
                 }
-                self.formatted_surveys.append(formatted_survey)
+                formatted_surveys.append(formatted_survey)
+                self.surveys = formatted_surveys
                 print(f"Autofilled form for {survey['name']}: {url}")
         else:
             raise ValueError("No surveys to autofill.")
-
-    def generate_embed_codes(self) -> None:
-        embed_codes = []
-        for surv in self.formatted_surveys:
-            url = surv["url"]
-            embed_code = f'<iframe src="{url}" width="640" height="480"></iframe>'
-
-            embed_dicts = {
-                "name": surv["name"],
-                "embed_code": embed_code
-            }
-            self.embed_codes.append(embed_dicts)
-        
+    
+    def get_embed_code(self, survey_name) -> str:
+        return_value = ""
+        for survey in self.surveys:
+            if survey["name"] == survey_name:
+                return_value = f'<iframe src="{survey["url"]}" width="920" height="680"></iframe>'
+                return return_value
+            else:
+                return_value = f"Survey with name '{survey_name}' not found."
+                
+        return return_value
+    
     def load_surveys(self) -> list:
         if not os.path.exists(self._surveys_file):
             raise FileNotFoundError(f"{self._surveys_file} does not exist.")
@@ -100,5 +99,4 @@ class FormManager:
             with open(self._surveys_file, "r") as file:
                 survey_data = json.load(file)
                 surveys = survey_data.get("surveys", [])
-
-        return surveys
+                return surveys

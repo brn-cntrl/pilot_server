@@ -535,13 +535,25 @@ def submit() -> Response:
 
             # Prep all forms with username and unique id
             form_manager.autofill_forms(participant_name, unique_id)
-            form_manager.generate_embed_codes()
-            
+
             return jsonify({'message': 'User information submitted.'}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
 
+@app.route('/get_embed_code', methods=['GET'])
+def get_embed_code() -> Response:
+    global form_manager
+    try:
+        data = request.get_json()
+        form_name = data.get('form_name')
+        embed_code = form_manager.get_embed_code(form_name)
+
+        return jsonify({'embed_code': embed_code})
+    
+    except Exception as e:
+        return jsonify({'message': 'Error processing request.'}), 400
+    
 ##################################################################
 ## Audio Routes
 ##################################################################
