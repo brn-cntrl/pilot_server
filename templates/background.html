@@ -183,10 +183,37 @@
         </form>
         <div id="feedback" style="display:none; margin-top: 20px;"></div>
 
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdgBFuzvC9M2sduYYo7tv0jTh0xonpB5P5gA6J2mq1NDdfL4w/viewform?embedded=true" width="640" height="419" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+        <div id="embeddedSurvey">
+
+        </div>
+
+        <!-- <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdgBFuzvC9M2sduYYo7tv0jTh0xonpB5P5gA6J2mq1NDdfL4w/viewform?embedded=true" width="640" height="419" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe> -->
     </div>
 
     <script>
+
+        function getEmbedCode() {
+            fetch('/get_embed_code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+            },
+                body: JSON.stringify({ form_name: 'background' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const embeddedSurvey = document.getElementById('embeddedSurvey');
+                embeddedSurvey.innerHTML = data.embed_code;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            getEmbedCode();
+        });
+
         function toggleMessage(radioId, messageId) {
             const radioButton = document.getElementById(radioId);
             const message = document.getElementById(messageId);

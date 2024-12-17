@@ -12,7 +12,7 @@
     <p>1. Click the "Add Survey" button to add a new survey.</p> <br>
     <p>2. Enter the survey name (no spaces) in the first field.</p><br>
     <p>3. In Google Forms, Be sure to create "Name" and "ID" fields at the top of the survey.</p><br>
-    <p>4. Prefill each of these with dummy values (e.g. "Name", and "ID number")</p><br>
+    <p>4. Prefill each of these with dummy values: "Sample Name", and "Sample ID"</p><br>
     <p>5. In "Edit" mode, select "more" in the upper right corner (three pip menu)</p><br>
     <p>6. Select "Get prefilled link" and copy the generated link</p>
     <p>7. Paste the link in the URL field of this form.</p><br>
@@ -29,11 +29,9 @@
             </label>
 
             <button type="submit">Submit</button>
-        </form>
+        </form><br>
 
-         <div id="otherTextbox" style="display: none;">
-             <label>Please specify: <input type="text" id="otherText" name="otherText"></label>
-         </div><br><br>
+        <p id="addSurveyStatusText" style="display:none;">Please wait...</p>
     </div>
 
     <script>
@@ -41,6 +39,7 @@
             toggleVis("addSurveyDiv");
         });
         document.getElementById("addSurveyForm").addEventListener("submit", submitForm);
+        let statusText = document.getElementById("statusText");
 
         function submitForm(event) {
                 event.preventDefault();
@@ -53,16 +52,16 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert("Survey added successfully!");
+                        statusText.style.display = "block";
+                        statusText.innerHTML = "Survey added successfully.";
                         form.reset();
                         document.getElementById("addSurveyDiv").style.display = "none";
-                    } else {
-                        alert("Error adding survey.");
-                    }
+                    } 
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert("Error adding survey.");
+                    statusText.style.display = "block";
+                    statusText.innerHTML = "Error adding survey.";
                 });
             }
 

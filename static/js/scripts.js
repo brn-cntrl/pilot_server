@@ -263,6 +263,55 @@ function handleOtherOption() {
     }
 }
 
+var restTime = 8;
+
+function compareToBaseline(label){
+    fetch('/baseline_comparison', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            label: label
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        biometricBaselineData = data.baseline_means;
+        biometricData = data.data_means;
+        restTime = calculateTimeToRest(biometricBaselineData, biometricData);
+    })
+    .catch(error => {
+        console.error('Error comparing to baseline:', error);
+    });
+}
+
+function calculateTimeToRest(bioBaseline, bioData){
+    let lowerCount = 0;
+    let higherCount = 0;
+
+    for (const key in bioBaseline){
+        if(bioBaseline.hasOwnProperty(key) && bioData.hasOwnProperty(key)){
+            const baselineValue = bioBaseline[key];
+            const dataValue = bioData[key];
+            if(baselineValue < dataValue){
+                lowerCount++;
+            } else if (baselineValue > dataValue){
+                higherCount++;
+            }
+        }
+    }
+    let time
+    if (lowerCount > higherCount){
+        time = 8;
+    } else {
+        time = 5;
+    }
+    console.log(`Rest time is set to ${time} minutes.`);
+
+    return time;
+}
+
 function emotibitRecording(button, action){
     /*
     Function to start or stop recording from EmotiBit
@@ -324,7 +373,7 @@ function emotibitRecording(button, action){
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                task_id: taskID
+                label: taskID
             })
         })
         .then(response => {
@@ -355,4 +404,33 @@ function emotibitRecording(button, action){
             }
         });
     }
+}
+
+async function loadSurveys(){
+    try {
+        const response = await fetch('/get_surveys');
+        const surveys = await response.json();
+
+        const container = document.getElementById('surveyButtons');
+        container.innerHTML = '';
+        console.log(surveys);
+        surveys.forEach(survey => {
+            if (survey.url.trim()) {
+                const button = document.createElement('button');
+                button.textContent = survey.name.charAt(0).toUpperCase() + survey.name.slice(1);
+                button.onclick = () => window.open(`/survey/${survey.name}`, '_blank');
+                container.appendChild(button);
+
+                const br1 = document.createElement('br');
+                const br2 = document.createElement('br');
+                container.appendChild(br1);
+                container.appendChild(br2);
+            }
+        });
+        // document.getElementById("surveyStatus").style.display = "none";
+
+    } catch(error){
+        console.error('Error fetching surveys:', error);
+        // document.getElementById("surveyStatus").style.display = "block";
+    } 
 }

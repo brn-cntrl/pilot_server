@@ -72,9 +72,29 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 @app.route('/baseline_comparison', methods=['POST'])
 def baseline_comparison() -> Response:
     global subject_manager
+    data = request.get_json()
+    label = data.get("label")
+    if not label:
+        return jsonify({'status': 'error', 'message': 'Label parameter is required'}), 400
+    
     try:
-        bio_baseline_data = subject_manager.subject_data.get('Biometric_Baseline', [])
-        bio_data = subject_manager.subject_data.get('Biometric_Data', [])
+        bio_baseline_data = next(
+            (entry for entry in subject_manager.subject_data.get('Biometric_Baseline', [])
+             if entry.get("label") == "baseline"),
+            None
+        )
+
+        # Fetch session data by label
+        bio_data = next(
+            (entry for entry in subject_manager.subject_data.get('Biometric_Data', [])
+             if entry.get("label") == label),
+            None
+        )
+
+        if not bio_baseline_data:
+            return jsonify({'status': 'error', 'message': 'No baseline data found'}), 404
+        if not bio_data:
+            return jsonify({'status': 'error', 'message': f'No data found for label: {label}'}), 404
 
         keys = ["EDA", "HR", "BI", "HRV"]
 
@@ -108,13 +128,22 @@ def start_emotibit_stream() -> Response:
 
 @app.route('/push_emotibit_data', methods=['POST'])
 def push_emotibit_data() -> Response:
+    """
+    Route for pushing EmotiBit data to the subject's data array.
+    This route receives a JSON object with a label and pushes the current EmotiBit data to the subject's data array.
+    The data is stored in the 'Biometric_Data' key of the subject's data dictionary.
+    Returns:
+        - Response: A JSON response indicating the status of the data push.
+            If successful, returns {'message': 'Biometric data pushed to array with label: {label}'}.
+            If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
+    """
     global subject_manager, emotibit_streamer
 
     try:
         data = request.get_json()
         label = data.get('label')
-        labeled_data = {"label": label, **emotibit_streamer.data}
-        subject_manager.subject_data['Biometric_Data'].push(labeled_data)
+        labeled_data = {"label": label, **{timestamp: value for timestamp, value in emotibit_streamer.data}}
+        subject_manager.subject_data['Biometric_Data'].append(labeled_data)
 
         # Flush the streamer data
         if labeled_data in subject_manager.subject_data['Biometric_Data'] and labeled_data:
@@ -129,9 +158,14 @@ def push_emotibit_data() -> Response:
 
 @app.route('/get_biometric_baseline', methods=['POST'])
 def get_biometric_baseline() -> Response:
+    global subject_manager
     try:
         stop_emotibit()
+
         data = emotibit_streamer.get_biometric_baseline()
+        label = "baseline"
+        labeled_data = {"label": label, **{timestamp: value for timestamp, value in data}}
+        subject_manager.subject_data['Biometric_Baseline'].append(labeled_data)
 
         # Debug statement
         print(data)
@@ -368,8 +402,8 @@ def shutdown() -> Response:
 
     return response
 
-@app.route('/submit_new_survey', methods=['POST'])
-def submit_new_survey() -> Response:
+@app.route('/add_survey', methods=['POST'])
+def add_survey() -> Response:
     global subject_manager, form_manager
     try:
         survey_name = request.form.get('surveyName')
@@ -516,7 +550,6 @@ def upload_subject_data() -> Response:
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
     global subject_manager, form_manager
-    
     try:
         if request.method == 'POST':
             participant_name = request.form['name']
@@ -532,27 +565,27 @@ def submit() -> Response:
             subject_manager.subject_data['Email'] = email
             subject_manager.subject_data['ID'] = unique_id
             subject_manager.subject_data['Date'] = current_date
-
+            print("In HERE NOW")
             # Prep all forms with username and unique id
             form_manager.autofill_forms(participant_name, unique_id)
-
+            print(form_manager.surveys)
             return jsonify({'message': 'User information submitted.'}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
 
-@app.route('/get_embed_code', methods=['GET'])
-def get_embed_code() -> Response:
-    global form_manager
-    try:
-        data = request.get_json()
-        form_name = data.get('form_name')
-        embed_code = form_manager.get_embed_code(form_name)
+# @app.route('/get_embed_code', methods=['GET'])
+# def get_embed_code() -> Response:
+#     global form_manager
+#     try:
+#         data = request.get_json()
+#         form_name = data.get('form_name')
+#         embed_code = form_manager.get_embed_code(form_name)
 
-        return jsonify({'embed_code': embed_code})
+#         return jsonify({'embed_code': embed_code})
     
-    except Exception as e:
-        return jsonify({'message': 'Error processing request.'}), 400
+#     except Exception as e:
+#         return jsonify({'message': 'Error processing request.'}), 400
     
 ##################################################################
 ## Audio Routes
@@ -700,10 +733,25 @@ def test_page() -> Response:
 
     return render_template('test_page.html')
 
-@app.route('/vr_task', methods=['GET'])
+@app.route('/survey/<survey_name>')
+def survey(survey_name) -> Response:
+    global form_manager
+    survey = next((s for s in form_manager.surveys if s['name'] == survey_name), None)
+    if survey and survey['url']:
+        embed_url = survey['url']
+        return render_template('survey.html', survey_name=survey_name, embed_url=embed_url)
+    return "Survey not found or no URL provided.", 404
+
+@app.route('/get_surveys', methods=['GET'])
+def get_surveys() -> Response:
+    global form_manager
+    surveys = form_manager.surveys
+    return jsonify(surveys)
+
 def vr_task() -> Response:
     return render_template('vr_task.html')
 
+@app.route('/survey', methods=['GET'])
 @app.route('/pss4', methods=['GET'])
 def pss4() -> Response:
     return render_template('pss4.html')
@@ -723,14 +771,18 @@ def exit_survey() -> Response:
 ##################################################################
 ## Helper Functions 
 ##################################################################
-def calculate_biometric_mean(data_list, key) -> float:
+def calculate_biometric_mean(data, key) -> float:
     global subject_manager
     try:
-        values = [value for record in data_list for value in record[key]]
+        values = [
+            metrics[key] for timestamp, metrics in data.items()
+            if timestamp != 'label' and metrics.get(key) is not None
+        ]
         
         if not values:
             return None
-        return sum(value[1] for value in values) / len(values)
+        
+        return sum(values) / len(values)
     
     except Exception as e:
         print(f"An error occurred: {str(e)}")

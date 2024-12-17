@@ -28,6 +28,7 @@
             <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
             <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
         </div><br>
+
         <button id="studentSurveyButton">Student Information</button><br><br>
         <div class="innerModule" id="studentDiv" style="display:none;" disabled>
             <p>Please fill out the following information if applicable:</p>
@@ -41,10 +42,39 @@
             <div id="notification2" style="display:none; color: green;">Form submitted successfully!</div>
             <div id="errorNotification2" style="display:none; color: red;">Error submitting form.</div>
         </div>
-        <p> Note: These require both a subject and witness signature </p><br>
-        <button id="consentFormButton">Consent Form</button><br><br>
+        <p><span class="required">*</span>Add any additional surveys and be sure to submit participant information before filling out surveys</p>
+        <button id="addSurveyButton">Add Survey</button><br>
+        <div class="innerModule" id="addSurveyDiv" style="display:none;" disabled>
+            <h3>Instructions for adding surveys</h3>
+            <p>1. Enter the survey name (no spaces) in the first field.</p>
+            <p>2. In Google Forms, Be sure to create "Name" and "ID" fields at the top of the survey.</p>
+            <p>3. Prefill each of these with the dummy values: "Sample Name", and "Sample ID"</p>
+            <p>4. In "Edit" mode, select "more" in the upper right corner (three pip menu)</p>
+            <p>5. Select "Get prefilled link" and copy the generated link</p>
+            <p>6. Paste the link in the URL field of this form.</p>
+            <p>7. Click "Submit Survey" to add the survey to the list of surveys.</p>
+
+            <form action="/add_survey" id="addSurveyForm" method="POST">
+                <label for="surveyName">Survey Name:</label>
+                <input type="text" id="surveyName" name="surveyName" required><br><br>
+                <label for="surveyLink">Survey URL:</label>
+                <input type="text" id="surveyLink" name="URL" required><br><br>
+                <button type="submit">Submit Survey</button>
+            </form><br>
+            <div id="notification3" style="display:none; color: green;">Survey added successfully!</div>
+            <div id="errorNotification3" style="display:none; color: red;">Error adding survey.</div>
+        </div><br>
+
+        <div id="surveyButtons">
+            <p>Note: These require both a subject and witness signature </p>
+            <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
+        </div>
+        
+
+        <!-- <button id="consentFormButton">Consent Form</button><br><br>
         <button id="demographicSurveyButton">Demographic Survey</button><br><br>
-        <button id="backgroundInfoButton">Background Information</button><br><br>
+        <button id="backgroundInfoButton">Background Information</button><br><br> -->
+
     </div><br>
 
     <button id="biometricBaselineButton">Biometrics Baseline</button>
@@ -138,6 +168,7 @@
                     notification1.style.display = 'block';
                     errorNotification1.style.display = 'none';
                     console.log('Success:', data);
+                    loadSurveys();
                 })
                 .catch((error) => {
                     notification1.style.display = 'none';
@@ -145,6 +176,10 @@
                     console.error('Error:', error);
                 });
             })
+        });
+
+        document.getElementById('addSurveyButton').addEventListener('click', function() {
+            toggleVis('addSurveyDiv');
         });
 
         document.getElementById("stressBaselineButton").addEventListener("click", function() {
@@ -157,6 +192,31 @@
 
         document.getElementById('studentSurveyButton').addEventListener('click', function() {
             toggleVis('studentDiv');
+        });
+
+        document.addEventListener('DOMContentLoaded', function(){
+            const form = document.getElementById('addSurveyForm');
+            form.addEventListener('submit', function(event){
+                event.preventDefault();
+                const notification3 = document.getElementById('notification3');
+                const errorNotification3 = document.getElementById('errorNotification3');
+                const formData = new FormData(form);
+                fetch('/add_survey', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    notification3.style.display = 'block';
+                    errorNotification3.style.display = 'none';
+                    loadSurveys();
+                })
+                .catch(error => {
+                    notification3.style.display = 'none';
+                    errorNotification3.style.display = 'block';
+                    console.error('Error:', error);
+                });
+            });
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -175,7 +235,6 @@
                 .then(data => {
                     notification2.style.display = 'block';
                     errorNotification2.style.display = 'none';
-                    console.log(data); 
                 })
                 .catch(error => {
                     notification2.style.display = 'none';
@@ -185,17 +244,17 @@
             });
         });
 
-        document.getElementById('backgroundInfoButton').addEventListener('click', function() {
-            window.open('/background', '_blank');
-        });
+        // document.getElementById('backgroundInfoButton').addEventListener('click', function() {
+        //     window.open('/background', '_blank');
+        // });
 
-        document.getElementById('pss4_button').addEventListener('click', function() {
-            window.open('/pss4', '_blank');
-        });
+        // document.getElementById('pss4_button').addEventListener('click', function() {
+        //     window.open('/pss4', '_blank');
+        // });
 
-        document.getElementById('demographicSurveyButton').addEventListener('click', function(){
-            window.open('/demographic_survey', '_blank');
-        });
+        // document.getElementById('demographicSurveyButton').addEventListener('click', function(){
+        //     window.open('/demographic_survey', '_blank');
+        // });
 
         document.getElementById('exitSurveyButton').addEventListener('click', function() {
             window.open('/exit_survey', '_blank');
