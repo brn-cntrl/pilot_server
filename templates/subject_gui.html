@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject GUI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Welcome to the Subject GUI</h1>
+
+    <button id="studentSurveyButton">Student Information</button><br><br>
+        <div class="innerModule" id="studentDiv" style="display:none;" disabled>
+            <p>Please fill out the following information if applicable:</p>
+            <form action="/submit_student_data" id="studentForm" method="POST">
+                <label for="PID">PID:<span class="required">*</span></label>
+                <input type="text" id="PID" name="PID" required><br><br>
+                <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
+                <input type="text" id="class" name="class" required><br><br>
+                <input type="submit" value="Submit">
+            </form><br>
+            <div id="notification2" style="display:none; color: green;">Form submitted successfully!</div>
+            <div id="errorNotification2" style="display:none; color: red;">Error submitting form.</div>
+        </div>
+
+    <button id="emotionBaselineButton">Emotion Baseline</button><br>
+    <div class="testModule" id="emotionBaselineDiv" style="display:none;">
+        <ul></ul>
+            <li>Press "Begin"</li>
+            <li>Read the first question when it appears</li>
+            <li>Speak your answer aloud</li>
+            <li>Press "Submit" to register your answer and receive the next question</li>
+        </ul> <br>
+        <button id="beginSERButton">Begin</button>
+        <p id="status" style="display:none;" disabled></p>
+        <p id="questionContainer" style="display:none;" disabled></p>
+        <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
+    </div><br>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        
+        document.getElementById('emotionBaselineButton').addEventListener('click', function() {
+            toggleVis('emotionBaselineDiv');
+        });
+
+        document.getElementById('studentSurveyButton').addEventListener('click', function() {
+            toggleVis('studentDiv');
+        });
+
+    </script>
+</body>
+</html>

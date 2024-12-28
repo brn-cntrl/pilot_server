@@ -2,10 +2,11 @@ from pythonosc import dispatcher, osc_server
 from threading import Thread, Event, Timer
 import socket
 import numpy as np
+from scipy.signal import butter, filtfilt, hilbert, find_peaks
 import atexit
 import time
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 """
 This class manages the OSC server that receives data from the EmotiBit.
 All OSC addresses must be included in the oscOutputSettings.xml file. Some
@@ -23,14 +24,18 @@ class EmotiBitStreamer:
              "EDA": [],
             "HR": [],
             "BI": [],
-            "HRV": []
+            "HRV": [],
+            "PG": [],
+            "RR": []
         }
         
         self._baseline_data = {
             "EDA": [],
             "HR": [],
             "BI": [],
-            "HRV": []
+            "HRV": [],
+            "PG": [],
+            "RR": []
         }
 
         # Structure for tracking the last time data was received from the EmotiBit
@@ -38,7 +43,9 @@ class EmotiBitStreamer:
             "EDA": None,
             "HR": None,
             "BI": None,
-            "HRV": None
+            "HRV": None,
+            "PG": None,
+            "RR": None
         }
 
         self.dispatcher = dispatcher.Dispatcher()
@@ -102,6 +109,70 @@ class EmotiBitStreamer:
             rmssd_values.append((timestamps[i].isoformat(), np.sqrt((intervals[i] - intervals[i - 1]) ** 2)))
 
         return rmssd_values
+    
+    def bandpass_filter(self, data, lowcut, hightcut, fs, order=4) -> np.ndarray:
+        nyquist = 0.5 * fs
+        low = lowcut / nyquist
+        high = hightcut / nyquist
+        b, a = butter(order, [low, high], btype='band')
+        y = filtfilt(b, a, data)
+        return y
+    
+    def calculate_rr(self, signal, fs) -> np.ndarray:
+        # Bandpass filter the signal
+        filtered_signal = self.bandpass_filter(signal, 0.1, 0.5, fs)
+
+        # Calculate the envelope of the signal
+        envelope = np.abs(hilbert(filtered_signal))
+
+        # Determine RR via FFT
+        fft_result = np.fft.rfft(envelope)
+        frequencies = np.fft.rfftfreq(len(envelope), d=1/fs)
+        resp_freq = frequencies[np.argmax(np.abs(fft_result))]
+        return resp_freq * 60  # Convert to breaths per minute
+    
+    def window_rr_signal(self, ppg_data) -> np.ndarray:
+        iso_timestamps, values = zip(*ppg_data)
+        timestamps = np.array(timestamps)
+        values = np.array(values)
+
+        reference_time = datetime.fromisoformat(iso_timestamps[0])
+
+        timestamps = np.array(self.timestamps_to_seconds(iso_timestamps))
+
+        fs = 50  # Hz
+        window_duration = 10  # seconds
+        step_duration = 5  # seconds
+        window_size = int(window_duration * fs)
+        step_size = int(step_duration * fs)
+
+        resp_rates = []
+        window_timestamps = []
+
+        for start_idx in range(0, len(values) - window_size + 1, step_size):
+            end_idx = start_idx + window_size
+            window_signal = values[start_idx:end_idx]
+            window_start_time = timestamps[start_idx]
+            window_end_time = timestamps[end_idx - 1]
+            resp_rate = self.calculate_rr(window_signal, fs)
+            resp_rates.append(resp_rate)
+            window_timestamps.append((window_start_time + window_end_time) / 2)
+
+        iso_window_timestamps = [self.seconds_to_iso(ts, reference_time) for ts in window_timestamps]
+
+        result = list(zip(iso_window_timestamps, resp_rates))
+        print(f"RR values: {result}")
+
+        return result
+    
+    def timestamps_to_seconds(self, timestamps) -> list:
+        datetime_objects = [datetime.fromisoformat(ts) for ts in timestamps]
+        reference_time = datetime_objects[0]
+
+        return [(dt - reference_time).total_seconds() for dt in datetime_objects]
+    
+    def seconds_to_iso(self, seconds, reference_time):
+        return (reference_time + timedelta(seconds=seconds)).isoformat()
     
     def print_osc_message(address, *args) -> None:
         """This function is for debugging the incoming messages"""

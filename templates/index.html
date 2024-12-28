@@ -121,6 +121,7 @@
     <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
         <h2>Experimental Tasks</h2>
+        <button id="launchSubjectGUI">Launch Subject GUI</button>
         <button id="firstStressTask">First Stressor Task</button><br><br>
         <button id="firstVRTask">First VR Task</button><br><br>
         <button class="breakButton">Take Break</button><br><br>
@@ -255,6 +256,10 @@
         // document.getElementById('demographicSurveyButton').addEventListener('click', function(){
         //     window.open('/demographic_survey', '_blank');
         // });
+
+        document.getElementById('launchSubjectGUI').addEventListener('click', function() {
+            window.open('/subject_gui', '_blank');
+        });
 
         document.getElementById('exitSurveyButton').addEventListener('click', function() {
             window.open('/exit_survey', '_blank');

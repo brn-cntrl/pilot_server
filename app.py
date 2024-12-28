@@ -167,9 +167,6 @@ def get_biometric_baseline() -> Response:
         labeled_data = {"label": label, **{timestamp: value for timestamp, value in data}}
         subject_manager.subject_data['Biometric_Baseline'].append(labeled_data)
 
-        # Debug statement
-        print(data)
-
         return jsonify({'message': 'Baseline data collected.', 'data': data})
     
     except Exception as e:
@@ -329,7 +326,7 @@ def submit_answer() -> Response:
     This function handles the submission of an answer by performing the following steps:
         1. Stops the current audio recording.
         2. Transcribes the recorded audio.
-        3. Normalizes the audio signal and predicts the emotion.
+        3. Predicts the emotion label.
         4. Saves the audio file with a specific naming convention.
         5. Appends the transcription and emotion prediction to the test data.
         6. Checks the transcription against the correct answer and determines if it is correct or incorrect.
@@ -414,55 +411,6 @@ def add_survey() -> Response:
   
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-    
-@app.route('/submit_pss4', methods=['POST'])
-def submit_pss4():
-    global subject_manager
-    try:
-        pss4 = {
-            'response_1': request.form.get('controlFeeling1'),
-            'response_1_other': request.form.get('otherText'),
-            'response_2': request.form.get('controlFeeling2'),
-            'response_3': request.form.get('controlFeeling3'),
-            'response_4': request.form.get('controlFeeling4')
-        }
-
-        subject_manager.subject_data['pss4_data'] = pss4
-
-        return jsonify({'message': 'PSS-4 submitted successfully.'}), 200
-    
-    except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
-@app.route('/submit_background', methods=['POST'])
-def submit_background() -> Response:
-    global subject_manager
-    try:
-        background_data = {
-            'rush_caffeine': request.form.get('rush_caffeine'),
-            'caffeine_details': request.form.get('caffeine_details'),
-            'caffeine_time': request.form.get('caffeine_time'),
-            'thirst_hunger': request.form.get('thirst_hunger'),
-            'heart_rate': request.form.get('heart_rate'),
-            'vr_experience': request.form.get('vr_experience'),
-            'vr_experience_description': request.form.get('vr_experience_description'),
-            'balance_issues': request.form.get('balance_issues'),
-            'motion_sickness': request.form.get('motion_sickness'),
-            'neurological_conditions': request.form.get('neurological_conditions'),
-            'visual_impairments': request.form.get('visual_impairments'),
-            'neurological_vestibular': request.form.get('neurological_vestibular'),
-            'movement_issues': request.form.get('movement_issues'),
-            'mobility_issues': request.form.get('mobility_issues'),
-            'scars_tattoos': request.form.get('scars_tattoos'),
-            'glasses': request.form.get('glasses'),
-        }
-
-        subject_manager.subject_data['background_data'] = background_data 
-
-        return jsonify({'message': 'Background data submitted successfully.'}), 200
-    
-    except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_exit', methods=['POST'])
 def submit_exit() -> Response:
@@ -488,39 +436,12 @@ def submit_exit() -> Response:
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
-@app.route('/submit_demographics', methods=['POST'])
-def submit_demographics() -> Response:
-    global subject_manager
-    try:
-        demographics_data = {
-            'age': request.form.get('age'),
-            'gender': request.form.get('gender'),
-            'education': request.form.get('education'),
-            'childhood_setting': request.form.get('childhood_setting'),
-            'current_living_setting': request.form.get('current_living_setting'),
-            'exposure_to_nature': request.form.get('exposure_to_nature'),
-            'access_to_green_spaces': request.form.get('access_to_green_spaces'),
-            'preference_for_natural_environments': request.form.get('preference_for_natural_environments'),
-            'environmental_preferences': request.form.get('environmental_preferences'),
-            'preference_for_interior_design': request.form.get('preference_for_interior_design'),
-            'work_study_environment': request.form.get('work_study_environment'),
-            'current_mood': request.form.get('current_mood'),
-            'stress_level': request.form.get('stress_level'),
-            'physical_activity': request.form.get('physical_activity'),
-            'sleep_quality': request.form.get('sleep_quality'),
-            'previous_vr_experience': request.form.get('previous_vr_experience'),
-            'comfort_with_vr': request.form.get('comfort_with_vr'),
-        }
-
-        subject_manager.subject_data['demographics_data'] = demographics_data
-
-        return jsonify({'message': 'Demographics data submitted successfully.'}), 200
-    
-    except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
 @app.route('/submit_student_data', methods=['POST'])
 def submit_student_data() -> Response:
+    """
+    Route for submitting data for students with PID numbers and class information.
+    This form will be kept local to server for simplicity.
+    """
     global subject_manager
 
     try:
@@ -556,7 +477,7 @@ def submit() -> Response:
             email = request.form['email']   
             current_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
-            # NOTE: This is a temporary test method to generate unique IDs
+            # NOTE: get_available_id() is a temporary test method to generate unique IDs
             # The aws_handler will assign the ID when subject instance is created
             # at the end of the test session
             unique_id = get_available_id()
@@ -573,19 +494,6 @@ def submit() -> Response:
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
-
-# @app.route('/get_embed_code', methods=['GET'])
-# def get_embed_code() -> Response:
-#     global form_manager
-#     try:
-#         data = request.get_json()
-#         form_name = data.get('form_name')
-#         embed_code = form_manager.get_embed_code(form_name)
-
-#         return jsonify({'embed_code': embed_code})
-    
-#     except Exception as e:
-#         return jsonify({'message': 'Error processing request.'}), 400
     
 ##################################################################
 ## Audio Routes
@@ -601,7 +509,6 @@ def set_device() -> Response:
     global device_index
     global recording_manager
     data = request.get_json()
-    print(f'Received data: {data}')  # Debugging statement
 
     p = pyaudio.PyAudio()
     device_index = int(data.get('device_index'))
@@ -751,7 +658,6 @@ def get_surveys() -> Response:
 def vr_task() -> Response:
     return render_template('vr_task.html')
 
-@app.route('/survey', methods=['GET'])
 @app.route('/pss4', methods=['GET'])
 def pss4() -> Response:
     return render_template('pss4.html')
