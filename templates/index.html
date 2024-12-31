@@ -65,8 +65,8 @@
             <div id="errorNotification3" style="display:none; color: red;">Error adding survey.</div>
         </div><br>
 
-        <div id="surveyButtons">
-            <p>Note: These require both a subject and witness signature </p>
+        <div id="surveyList">
+            <p>Current Surveys in Test Procedure</p>
             <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
         </div>
         
@@ -79,31 +79,25 @@
 
     <button id="biometricBaselineButton">Biometrics Baseline</button>
     <div class="testModule" id="biometricBaselineDiv" style="display:none;">
-        <p>The experimenter will now help you put on two devices needed to collect data for the session.</p>
+        <p>Once the subject is fitted with the Emotibit, click the button below to collect baseline data.</p>
         <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
     </div><br><br>
 
-    <button id="stressBaselineButton">Stress Baseline</button>
+    <!-- <button id="stressBaselineButton">Stress Baseline</button>
     <div class="testModule" id="stressBaselineDiv" style="display:none;">
         <p>Please fill out this form.</p>
         <button id="pss4_button">Stress Baseline Survey</button><br><br>
-    </div><br><br>
+    </div><br><br> -->
 
     <button id="testAudioButton">Test Audio</button><br>
     <div class="testModule" id="testAudioDiv" style="display:none;">
-        <p>The experimenter will now help you put on a device to record audio for the session.</p>
         <p>Please select your audio input or microphone.</p>
-
         <label for="audioDevices">Select Audio Input Device:</label><br>
         <select id="audioDevices" onchange="setDevice()"></select>
-
-        <p>Please press "Record" and read the following out loud to test the audio connection:</p>
-        <button id="testAudio">Record</button>
-        <p id="audioStatusMessage"></p>
     </div> <br>
 
-    <button id="emotionBaselineButton">Emotion Baseline</button><br>
+    <!-- <button id="emotionBaselineButton">Emotion Baseline</button><br>
     <div class="testModule" id="emotionBaselineDiv" style="display:none;">
         <ul></ul>
             <li>Press "Begin"</li>
@@ -115,13 +109,13 @@
         <p id="status" style="display:none;" disabled></p>
         <p id="questionContainer" style="display:none;" disabled></p>
         <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
-    </div><br>
+    </div><br> -->
 
     <h2>Experimental Tasks</h2>
     <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
         <h2>Experimental Tasks</h2>
-        <button id="launchSubjectGUI">Launch Subject GUI</button>
+        <button id="launchSubjectGUI">Launch Subject GUI</button><br><br>
         <button id="firstStressTask">First Stressor Task</button><br><br>
         <button id="firstVRTask">First VR Task</button><br><br>
         <button class="breakButton">Take Break</button><br><br>
@@ -138,53 +132,12 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
-        window.onload = function(){
-            fetch("/reset_ser_question_index", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => console.log(data.status))
-            .catch(error => console.error('Error:', error));
-        }
+        
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('nameForm');
-            const notification1 = document.getElementById('notification1');
-            const errorNotification1 = document.getElementById('errorNotification1');
-            form.addEventListener('submit', function(event){
-                event.preventDefault();
-                const formData = new FormData(form);
-                fetch('/submit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams(formData).toString()
-                })
-                .then(response => response.json())
-                .then(data => {
-                    notification1.style.display = 'block';
-                    errorNotification1.style.display = 'none';
-                    console.log('Success:', data);
-                    loadSurveys();
-                })
-                .catch((error) => {
-                    notification1.style.display = 'none';
-                    errorNotification1.style.display = 'block';
-                    console.error('Error:', error);
-                });
-            })
-        });
+        
 
         document.getElementById('addSurveyButton').addEventListener('click', function() {
             toggleVis('addSurveyDiv');
-        });
-
-        document.getElementById("stressBaselineButton").addEventListener("click", function() {
-            toggleVis('stressBaselineDiv');
         });
 
         document.getElementById('beginExperimentButton').addEventListener('click', function() {
@@ -220,43 +173,6 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('studentForm');
-            form.addEventListener('submit', function(event) {
-                event.preventDefault(); 
-                const notification2 = document.getElementById('notification2');
-                const errorNotification2 = document.getElementById('errorNotification2');
-                const formData = new FormData(form); 
-
-                fetch('/submit_student_data', { 
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    notification2.style.display = 'block';
-                    errorNotification2.style.display = 'none';
-                })
-                .catch(error => {
-                    notification2.style.display = 'none';
-                    errorNotification2.style.display = 'block';
-                    console.error('Error:', error);
-                });
-            });
-        });
-
-        // document.getElementById('backgroundInfoButton').addEventListener('click', function() {
-        //     window.open('/background', '_blank');
-        // });
-
-        // document.getElementById('pss4_button').addEventListener('click', function() {
-        //     window.open('/pss4', '_blank');
-        // });
-
-        // document.getElementById('demographicSurveyButton').addEventListener('click', function(){
-        //     window.open('/demographic_survey', '_blank');
-        // });
-
         document.getElementById('launchSubjectGUI').addEventListener('click', function() {
             window.open('/subject_gui', '_blank');
         });
@@ -273,175 +189,9 @@
             toggleVis('participantInfoDiv');
         });
 
-        document.getElementById('emotionBaselineButton').addEventListener('click', function() {
-           toggleVis('emotionBaselineDiv');
-        });
-
         document.getElementById('tasksButton').addEventListener('click', function(){
             toggleVis('tasksDiv');
         });
-
-        document.getElementById('testAudio').addEventListener('click', async function() {
-            let button = document.getElementById('testAudio');
-            let statusMessage = document.getElementById('audioStatusMessage');
-            
-            if (button.innerText === 'Record') {
-                startRecording()
-                .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if(streamActive) {
-                            console.log('Stream is active');
-                            statusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
-                            button.innerText = 'Stop';
-                            clearInterval(checkInterval); 
-                        } else {
-                            console.log('Stream is not active');
-                            statusMessage.innerText = "Please wait...";
-                        }
-                    }, 2000);
-                })
-            }
-            else if (button.innerText === 'Stop') {
-                try {
-                    const response = await fetch('/test_audio', { method: 'POST' });
-                    const data = await response.json();
-                    statusMessage.innerText = `I got: ${data.result}`;
-                } catch (error) {
-                    console.error('Error:', error);
-                    statusMessage.innerText = "Error occurred during recording or transcription.";
-                } finally {
-                    button.innerText = 'Record';
-                }
-            }
-        });
-        
-        let statusMessage = document.getElementById('status');
-        document.getElementById('beginSERButton').addEventListener('click', function(){
-            
-            document.getElementById('beginSERButton').disabled = true;
-            document.getElementById('questionContainer').style.display = 'block';
-            document.getElementById('questionContainer').disabled = false;
-            statusMessage.style.display = 'block';
-            statusMessage.disabled = false;
-            document.getElementById('submitAnswer').style.display = 'block';
-            document.getElementById('submitAnswer').disabled = false;
-
-            // Start recording audio stream
-            startRecording()
-                .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if (streamActive) {
-                            clearInterval(checkInterval); 
-                            console.log('Stream is active');
-                            document.getElementById('submitAnswer').disabled = false;
-                            statusMessage.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
-                        
-                        } else {
-                            console.log('Stream is not active');
-                            statusMessage.innerText = "Please wait...";
-                            document.getElementById('submitAnswer').disabled = true;
-                        }
-                    }, 2000);
-                })
-                .catch(error => {
-                    console.error('Error starting audio stream:', error);
-                    alert('Error starting audio stream: ' + error);
-                });
-
-                console.log('Fetching SER question...');
-                fetch('/get_ser_question', { method: 'GET' })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Received data:', data);
-                        let q = data.question;
-                        document.getElementById('questionContainer').innerText = q;
-                        if (q === 'SER task completed.') {
-                            stopRecording();
-                            document.getElementById('submitAnswer').disabled = true;
-                            document.getElementById('submitAnswer').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error getting SER question:', error);
-                        alert('Error getting SER question: ' + error);
-                    });
-            });
-
-            document.getElementById('submitAnswer').addEventListener('click', function() {
-                // First, submit the SER answer via POST
-                fetch("/process_ser_answer", {
-                    method: "POST"
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Received data:', data); // Log the full response data
-                    if (data.status === 'error') {
-                        document.getElementById("status").innerHTML = data.message;
-                        document.getElementById("status").style.display = "block";
-                        document.getElementById("status").disabled = false;
-                    } else {
-                        // document.getElementById("status").innerHTML = data.message;
-                        statusMessage.style.display = "block";
-                        statusMessage.disabled = false;
-                        statusMessage.innerText = "Answer submitted successfully. Please wait for the next question.";
-
-                        // Ensure recording starts only after answer is processed
-                        return startRecording();
-
-                    }
-                })
-                .then(() => {
-                    let statusMessage = document.getElementById('status');
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if (streamActive) {
-                            console.log('Stream is active');
-                            clearInterval(checkInterval); 
-                        } else {
-                            console.log('Stream is not active');
-                            statusMessage.innerText = "Please wait...";
-                        }
-                    }, 2000);
-
-                    // Fetch the next question only after recording has started successfully
-                    return fetch('/get_ser_question', { method: 'GET' });
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Received data:', data);
-                    let q = data.question;
-                    document.getElementById('questionContainer').innerText = q;
-
-                    if (q === 'SER task completed.') {
-                        stopRecording();
-                        document.getElementById('submitAnswer').disabled = true;
-                        document.getElementById('submitAnswer').style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById("status").innerHTML = "Error occurred while processing the answer.";
-                    document.getElementById("status").style.display = "block";
-                    document.getElementById("status").disabled = false;
-                });
-            });
 
         document.getElementById('biometricBaselineButton').addEventListener('click', function() {
             toggleVis('biometricBaselineDiv');

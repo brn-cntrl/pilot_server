@@ -92,6 +92,11 @@ class EmotiBitStreamer:
                 print("HRV calculated and appended to data.")
             else:
                 print("No BI data available to calculate HRV.")
+            
+            if len(self.data["PG"]) > 0:
+                print("Windowing and Calculating RR signal...")
+                self.data["RR"] = self.window_rr_signal(self.data["PG"])
+                print("RR signal windowed and appended to data.")
 
             print("Server stopped successfully.")
         else:
