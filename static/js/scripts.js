@@ -1,3 +1,33 @@
+//Booleans to control flow.
+var surveysComplete = true;
+var biometricBaselineComplete = false;
+var stressBaselineComplete = true;
+var audioTestComplete = false;
+var emotionBaselineComplete = false;
+var firstStressTaskComplete = false;
+var firstVRTaskComplete = false;
+var firstBreak = false;
+var secondStressTaskComplete = false;
+var secondVRTaskComplete = false;
+var secondBreak = false;
+
+function pushTaskId(taskId){
+    fetch('/set_task_id', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            task_id: taskId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+    })
+    .catch(error => console.error('status:', error));
+}
+
 async function startRecording() {
     try {
         const response = await fetch('/start_recording', {

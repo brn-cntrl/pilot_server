@@ -6,16 +6,13 @@ from aws_handler import AWSHandler
 # Date: The date the data was collected
 # Name: The name of the subject
 # Email: The email of the subject
+# Student_Data: A JSON object that holds the student survey data
+# Task_ID: A list of tuples that hold the timestamp for when a task is started (including idling between tasks) and the task id.
 # Test_Transcriptions: A list of JSON objects that hold the transcript, SER values, and timestamps for the test data
 # VR_Transcriptions_1: A list of JSON objects that hold the transcript, SER values, and timestamps for the VR data
 # VR_Transcriptions_2: A list of JSON objects that hold the transcript, SER values, and timestamps for the VR data
 # Biometric_Baseline: A list of JSON objects that hold the biometric baseline data
 # Biometric_Data: A list of JSON objects that hold the biometric data
-# pss4_data: A JSON object that holds the PSS-4 data
-# background_data: A JSON object that holds the background data
-# demographics_data: A JSON object that holds the demographics data
-# exit_survey_data: A JSON object that holds the exit survey data
-# student_data: A JSON object that holds the student survey data
 # NOTE: All data will be uploaded to the AWS database once the subject has completed the study. 
 # A CSV file will also be created for the subject
 
@@ -26,17 +23,14 @@ class SubjectManager:
             'Date': '',
             'Name': '',
             'Email': '',
+            'student_data': {},
+            'Task_ID': [],
             'Test_Transcriptions': [], 
             'VR_Transcriptions_1': [], 
             'VR_Transcriptions_2': [], 
             'Biometric_Baseline': [],
             'Biometric_Data': [], 
-            'SER_Baseline': [],
-            'pss4_data': {},
-            'background_data': {},
-            'demographics_data': {},
-            'exit_survey_data': {},
-            'student_data': {}
+            'SER_Baseline': []
         }
 
         # Create subject ID when the object is created

@@ -69,6 +69,24 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/set_task_id', methods=['POST'])
+def set_task_id() -> Response:
+    global subject_manager
+    try:
+        data = request.get_json()
+        print(data)
+        ts = datetime.datetime.now().isoformat()
+        task = data.get("task_id")
+        if not task:
+            return jsonify({'status': 'error', 'message': 'Task ID is required'}), 400
+    
+        subject_manager.subject_data['Task_ID'].append((ts, task))
+       
+        return jsonify({'status': f'{task} appended to data with at timestamp {ts}.'})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
 @app.route('/baseline_comparison', methods=['POST'])
 def baseline_comparison() -> Response:
     global subject_manager
@@ -140,6 +158,8 @@ def push_emotibit_data() -> Response:
     global subject_manager, emotibit_streamer
 
     try:
+        stop_emotibit()
+
         data = request.get_json()
         label = data.get('label')
         labeled_data = {"label": label, **{timestamp: value for timestamp, value in emotibit_streamer.data}}
@@ -166,6 +186,9 @@ def get_biometric_baseline() -> Response:
         label = "baseline"
         labeled_data = {"label": label, **{timestamp: value for timestamp, value in data}}
         subject_manager.subject_data['Biometric_Baseline'].append(labeled_data)
+
+        # Debug statement
+        print(f"Biometric baseline data: {labeled_data}")
 
         return jsonify({'message': 'Baseline data collected.', 'data': data})
     
@@ -584,7 +607,6 @@ def record_vr_task() -> Response:
                 # SER
                 sig, sr = librosa.load(segment_file, sr=None)
                 resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-                # emotion = predict_emotion(resampled_sig)
                 emotion = ser_manager.predict_emotion(resampled_sig)
                 ser_predictions.append(emotion)
 
@@ -627,6 +649,10 @@ def home() -> Response:
 def break_page() -> Response:
     return render_template('break_page.html')
 
+@app.route('/subject_gui', methods=['GET'])
+def subject_gui() -> Response:
+    return render_template('subject_gui.html')
+
 @app.route('/video/<filename>')
 def video(filename) -> Response:
     video_path = os.path.join('static', 'videos', filename)
@@ -655,6 +681,7 @@ def get_surveys() -> Response:
     surveys = form_manager.surveys
     return jsonify(surveys)
 
+@app.route('/vr_task', methods=['GET'])
 def vr_task() -> Response:
     return render_template('vr_task.html')
 

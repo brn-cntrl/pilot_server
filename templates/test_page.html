@@ -37,13 +37,6 @@
         <p id="status"></p><br><br>
     </div>
     
-    <div class="emotibitModule">
-        <button id="startEmotibitButton" style="display:none;">Start Emotibit</button><br>
-        <p id="emotibitStatus" style="display:none;">Please wait...</p><br><br>
-        <button id="compareToBaseline" style="display:none;">Compare to Baseline</button><br>
-        <p id="baselineStatus" style="display:none;">Please wait...</p><br><br>
-    </div>
-    
     <script>
         let testNumber = 1;
         let startTime;
@@ -54,11 +47,6 @@
         let account = .00;
         const timeDisplay = document.getElementById('clock');
         const accountBalance = document.getElementById('accountBalance');
-        
-        let startEmotibitButton = document.getElementById('startEmotibitButton');
-        let baselineButton = document.getElementById('compareToBaseline');
-        let emotibitStatus = document.getElementById('emotibitStatus');
-        let baselineStatus = document.getElementById('baselineStatus');
         
         function getNextTest(){
             fetch('/get_next_test', {
@@ -95,8 +83,6 @@
                 document.getElementById('startTestButton').disabled = true;
                 document.getElementById('clock').innerText = '00:00';
             }
-            
-            // sendAccountBalance(account);
         }
 
         async function submitAnswer() {
@@ -221,7 +207,6 @@
             })
             .catch(error => console.error('Error:', error));
         });
-
     </script>
 </body>
 </html> 

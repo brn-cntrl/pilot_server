@@ -39,6 +39,7 @@ class SERManager:
             - audio_chunk: audio file in wav format. 
         Returns:
             - str: The predicted emotion label.
+            - TODO: float: The confidence value of the predicted label.
         Raises:
             - ValueError: If the AUDONNX_MODEL is not initialized.
         Notes:

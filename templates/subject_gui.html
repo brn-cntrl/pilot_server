@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Subject GUI</h1>
-
+    <h1>Subject GUI Panel</h1>
+    <h2>Pretest</h2>
+    <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p>
     <button id="beginSurveysButton">Surveys</button>
     <div class="testModule" id="surveysDiv" style="display:none;">
         <h2>Surveys and Participant Information</h2>
@@ -82,8 +83,51 @@
         <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
     </div><br>
 
+    <h2>Experimental Tasks</h2>
+    <p>The following is a set of experimental tasks to be completed.</p>
+    <p>After completing a task, please wait for instructions before advancing to the next task.</p>
+    <button id="testsButton">Begin Tasks</button>
+    <div class="testModule" id="testProceduresDiv" style="display:none;">
+        <button id="firstStressTask">First Stressor Task</button><br><br>
+        <button id="firstVRTask">First VR Task</button><br><br>
+        <div class="innerModule" id="vrTask1" style="display:none;">
+            <p>The test supervisor will now assist you with the VR headset.</p> 
+        </div>
+        <button class="breakButton">Take Break</button><br><br>
+        <button id="secondStressTask">Second Stressor Task</button><br><br>
+        <button id="secondVRTask">Second VR Task / Control</button><br><br>
+        <div class="innerModule" id="vrTask2" style="display:none;">
+            <p>The test supervisor will now assist you with the VR headset.</p>
+        </div>
+        <button class="breakButton">Take a Break</button>
+    </div>
+
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
+        let breakWin;
+        let breakButtons = document.getElementsByClassName('breakButton');
+        for (let i = 0; i < breakButtons.length; i++) {
+            breakButtons[i].addEventListener('click', function() {
+                breakWin = window.open('/break_page', '_blank', 'width=800, height=600');
+            });
+        }
+
+        document.getElementById('firstStressTask').addEventListener('click', function() {
+            window.open('/test_page', '_blank', 'width=800, height=600');
+        });
+
+        document.getElementById('secondStressTask').addEventListener('click', function() {
+            window.open('/test_page', '_blank', 'width=800, height=600');
+        });
+
+        document.getElementById('firstVRTask').addEventListener('click', function() {
+            vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
+        });
+
+        document.getElementById('secondVRTask').addEventListener('click', function() {
+            vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
+        });
+
         window.onload = function(){
             fetch("/reset_ser_question_index", {
                 method: "POST",
@@ -95,6 +139,12 @@
             .then(data => console.log(data.status))
             .catch(error => console.error('Error:', error));
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('testsButton').addEventListener('click', function() {
+                toggleVis('testProceduresDiv');
+            });
+        });
 
         document.addEventListener('DOMContentLoaded', function(){
             document.getElementById('beginSurveysButton').addEventListener('click', function() {
@@ -262,6 +312,7 @@
                     statusMessage.innerText = "Error occurred during recording or transcription.";
                 } finally {
                     button.innerText = 'Record';
+                    audioTestComplete = true;
                 }
             }
         });
@@ -322,6 +373,7 @@
 
                 if (q === 'SER task completed.') {
                     stopRecording();
+                    emotionBaselineComplete = true;
                     document.getElementById('submitAnswer').disabled = true;
                     document.getElementById('submitAnswer').style.display = 'none';
                 }

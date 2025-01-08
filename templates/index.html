@@ -9,6 +9,7 @@
 </head>
 <body>
     <h1>Experiment</h1>
+    <button id="launchSubjectGUI">Launch Subject GUI</button><br><br>
     <h2>Pre-Test</h2>
 
     <button id="beginExperimentButton">Surveys</button><br>
@@ -69,11 +70,6 @@
             <p>Current Surveys in Test Procedure</p>
             <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
         </div>
-        
-
-        <!-- <button id="consentFormButton">Consent Form</button><br><br>
-        <button id="demographicSurveyButton">Demographic Survey</button><br><br>
-        <button id="backgroundInfoButton">Background Information</button><br><br> -->
 
     </div><br>
 
@@ -97,31 +93,72 @@
         <select id="audioDevices" onchange="setDevice()"></select>
     </div> <br>
 
-    <!-- <button id="emotionBaselineButton">Emotion Baseline</button><br>
-    <div class="testModule" id="emotionBaselineDiv" style="display:none;">
-        <ul></ul>
-            <li>Press "Begin"</li>
-            <li>Read the first question when it appears</li>
-            <li>Speak your answer aloud</li>
-            <li>Press "Submit" to register your answer and receive the next question</li>
-        </ul> <br>
-        <button id="beginSERButton">Begin</button>
-        <p id="status" style="display:none;" disabled></p>
-        <p id="questionContainer" style="display:none;" disabled></p>
-        <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
-    </div><br> -->
-
     <h2>Experimental Tasks</h2>
     <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
         <h2>Experimental Tasks</h2>
-        <button id="launchSubjectGUI">Launch Subject GUI</button><br><br>
-        <button id="firstStressTask">First Stressor Task</button><br><br>
-        <button id="firstVRTask">First VR Task</button><br><br>
-        <button class="breakButton">Take Break</button><br><br>
-        <button id="secondStressTask">Second Stressor Task</button><br><br>
-        <button id="secondVRTask">Second VR Task / Control</button><br><br>
-        <button class="breakButton">Take a Break</button>
+        <button id="firstStressTask">Stressor Task 1</button><br>
+        <div class="innerModule" id="firstStressDiv" style="display:none;">
+            <p>Instructions for the first stressor task:</p>
+            <p>1. If the EmotiBit has not been fitted to subject, do so now.</p>
+            <p>2. Have the subject read the instructions on their screen before starting the task.</p>
+            <p>3. The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</p>
+            <p>4. When the subject is ready, press the "Collect Biometrics" button below.</p>
+            <p>5. Press "Stop Biometrics" when the task is completed</p>
+            <button id="startStressBiometrics1">Start Collecting Biometrics</button>
+            <p id="stressStatus1" style="display:none;">Please wait...</p>
+        </div><br>
+
+        <button id="VRTaskButton1">VR Task 1</button><br>
+        <div class="innerModule" id="VRTaskDiv1" style="display:none">
+            <button id="VRBiometrics1">Start EmotiBit</button><br><br>
+            <p id="emotibitStatus1" style="display:none;">Please wait...</p>
+            <button id="VRAudio1">Start Recording</button><br><br>
+            <p>Please note that when recording is stopped, post-processing may take several minutes</p>
+            <p id="recordingStatus1" style="display:none;">Please wait...</p>
+        </div><br>
+
+        <button id="breakButton1">Take Break</button><br>
+        <div class="innerModule" id="break1Div" style="display:none;">
+            <p>Instructions for the break:</p>
+            <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
+            <p>2. Have the subject click the "Take Break" button.</p>
+            <p>3. Once they are on the break page, have them select the "Break 1" button.</p>
+            <p>4. Instruct the subject to watch the video for the amount of time listed in the instructions on their screen</p>
+            <button id="startBreak1">Start Break</button><br>
+        </div><br>
+
+        <button id="secondStressTask">Stressor Task 2</button><br>
+        <div class="innerModule" id="secondStressDiv" style="display:none;">
+            <p>Instructions for the second stressor task:</p>
+            <p>1. If the EmotiBit has not been fitted to subject, do so now.</p>
+            <p>2. Have the subject read the instructions on their screen before starting the task.</p>
+            <p>3. The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</p>
+            <p>4. When the subject is ready, press the "Collect Biometrics" button below.</p>
+            <p>5. Press "Stop Biometrics" when the task is completed</p>
+            <button id="startStressBiometrics2">Collect Biometrics</button><br>
+            <p id="stressStatus2" style="display:none;">Please wait...</p>
+        </div><br>
+
+        <button id="VRTaskButton2">VR Task 2</button><br>
+        <div class="innerModule" id="VRTaskDiv2" style="display:none">
+            <button id="VRBiometrics2">Start EmotiBit</button><br><br>
+            <p id="emotibitStatus2" style="display:none;">Please wait...</p>
+            <button id="VRAudio2">Start Recording</button><br><br>
+            <p>Please note that when recording is stopped, post-processing may take several minutes</p>
+            <p id="recordingStatus2" style="display:none;">Please wait...</p>
+        </div><br>
+
+        <button id="breakButton2">Take a Break</button><br>
+        <div class="innerModule" id="break2Div" style="display:none;">
+            <p>Instructions for the break:</p>
+            <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
+            <p>2. Have the subject click the "Take Break" button.</p>
+            <p>3. Once they are on the break page, have them select the "Break 2" button.</p>
+            <p>4. Instruct the subject to watch the video for the amount of time listed in the instructions on their screen</p>
+            <p>5. Press the "Start Break" button below.</p>
+            <button id="startBreak2">Start Break</button><br>
+        </div><br>
     </div><br>
 
     <h2>Post-Test</h2>
@@ -132,22 +169,70 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
+        // TODO: Add disabling for task completion logic.
+        document.addEventListener('DOMContentLoaded', function(){
+            document.getElementById('addSurveyButton').addEventListener('click', function() {
+                toggleVis('addSurveyDiv');
+            });
+
+            document.getElementById('beginExperimentButton').addEventListener('click', function() {
+                toggleVis('surveysDiv');
+            });
+
+            document.getElementById('studentSurveyButton').addEventListener('click', function() {
+                toggleVis('studentDiv');
+            });
+
+            document.getElementById('launchSubjectGUI').addEventListener('click', function() {
+                window.open('/subject_gui', '_blank', 'width=1200, height=720');
+            });
+
+            document.getElementById('exitSurveyButton').addEventListener('click', function() {
+                window.open('/exit_survey', '_blank');
+            });
+
+            document.getElementById('testAudioButton').addEventListener('click', function() {
+                toggleVis('testAudioDiv');
+            });
+
+            document.getElementById('participantInfoButton').addEventListener('click', function() {
+                toggleVis('participantInfoDiv');
+            });
+
+            document.getElementById('tasksButton').addEventListener('click', function(){
+                toggleVis('tasksDiv');
+            });
+
+            document.getElementById('biometricBaselineButton').addEventListener('click', function() {
+                toggleVis('biometricBaselineDiv');
+            });
+
+            document.getElementById('firstStressTask').addEventListener('click', function() {
+                toggleVis('firstStressDiv');
+            });
+
+            document.getElementById('secondStressTask').addEventListener('click', function() {
+                toggleVis('secondStressDiv');
+            });
+
+            document.getElementById("VRTaskButton1").addEventListener('click', function(){
+                toggleVis('VRTaskDiv1');
+            });
+                
+            document.getElementById("VRTaskButton2").addEventListener('click', function(){
+                toggleVis('VRTaskDiv2');
+            });
+
+            
+            document.getElementById('breakButton1').addEventListener('click', function() {
+                toggleVis('break1Div');
+            });
+
+            document.getElementById('breakButton2').addEventListener('click', function() {
+                toggleVis('break2Div');
+            }); 
+        });
         
-
-        
-
-        document.getElementById('addSurveyButton').addEventListener('click', function() {
-            toggleVis('addSurveyDiv');
-        });
-
-        document.getElementById('beginExperimentButton').addEventListener('click', function() {
-            toggleVis('surveysDiv');
-        });
-
-        document.getElementById('studentSurveyButton').addEventListener('click', function() {
-            toggleVis('studentDiv');
-        });
-
         document.addEventListener('DOMContentLoaded', function(){
             const form = document.getElementById('addSurveyForm');
             form.addEventListener('submit', function(event){
@@ -171,115 +256,62 @@
                     console.error('Error:', error);
                 });
             });
-        });
 
-        document.getElementById('launchSubjectGUI').addEventListener('click', function() {
-            window.open('/subject_gui', '_blank');
-        });
-
-        document.getElementById('exitSurveyButton').addEventListener('click', function() {
-            window.open('/exit_survey', '_blank');
-        });
-
-        document.getElementById('testAudioButton').addEventListener('click', function() {
-            toggleVis('testAudioDiv');
-        });
-
-        document.getElementById('participantInfoButton').addEventListener('click', function() {
-            toggleVis('participantInfoDiv');
-        });
-
-        document.getElementById('tasksButton').addEventListener('click', function(){
-            toggleVis('tasksDiv');
-        });
-
-        document.getElementById('biometricBaselineButton').addEventListener('click', function() {
-            toggleVis('biometricBaselineDiv');
-        });
-
-        baselineButton = document.getElementById("startBiometricBaseline");
-        function startBaseline() {
-            fetch("/start_emotibit_stream", {
-                method: "POST"
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data.message);
-                baselineButton.innerText = "Stop Collecting Baseline";
-                document.getElementById('biometricStatusMessage').innerText = data.message;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
-            });
-        }
-
-        function stopBaseline() {
-            fetch("/get_biometric_baseline", {
-                method: "POST"
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data.message);
-                baselineButton.innerText = "Start Collecting Baseline";
-                document.getElementById('biometricStatusMessage').innerText = data.message;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('biometricStatusMessage').innerText = "Error occurred while stopping biometric baseline.";
-            });
-        }
-
-        baselineButton.addEventListener("click", function() {
-            if (baselineButton.innerText == "Start Collecting Baseline") {
-                startBaseline();
-            } else {
-                stopBaseline();
+            baselineButton = document.getElementById("startBiometricBaseline");
+            function startBaseline() {
+                fetch("/start_emotibit_stream", {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    baselineButton.innerText = "Stop Collecting Baseline";
+                    document.getElementById('biometricStatusMessage').innerText = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while starting biometric baseline.";
+                });
             }
-        });
 
-        let vrWin;
-
-        document.getElementById('firstVRTask').addEventListener('click', function() {
-            vrWin = window.open('/vr_task', '_blank');
-            if (vrWin) {
-                vrWin.focus();
-            } else {
-                alert('Please allow popups');
+            function stopBaseline() {
+                fetch("/get_biometric_baseline", {
+                    method: "POST"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    baselineButton.innerText = "Start Collecting Baseline";
+                    document.getElementById('biometricStatusMessage').innerText = data.message;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('biometricStatusMessage').innerText = "Error occurred while stopping biometric baseline.";
+                });
+                
+                biometricBaselineComplete = true;
             }
-        });
 
-        document.getElementById('secondVRTask').addEventListener('click', function() {
-            vrWin = window.open('/vr_task', '_blank');
-            if (vrWin) {
-                vrWin.focus();
-            } else {
-                alert('Please allow popups');
-            }
-        });
-
-        let breakWin;
-        let breakButtons = document.getElementsByClassName('breakButton');
-        for (let i = 0; i < breakButtons.length; i++) {
-            breakButtons[i].addEventListener('click', function() {
-                breakWin = window.open('/break_page', '_blank');
-                if (breakWin) {
-                    breakWin.focus();
+            baselineButton.addEventListener("click", function() {
+                if (baselineButton.innerText == "Start Collecting Baseline") {
+                    pushTaskId('biometric_baseline');
+                    startBaseline();
                 } else {
-                    alert('Please allow popups for this website');
+                    pushTaskId('subject_idle')
+                    stopBaseline();
                 }
             });
-        }
+        });
 
         document.addEventListener('DOMContentLoaded', (event) => {
             console.log('Fetching audio devices...');
@@ -291,20 +323,257 @@
             shutdownButton.addEventListener('click', shutdownServer);
         });
 
-        document.getElementById('firstStressTask').addEventListener('click', function() {
-            window.open('/test_page', '_blank');
+        document.addEventListener('DOMContentLoaded', function(){
+            let stress1Button = document.getElementById('startStressBiometrics1');
+            let stress1Status = document.getElementById('stressStatus1');
+            stress1Button.addEventListener('click', function() {
+                if(stress1Button.innerText == 'Collect Biometrics'){
+                    pushTaskId('stressor_test_1')
+                    fetch('/start_emotibit_stream', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        stress1Button.innerText = 'Stop Collecting Biometrics';
+                        stress1Status.innerText = 'Collecting Biometrics...';
+                        stress1Status.style.display = 'block';
+                    })
+                    .catch(error => console.error('Error:', error));
+                } else {
+                    pushTaskId('subject_idle')
+                    fetch('/push_emotibit_data', {
+                        method: 'POST',
+                        label: 'stress_test_1'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        stress1Button.innerText = 'Collect Biometrics';
+                        stress1Status.style.display = 'none';
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            });
+
+            let stress2Button = document.getElementById('startStressBiometrics2');
+            let stress2Status = document.getElementById('stressStatus2');
+            stress2Button.addEventListener('click', function() {
+                if(stress2Button.innerText == 'Collect Biometrics'){
+                    pushTaskId('stressor_test_2');
+                    fetch('/start_emotibit_stream', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        stress2Button.innerText = 'Stop Collecting Biometrics';
+                        stress2Status.innerText = 'Collecting Biometrics...';
+                        stress2Status.style.display = 'block';
+                    })
+                    .catch(error => console.error('Error:', error));
+                } else {
+                    pushTaskId('subject_idle')
+                    fetch('/push_emotibit_data', {
+                        method: 'POST',
+                        label: 'stress_test_2'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        stress2Button.innerText = 'Collect Biometrics';
+                        stress2Status.style.display = 'none';
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            });
+
+            let VRAudio1 = document.getElementById('VRAudio1');
+            let VRAudio2 = document.getElementById('VRAudio2');
+
+            VRAudio1.addEventListener('click', function() {
+                if (VRAudio1.innerText == "Start Recording"){
+                    VRAudio1.innerText = "Stop Recording";
+                    VRRecording(VRAudio1, 'start');
+                } else {
+                    VRAudio1.innerText = "Start Recording";
+                    VRRecording(button, 'stop');
+                }
+            });
+
+            VRAudio2.addEventListener('click', function() {
+                if (VRAudio2.innerText == "Start Recording"){
+                    VRAudio2.innerText = "Stop Recording";
+                    VRRecording(VRAudio1, 'start');
+                } else {
+                    VRAudio2.innerText = "Start Recording";
+                    VRRecording(button, 'stop');
+                }
+            });
+
+            let VRBiom1 = document.getElementById('VRBiometrics1');
+            let VRBiom2 = document.getElementById('VRBiometrics2');
+
+            VRBiom1.addEventListener('click', function() {
+                if (VRBiom1.innerText == "Start EmotiBit"){
+                    pushTaskId('VR_task_1');
+                    VRBiom1.innerText = "Stop Task";
+                    fetch('/start_emotibit_stream', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                    })
+                    .catch(error => console.error('status:', error));
+                } else {
+                    pushTaskId('subject_idle');
+                    VRBiom1.innerText = "Start EmotiBit"
+                    fetch('/push_emotibit_data', {
+                        method: 'POST',
+                        label: 'VR_task_1'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                    })
+                    .catch(error => console.error('message:', error));
+                }
+            });
+
+            VRBiom2.addEventListener('click', function() {
+                if (VRBiom2.innerText == "Start EmotiBit"){
+                    pushTaskId('VR_task_2');
+                    VRBiom2.innerText = "Stop Task"
+                    fetch('/start_emotibit_stream', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                    })
+                    .catch(error => console.error('status:', error));
+                } else {
+                    pushTaskId('subject_idle');
+                    VRBiom2.innerText = "Start EmotiBit"
+                    fetch('/push_emotibit_data', {
+                        method: 'POST',
+                        label: 'VR_task_2'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                    })
+                    .catch(error => console.error('message:', error));
+                }
+            });
+
+            let breakButton1 = document.getElementById('startBreak1');
+            let breakButton2 = document.getElementById('startBreak2');
+
+            breakButton1.addEventListener('click', function(){
+                if(breakButton1.innerText == "Start Break"){
+                    pushTaskId('break_1');
+                    breakButton1.innerText = "End Break";
+                } else {
+                    pushTaskId('subject_idle');
+                    breakButton1.innerText = "Start Break";
+                }
+            });
+
+            breakButton2.addEventListener('click', function(){
+                if(breakButton2.innerText == "Start Break"){
+                    pushTaskId('break_2');
+                    breakButton2.innerText = "End Break";
+                } else {
+                    pushTaskId('subject_idle');
+                    breakButton1.innerText = "Start Break";
+                }
+            });
+
+            function VRRecording(button, action){
+                const taskID = button.id;
+                console.log(`taskID: ${taskID}, action: ${action}`);  // Debugging statement
+                statusId1 = document.getElementById("recordingStatus1");
+                statusId2 = document.getElementById("recordingStatus2");
+                if(action == 'start'){
+                    startRecording();
+                    let checkInterval = setInterval(() => {
+                        if (checkActiveStream()) {
+                            console.log("Stream is active.");
+                            if (taskID == 'VRAudio1'){
+                                statusId1.style.display = 'block';
+                                statusId1.innerHTML = 'Recording stream active.';
+                            } else if (taskID == 'VRAudio2'){
+                                statusId2.style.display = 'block';
+                                statusId2.innerHTML = 'Recording stream active.';
+                            }
+                            clearInterval(checkInterval); // Stop checking once stream is active
+                        } else {
+                            if(taskID == 'VRAudio1'){
+                                statusId1.style.display = 'block';
+                                statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
+                            } else if (taskID == 'VRAudio2'){
+                                statusId2.style.display = 'block';
+                                statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
+                            }
+                        }
+                    }, 2000); 
+
+                } else if (action == 'stop'){
+                    console.log(`taskID: ${taskID}, action: ${action}`);
+                    if(taskID == 'taskID1'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
+                    } else if (taskID == 'taskID2'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
+                    }
+
+                    fetch('/record_vr_task', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            task_id: taskID,
+                            action: action
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Success:', data);
+                        if(taskID == 'taskID1'){
+                            statusId1.style.display = 'block';
+                            statusId1.innerHTML = data.message;
+                        } else if (taskID == 'taskID2'){
+                            statusId2.style.display = 'block';
+                            statusId2.innerHTML = data.message;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            }
+
+            document.getElementById('uploadSubjectData').addEventListener('click', function() {
+                fetch('/upload_subject_data', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                })
+                .catch(error => console.error('Error:', error));
+            });
         });
-        
-        document.getElementById('uploadSubjectData').addEventListener('click', function() {
-            fetch('/upload_subject_data', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-            })
-            .catch(error => console.error('Error:', error));
-        });
+
     </script>
 </body>
 </html>

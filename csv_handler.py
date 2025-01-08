@@ -46,27 +46,17 @@ class CSVHandler:
         )
 
             # Create CSV headers
+
+        # TODO: add start / stop columns for each task
         headers = ['ID', 'Date', 'Name', 'Email',
-            'Test_Timestamp', 'Test_Transcript', 'Test_Emotion',
+            'Test1_Timestamp', 'Test1_Transcript', 'Test1_Emotion',
             'VR1_Timestamp', 'VR1_Transcript', 'VR1_Emotion',
             'VR2_Timestamp', 'VR2_Transcript', 'VR2_Emotion', 
             'Baseline_EDA_Timestamp', 'Biometric_Baseline_EDA', 'Baseline_HR_Timestamp', 'Biometric_Baseline_HR', 
             'Baseline_BI_Timestamp', 'Biometric_Baseline_BI', 'Baseline_HRV_Timestamp', 'Biometric_Baseline_HRV',
             'EDA_Timestamp', 'Biometric_Data_EDA', 'HR_Timestamp', 'Biometric_Data_HR', 
-            'BI_Timestamp', 'Biometric_Data_BI', 'HRV_Timestamp', 'Biometric_Data_HRV', 'SER_Baseline_Timestamp', 'SER_Baseline_Emotion',
-            'PSS4_Purpose', 'PSS4_Time_Nature', 'PSS4_Access_Gardens', 'PSS4_Enjoy_Time_Natural', 'PSS4_Environmental_Preference',
-            'PSS4_Natural_Elements', 'PSS4_Interior_Preference','PSS4_Instructions', 'PSS4_Expectations', 'PSS4_Feedback', 
-            'Background_Rush_Caffeine','Background_Caffeine_Details', 'Background_Caffeine_Time', 'Background_Thirst_Hunger', 
-            'Background_Heart_Rate', 'Background_VR_Experience', 'Background_VR_Experience_Description', 'Background_Balance_Issues', 
-            'Background_Motion_Sickness', 'Background_Neurological_Condition', 'Background_Visual_Impairments', 'Background_Neurological_Vestibular', 
-            'Background_Movement_Issues', 'Background_Mobility_Issues', 'Background_Scars_Tattoo','Background_Glasses', 
-            'Demographics_Age', 'Demographics_Gender', 'Demographics_Education', 'Demographics_Childhood_Setting', 
-            'Demographics_Current_Setting', 'Demographics_Nature', 'Demographics_Green_Spaces', 'Demographics_Pref_Natural',
-            'Demographics_Env_Prefs', 'Demographics_Pref_Interior', 'Demographics_Work_Study_Env', 'Demographics_Current_Mood',
-            'Demographics_Stress_Level', 'Demographics_Physical_Activity', 'Demographics_Sleep_Quality', 'Demographics_VR_Experience',
-            'Demographics_VR_Comfort', 'Exit_Survey_Main_Purpose', 'Exit_Survey_Time_In_Nature', 'Exit_Survey_Access_Gardens',
-            'Exit_Survey_Enjoy_Time_Natural', 'Exit_Survey_Environ_Preference', 'Exit_Survey_Natural_Elements', 'Exit_Survey_Interior_Preference',
-            'Exit_Survey_Instructions', 'Exit_Survey_Expectations', 'Exit_Survey_Feedback', 'Student_Survey_PID', 'Student_Survey_Class']
+            'BI_Timestamp', 'Biometric_Data_BI', 'HRV_Timestamp', 'Biometric_Data_HRV', 'SER_Baseline_Timestamp', 'SER_Baseline_Emotion'
+        ]
         
         try:
             # Open CSV file for writing
