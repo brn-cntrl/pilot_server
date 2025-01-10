@@ -38,10 +38,6 @@ class CSVHandler:
             len(self.subject_data['Biometric_Baseline']),
             len(self.subject_data['Biometric_Data']),
             len(self.subject_data['SER_Baseline']),
-            len(self.subject_data['pss4_data']),
-            len(self.subject_data['background_data']),
-            len(self.subject_data['demographics_data']),
-            len(self.subject_data['exit_survey_data']),
             len(self.subject_data['student_data'])
         )
 
@@ -55,7 +51,8 @@ class CSVHandler:
             'Baseline_EDA_Timestamp', 'Biometric_Baseline_EDA', 'Baseline_HR_Timestamp', 'Biometric_Baseline_HR', 
             'Baseline_BI_Timestamp', 'Biometric_Baseline_BI', 'Baseline_HRV_Timestamp', 'Biometric_Baseline_HRV',
             'EDA_Timestamp', 'Biometric_Data_EDA', 'HR_Timestamp', 'Biometric_Data_HR', 
-            'BI_Timestamp', 'Biometric_Data_BI', 'HRV_Timestamp', 'Biometric_Data_HRV', 'SER_Baseline_Timestamp', 'SER_Baseline_Emotion'
+            'BI_Timestamp', 'Biometric_Data_BI', 'HRV_Timestamp', 'Biometric_Data_HRV', 'SER_Baseline_Timestamp', 
+            'SER_Baseline_Emotion', 'Task_ID_Timestamp', 'Task_ID'
         ]
         
         try:
@@ -122,91 +119,6 @@ class CSVHandler:
                         row['SER_Baseline_Emotion'] = self.subject_data['SER_Baseline'][i]['emotion']
                     else:
                         row['SER_Baseline_Timestamp'] = row['SER_Baseline_Emotion'] = ''
-
-                    if i == 0 and self.subject_data['pss4_data']:   
-                        row['PSS4_Main_Purpose'] = self.subject_data['pss4_data']['main_purpose']
-                        row['PSS4_Time_Nature'] = self.subject_data['pss4_data']['time_in_nature']
-                        row['PSS4_Access_Gardens'] = self.subject_data['pss4_data']['access_gardens']
-                        row['PSS4_Enjoy_Time_Natural'] = self.subject_data['pss4_data']['enjoy_time_natural']
-                        row['PSS4_Environmental_Preference'] = self.subject_data['pss4_data']['environment_preference']
-                        row['PSS4_Natural_Elements'] = self.subject_data['pss4_data']['natural_elements']
-                        row['PSS4_Interior_Preference'] = self.subject_data['pss4_data']['interior_preference']
-                        row['PSS4_Instructions'] = self.subject_data['pss4_data']['instructions']
-                        row['PSS4_Expectations'] = self.subject_data['pss4_data']['expectations']
-                        row['PSS4_Feedback'] = self.subject_data['pss4_data']['feedback']
-                    else:
-                        row['PSS4_Main_Purpose'] = row['PSS4_Time_Nature'] = row['PSS4_Access_Gardens'] = ''
-                        row['PSS4_Enjoy_Time_Natural'] = row['PSS4_Environmental_Preference'] = row['PSS4_Natural_Elements'] = ''
-                        row['PSS4_Interior_Preference'] = row['PSS4_Instructions'] = row['PSS4_Expectations'] = ''
-                        row['PSS4_Feedback'] = ''
-
-                    if i == 0 and self.subject_data['background_data']:
-                        row['Background_Rush_Caffeine'] = self.subject_data['background_data']['rush_caffeine']
-                        row['Background_Caffeine_Details'] = self.subject_data['background_data']['caffeine_details']
-                        row['Background_Caffeine_Time'] = self.subject_data['background_data']['caffeine_time']
-                        row['Background_Thirst_Hunger'] = self.subject_data['background_data']['thirst_hunger']
-                        row['Background_Heart_Rate'] = self.subject_data['background_data']['heart_rate']
-                        row['Background_VR_Experience'] = self.subject_data['background_data']['vr_experience']
-                        row['Background_VR_Experience_Description'] = self.subject_data['background_data']['vr_experience_description']
-                        row['Background_Balance_Issues'] = self.subject_data['background_data']['balance_issues']
-                        row['Background_Motion_Sickness'] = self.subject_data['background_data']['motion_sickness']
-                        row['Background_Neurological_Condition'] = self.subject_data['background_data']['neurological_conditions']
-                        row['Background_Visual_Impairments'] = self.subject_data['background_data']['visual_impairments']
-                        row['Background_Neurological_Vestibular'] = self.subject_data['background_data']['neurological_vestibular']
-                        row['Background_Movement_Issues'] = self.subject_data['background_data']['movement_issues']
-                        row['Background_Mobility_Issues'] = self.subject_data['background_data']['mobility_issues']
-                        row['Background_Scars_Tattoo'] = self.subject_data['background_data']['scars_tattoos']
-                        row['Background_Glasses'] = self.subject_data['background_data']['glasses']
-                    else:
-                        row['Background_Rush_Caffeine'] = row['Background_Caffeine_Details'] = row['Background_Caffeine_Time'] = ''
-                        row['Background_Thirst_Hunger'] = row['Background_Heart_Rate'] = row['Background_VR_Experience'] = ''
-                        row['Background_VR_Experience_Description'] = row['Background_Balance_Issues'] = row['Background_Motion_Sickness'] = ''
-                        row['Background_Neurological_Condition'] = row['Background_Visual_Impairments'] = row['Background_Neurological_Vestibular'] = ''
-                        row['Background_Movement_Issues'] = row['Background_Mobility_Issues'] = row['Background_Scars_Tattoo'] = ''
-                        row['Background_Glasses'] = ''
-
-                    if i == 0 and self.subject_data['demographics_data']:
-                        row['Demographics_Age'] = self.subject_data['demographics_data']['age']
-                        row['Demographics_Gender'] = self.subject_data['demographics_data']['gender']
-                        row['Demographics_Education'] = self.subject_data['demographics_data']['education']
-                        row['Demographics_Childhood_Setting'] = self.subject_data['demographics_data']['childhood_setting']
-                        row['Demographics_Current_Setting'] = self.subject_data['demographics_data']['current_living_setting']
-                        row['Demographics_Nature'] = self.subject_data['demographics_data']['exposure_to_nature']
-                        row['Demographics_Green_Spaces'] = self.subject_data['demographics_data']['access_to_green_spaces']
-                        row['Demographics_Pref_Natural'] = self.subject_data['demographics_data']['preference_for_natural_environments']
-                        row['Demographics_Env_Prefs'] = self.subject_data['demographics_data']['environmental_preferences']
-                        row['Demographics_Pref_Interior'] = self.subject_data['demographics_data']['preference_for_interior_design']
-                        row['Demographics_Work_Study_Env'] = self.subject_data['demographics_data']['work_study_environment']
-                        row['Demographics_Current_Mood'] = self.subject_data['demographics_data']['current_mood']
-                        row['Demographics_Stress_Level'] = self.subject_data['demographics_data']['stress_level']
-                        row['Demographics_Physical_Activity'] = self.subject_data['demographics_data']['physical_activity']
-                        row['Demographics_Sleep_Quality'] = self.subject_data['demographics_data']['sleep_quality']
-                        row['Demographics_VR_Experience'] = self.subject_data['demographics_data']['previous_vr_experience']
-                        row['Demographics_VR_Comfort'] = self.subject_data['demographics_data']['comfort_with_vr']
-                    else:
-                        row['Demographics_Age'] = row['Demographics_Gender'] = row['Demographics_Education'] = ''
-                        row['Demographics_Childhood_Setting'] = row['Demographics_Current_Setting'] = row['Demographics_Nature'] = ''
-                        row['Demographics_Green_Spaces'] = row['Demographics_Pref_Natural'] = row['Demographics_Env_Prefs'] = ''
-                        row['Demographics_Pref_Interior'] = row['Demographics_Work_Study_Env'] = row['Demographics_Current_Mood'] = ''
-                        row['Demographics_Stress_Level'] = row['Demographics_Physical_Activity'] = row['Demographics_Sleep_Quality'] = ''
-                        row['Demographics_VR_Experience'] = row['Demographics_VR_Comfort'] = ''
-
-                    if i == 0 and self.subject_data['exit_survey_data']:
-                        row['Exit_Survey_Main_Purpose'] = self.subject_data['exit_survey_data']['main_purpose']
-                        row['Exit_Survey_Time_In_Nature'] = self.subject_data['exit_survey_data']['time_in_nature']
-                        row['Exit_Survey_Access_Gardens'] = self.subject_data['exit_survey_data']['access_gardens']
-                        row['Exit_Survey_Enjoy_Time_Natural'] = self.subject_data['exit_survey_data']['enjoy_time_natural']
-                        row['Exit_Survey_Environ_Preference'] = self.subject_data['exit_survey_data']['environment_preference']
-                        row['Exit_Survey_Natural_Elements'] = self.subject_data['exit_survey_data']['natural_elements']
-                        row['Exit_Survey_Interior_Preference'] = self.subject_data['exit_survey_data']['interior_preference']
-                        row['Exit_Survey_Instructions'] = self.subject_data['exit_survey_data']['instructions']
-                        row['Exit_Survey_Expectations'] = self.subject_data['exit_survey_data']['expectations']
-                        row['Exit_Survey_Feedback'] = self.subject_data['exit_survey_data']['feedback']
-                    else:
-                        row['Exit_Survey_Main_Purpose'] = row['Exit_Survey_Time_In_Nature'] = row['Exit_Survey_Access_Gardens'] = ''
-                        row['Exit_Survey_Enjoy_Time_Natural'] = row['Exit_Survey_Environ_Preference'] = row['Exit_Survey_Natural_Elements'] = ''
-                        row['Exit_Survey_Interior_Preference'] = row['Exit_Survey_Instructions'] = row['Exit_Survey_Expectations'] = ''
-                        row['Exit_Survey_Feedback'] = ''
 
                     if i == 0 and self.subject_data['student_data']:
                         row['Student_Survey_PID'] = self.subject_data['student_data']['pid']

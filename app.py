@@ -27,6 +27,7 @@ from ser_manager import SERManager
 from csv_handler import CSVHandler
 from audio_file_manager import AudioFileManager
 from form_manager import FormManager
+from timestamp_manager import TimestampManager
 
 ##################################################################
 ## Globals 
@@ -56,6 +57,7 @@ emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
 audio_file_manager = AudioFileManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
 ser_manager = SERManager(app)
 form_manager = FormManager()
+timestamp_manager = TimestampManager()
 
 TASK_QUESTIONS = {}
 MODEL_ROOT = "model"
@@ -72,10 +74,14 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 @app.route('/set_task_id', methods=['POST'])
 def set_task_id() -> Response:
     global subject_manager
+    global timestamp_manager
     try:
         data = request.get_json()
         print(data)
-        ts = datetime.datetime.now().isoformat()
+        # ts = datetime.datetime.now().isoformat()
+        timestamp_manager.update_timestamp()
+        ts = timestamp_manager.get_iso_timestamp()
+
         task = data.get("task_id")
         if not task:
             return jsonify({'status': 'error', 'message': 'Task ID is required'}), 400
@@ -573,7 +579,7 @@ def record_vr_task() -> Response:
                    with a 400 HTTP status code.
     """
 
-    global recording_manager, ser_manager, subject_manager, audio_file_manager
+    global recording_manager, ser_manager, subject_manager, audio_file_manager, timestamp_manager
     global RECORDING_FILE
 
     try:
@@ -581,7 +587,9 @@ def record_vr_task() -> Response:
         task_id = data.get('task_id')
         action = data.get('action')
 
-        current_time_unix = int(time.time())
+        # current_time_unix = int(time.time()) 
+        timestamp_manager.update_timestamp()  
+        current_time_unix = int(timestamp_manager.get_raw_timestamp().timestamp())
 
         if action == 'start':
             return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200

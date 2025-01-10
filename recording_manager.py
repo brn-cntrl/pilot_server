@@ -3,6 +3,7 @@ import datetime
 import pyaudio
 import wave
 import speech_recognition as sr
+from timestamp_manager import TimestampManager
 
 class RecordingManager():
     """
@@ -21,6 +22,7 @@ class RecordingManager():
         self.device_index = 0
         self.audio_devices = self.fetch_audio_devices()
         self._timestamp = None
+        self.timestamp_manager = TimestampManager()
 
     ##################################################################
     ## GENERAL METHODS
@@ -53,8 +55,11 @@ class RecordingManager():
         self.stop_event.clear()
         self.recording_started_event.set()
 
-        t = datetime.datetime.now().isoformat()
-        self.timestamp = t
+        # t = datetime.datetime.now().isoformat()
+        self.timestamp_manager.update_timestamp()
+        ts = self.timestamp_manager.get_iso_timestamp()
+
+        self.timestamp = ts
 
         self.recording_thread = threading.Thread(target=self.record_thread)
         self.recording_thread.start()

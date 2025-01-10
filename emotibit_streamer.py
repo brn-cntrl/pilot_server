@@ -7,6 +7,7 @@ import atexit
 import time
 import copy
 from datetime import datetime, timedelta
+from timestamp_manager import TimestampManager
 """
 This class manages the OSC server that receives data from the EmotiBit.
 All OSC addresses must be included in the oscOutputSettings.xml file. Some
@@ -19,6 +20,7 @@ class EmotiBitStreamer:
     def __init__(self, port) -> None:
         self._ip = "127.0.0.1"
         self._port = port
+        self.timestamp_manager = TimestampManager()
 
         self._data = {
              "EDA": [],
@@ -183,17 +185,14 @@ class EmotiBitStreamer:
         """This function is for debugging the incoming messages"""
         print(f"Received OSC message on {address}: {args}")
     
-    def get_current_iso_time(self) -> str:
-        """Returns the current time in ISO 8601 format."""
-        return datetime.now().isoformat()
-    
     def record_null_values(self) -> None:
         """Records null values for each stream type if no values are incoming from the EmotiBit."""
         current_time = time.time()
 
         for stream_type in self.data.keys():
             if self.last_received[stream_type] is None or current_time - self.last_received[stream_type] >= self.null_record_interval:
-                timestamp = self.get_current_iso_time()
+                self.timestamp_manager.update_timestamp()
+                timestamp = self.timestamp_manager.get_iso_timestamp()
                 self.data[stream_type].append((timestamp, self.default_value))
                 print(f"Appended null value for {stream_type}")
 
@@ -217,7 +216,8 @@ class EmotiBitStreamer:
 
         if stream_type in self.data and len(args) == 1:
             value = args[0]
-            timestamp = self.get_current_iso_time()
+            self.timestamp_manager.update_timestamp()
+            timestamp = self.timestamp_manager.get_iso_timestamp()
             self.data[stream_type].append((timestamp, value))
             self.last_received[stream_type] = time.time()
         else:
