@@ -78,8 +78,8 @@ def set_task_id() -> Response:
     try:
         data = request.get_json()
         print(data)
-        # ts = datetime.datetime.now().isoformat()
-        # timestamp_manager.update_timestamp()
+
+        timestamp_manager.update_timestamp()
         ts = timestamp_manager.get_iso_timestamp()
 
         task = data.get("task_id")
@@ -587,8 +587,7 @@ def record_vr_task() -> Response:
         task_id = data.get('task_id')
         action = data.get('action')
 
-        # current_time_unix = int(time.time()) 
-        # timestamp_manager.update_timestamp()  
+        timestamp_manager.update_timestamp()  
         current_time_unix = int(timestamp_manager.get_raw_timestamp().timestamp())
 
         if action == 'start':
@@ -633,6 +632,7 @@ def record_vr_task() -> Response:
         else:
             print("Invalid Action")
             return jsonify({'message': 'Invalid action.'}), 400
+        
     except Exception as e:
         print(f"Exception: {str(e)}")
         return jsonify({'message': 'Error processing request.'}), 400
