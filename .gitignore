@@ -2,11 +2,15 @@
 /blueprints/
 /__pycache__/
 /pretrained_models/
+/classifier/
+/kaggle/
 /tests/
+/results/
 /utilities/
 /wav2vec2_checkpoints/
-/model/model.onnx
-/cache/*
+/model/
+/tests/
+/cache/
 /static/videos/*
 /EmotiBitSoftware-MacOS/
 /tmp/*
