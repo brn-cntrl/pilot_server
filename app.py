@@ -23,7 +23,7 @@ from subject_manager import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer import EmotiBitStreamer
-from ser_manager import SERManager
+from ser_manager3 import SERManager
 from csv_handler import CSVHandler
 from audio_file_manager import AudioFileManager
 from form_manager import FormManager
@@ -79,7 +79,7 @@ def set_task_id() -> Response:
         data = request.get_json()
         print(data)
         # ts = datetime.datetime.now().isoformat()
-        timestamp_manager.update_timestamp()
+        # timestamp_manager.update_timestamp()
         ts = timestamp_manager.get_iso_timestamp()
 
         task = data.get("task_id")
@@ -588,7 +588,7 @@ def record_vr_task() -> Response:
         action = data.get('action')
 
         # current_time_unix = int(time.time()) 
-        timestamp_manager.update_timestamp()  
+        # timestamp_manager.update_timestamp()  
         current_time_unix = int(timestamp_manager.get_raw_timestamp().timestamp())
 
         if action == 'start':
