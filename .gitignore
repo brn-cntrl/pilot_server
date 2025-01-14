@@ -20,4 +20,8 @@ config.txt
 wav_to_emotion_test.py
 survey_routes.py
 SERCheatSheet.ipynb
+aud_test.py
+ser_manager_2.py
+signal_processor.py
+Speaker.wav
 .DS_Store
