@@ -24,7 +24,7 @@ class TimestampManager:
     def get_raw_timestamp(self):
         """Returns the current timestamp as a datetime object."""
         with self.lock:
-            return self.current_timestamp
+            return self.current_timestamp.timestamp()
         
     def get_iso_timestamp(self):
         """Returns the current timestamp."""

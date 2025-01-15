@@ -588,7 +588,7 @@ def record_vr_task() -> Response:
         action = data.get('action')
 
         timestamp_manager.update_timestamp()  
-        current_time_unix = int(timestamp_manager.get_raw_timestamp().timestamp())
+        current_time_unix = timestamp_manager.get_raw_timestamp()
 
         if action == 'start':
             return jsonify({'message': 'Recording started.', 'task_id': task_id}), 200
