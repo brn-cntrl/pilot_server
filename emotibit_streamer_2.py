@@ -25,10 +25,9 @@ class EmotiBitStreamer:
         self.csv_filename = csv_filename
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
-        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR"]}
-        self._baseline_data = {key: [] for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
+        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"]}
         self.last_received = {key: None for key in self._baseline_data.keys()}
-        self.data_window = {key: deque(maxlen=500) for key in ["BI", "PG"]}  # For derived metrics
+        self.data_window = {key: deque(maxlen=500) for key in ["BI", "PG"]}  # Sliding window for derived metrics
 
         self.collecting_baseline = False
 
@@ -39,8 +38,6 @@ class EmotiBitStreamer:
         self.server_thread = None
         self.shutdown_event = Event()
 
-        self.last_received = {key: time.time() for key in self.data.keys()}
-        self.null_record_interval = 5  
         self.default_value = 0
 
         self.csv_file = None
@@ -49,10 +46,11 @@ class EmotiBitStreamer:
         atexit.register(self.stop)
 
     def start_baseline_collection(self) -> None:
+        if self.collecting_baseline:
+            print("Already collecting baseline data.")
+            return
+        
         self.collecting_baseline = True
-
-        # Reset the baseline values
-        self._baseline_data = {key: [] for key in self._baseline_data.keys()}
 
     def stop_baseline_collection(self) -> None:
         if not self.collecting_baseline:
@@ -60,10 +58,6 @@ class EmotiBitStreamer:
             return
         
         self.collecting_baseline = False
-
-        for stream_type, values in self._baseline_data.items():
-            for value in values:
-                self.write_to_csv(self.get_current_iso_time(), f"baseline_{stream_type}", value, None)
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
@@ -77,7 +71,7 @@ class EmotiBitStreamer:
 
         self.csv_file = open(self.csv_filename, mode="w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
-        self.csv_writer.writerow(["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR"])
+        self.csv_writer.writerow(["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"])
 
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
@@ -109,45 +103,44 @@ class EmotiBitStreamer:
         # Debug statement
         print(f"Received data at {address}: {args}")
 
+        if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_iso_timestamp():
+            self.timestamp_manager.update_timestamp()
+            self.current_timestamp = self.timestamp_manager.get_iso_timestamp()
+
+        if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
+            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"]}
+        
         stream_type = address.split('/')[-1]
-        if stream_type not in self._baseline_data:
-            print(f"Unrecognized stream or invalid data format: {stream_type}")
-            return
-
-        self.timestamp_manager.update_timestamp()
-        timestamp = self.timestamp_manager.get_iso_timestamp()
-
+        timestamp = self.current_timestamp
         value = args[0]
         self.last_received[stream_type] = time.time()
-
         derived_value = None
 
-        if self.collecting_baseline:
-            self._baseline_data[stream_type].append(value)
+        self.current_row["timestamp"] = timestamp
 
-            if stream_type == "BI":
+        if stream_type in self.data_window:
+            self.data_window[stream_type].append(value)
+            if stream_type == "BI" and len(self.data_window["BI"]) > 30:  
                 derived_value = self.calculate_hrv()
-                if derived_value is not None:
-                    self._baseline_data["HRV"].append(derived_value)
-
-            elif stream_type == "PG":
+                self.current_row['HRV'] = derived_value if derived_value is not None else None
+            elif stream_type == "PG" and len(self.data_window["PG"]) > 100:  
                 derived_value = self.calculate_rr()
-                if derived_value is not None:
-                    self._baseline_data["RR"].append(derived_value)
+                self.current_row['RR'] = derived_value if derived_value is not None else None
 
-        else:
-            if stream_type in self.data_window:
-                self.data_window[stream_type].append(value)
+        if stream_type == "EDA":
+            self.current_row["EDA"] = value
+        elif stream_type == "HR":
+            self.current_row["HR"] = value
+        elif stream_type == "BI":
+            self.current_row["BI"] = value
+        elif stream_type == "PG":
+            self.current_row["PG"] = value
+            self.record_null_values()
 
-                if stream_type == "BI" and len(self.data_window["BI"]) > 30:  
-                    derived_value = self.calculate_hrv()
-                elif stream_type == "PG" and len(self.data_window["PG"]) > 100:  
-                    derived_value = self.calculate_rr()
-
-        self.record_null_values()
+        self.current_row["baseline_status"] = "baseline" if self.collecting_baseline else "live"
 
         # Write data to CSV
-        self.write_to_csv(timestamp, value, derived_value, stream_type)
+        self.write_to_csv(self.current_row)
 
     ###########################################
     # Derived Metrics
@@ -188,107 +181,136 @@ class EmotiBitStreamer:
     ###########################################
     # Utility Methods
     ###########################################
-    def record_null_values(self) -> None:
-        """Records null values for each stream type if no values are incoming from the EmotiBit."""
-        current_time = time.time()
 
-        for stream_type in self.data.keys():
-            if self.last_received[stream_type] is None or current_time - self.last_received[stream_type] >= self.null_record_interval:
-                timestamp = self.get_current_iso_time()
-                self.data[stream_type].append((timestamp, self.default_value))
-                print(f"Appended null value for {stream_type}")
+    def get_baseline_entries(self) -> list:
+        """Check the CSV file for rows with 'baseline' under 'baseline_status' and return as a list of dictionaries."""
+        baseline_entries = []
+        
+        try:
+            with open(self.csv_filename, 'r') as file:
+                csv_reader = csv.DictReader(file)
 
-            self.last_received[stream_type] = current_time
+                for row in csv_reader:
+                    if row.get("baseline_status") == "baseline":
+                        baseline_entries.append(row)
+            
+            return baseline_entries
 
+        except FileNotFoundError:
+            print(f"Error: The file {self.csv_filename} was not found.")
+            return []
+        except Exception as e:
+            print(f"Error reading the CSV file: {e}")
+            return []
+        
+    def get_live_entries(self, lookback_minutes: int = 2) -> list: 
+        """Retrieve non-baseline entries (live data) from the last 'lookback_minutes' minutes.
+            Args:
+                lookback_minutes (int): The number of minutes to look back for live data.
+            Returns:
+                list: A list of dictionaries containing live data from the CSV file.
+        """
+        non_baseline_entries = []
+        try:
+            with open(self.csv_filename, 'r') as file:
+                csv_reader = csv.DictReader(file)
+                
+                current_time = datetime.now()
+                time_threshold = current_time - timedelta(minutes=lookback_minutes)
+                
+                for row in csv_reader:
+                    baseline_status = row.get("baseline_status")
+                    timestamp = row.get("timestamp")
+                    
+                    if baseline_status != "baseline" and timestamp:
+                        row_time = datetime.fromisoformat(timestamp)
+                        if row_time >= time_threshold:
+                            non_baseline_entries.append(row)
+            
+            return non_baseline_entries
+        
+        except FileNotFoundError:
+            print(f"Error: The file {self.csv_filename} was not found.")
+            return []
+        except Exception as e:
+            print(f"Error reading the CSV file: {e}")
+            return []
+    def get_averages(self, data) -> dict:
+        """
+        Calculate the averages of the given data.
+
+        Args:
+            data (list): A list of dictionaries containing data to calculate averages from.
+
+        Returns:
+            dict: A dictionary containing the averages of the given data.
+        """
+        averages = {}
+        for entry in data:
+            for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]:
+                if key not in averages:
+                    averages[key] = []
+                if entry.get(key) not in [None, 'N/A']:
+                    averages[key].append(float(entry.get(key)))
+        
+        averages = {key: sum(values) / len(values) if values else None for key, values in averages.items()}
+        return averages
+    
     def compare_baseline(self) -> dict:
         """
-        Compare the averages of the baseline data with the last 2 minutes of live data
+        Compare the averages of the baseline data with a specified window of live data
         from the CSV file. If there is not enough data, return a message indicating so.
 
         Returns:
             dict or str: A dictionary with comparison results or a string message if
                          not enough data has been collected.
         """
+        live_data = self.get_live_entries()
+        baseline_data = self.get_baseline_entries()
 
-        self.timestamp_manager.update_timestamp()
-        now = self.timestamp_manager.get_raw_timestamp()
-        two_minutes_ago = now - timedelta(minutes=2)
-        recent_data = self.read_recent_csv_entries(two_minutes_ago)
+        baseline_averages = self.get_averages(baseline_data)
+        live_averages = self.get_averages(live_data)
 
-        if not recent_data:
-            return "Not enough data has been collected to perform the comparison."
-
-        comparison_result = {}
-
-        for stream_type in ["EDA", "HR", "BI", "HRV", "PG", "RR"]:
-            baseline_data = self._baseline_data.get(stream_type, [])
-            if baseline_data:
-                baseline_avg = np.mean(baseline_data)
+        comparison_results = {}
+        for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]:
+            baseline_avg = baseline_averages.get(key)
+            live_avg = live_averages.get(key)
+            
+            # Calculate the difference and check if the non-baseline average is elevated
+            if baseline_avg is not None and live_avg is not None:
+                if live_avg > baseline_avg:
+                    higher = "Live data"
+                elif live_avg < baseline_avg:
+                    higher = "Baseline data"
+                else:
+                    higher = "Equal"
             else:
-                baseline_avg = 0
-
-            live_data = [entry[stream_type] for entry in recent_data if stream_type in entry]
-            if live_data:
-                live_avg = np.mean(live_data)
-            else:
-                live_avg = 0
-
-            comparison_result[stream_type] = {
+                higher = None
+            
+            comparison_results[key] = {
                 "baseline_avg": baseline_avg,
-                "live_avg": live_avg,
-                "elevated": live_avg > baseline_avg
+                "non_baseline_avg": live_avg,
+                "elevated": higher
             }
+    
+        return comparison_results
 
-        return comparison_result
-
-    def record_null_values(self) -> None:
-        """Records null values for each stream type if no values are incoming from the EmotiBit."""
-        current_time = time.time()
-
-        for stream_type in self.data.keys():
-            if self.last_received[stream_type] is None or current_time - self.last_received[stream_type] >= self.null_record_interval:
-                self.timestamp_manager.update_timestamp()
-                timestamp = self.timestamp_manager.get_iso_timestamp()
-                self.data[stream_type].append((timestamp, self.default_value))
-                print(f"Appended null value for {stream_type}")
-
-            self.last_received[stream_type] = current_time
-
-    def write_to_csv(self, timestamp: str, value: float, derived_value: float, stream_type: str, baseline_status: str) -> None:
-        """Write a single data point to the CSV file."""
+    def write_to_csv(self, current_row) -> None:
+        """Write the current row to the CSV file."""
+        
         if self.csv_writer:
-            row = [timestamp]  
-            if stream_type == "EDA":
-                row.append(value)  # EDA
-                row.append(None)   # HR
-                row.append(None)   # BI
-                row.append(None)   # HRV
-                row.append(None)   # PG
-                row.append(None)   # RR
-            elif stream_type == "HR":
-                row.append(None)   # EDA
-                row.append(value)  # HR
-                row.append(None)   # BI
-                row.append(None)   # HRV
-                row.append(None)   # PG
-                row.append(None)   # RR
-            elif stream_type == "BI":
-                row.append(None)   # EDA
-                row.append(None)   # HR
-                row.append(value)  # BI
-                row.append(derived_value if derived_value is not None else None)  # HRV
-                row.append(None)   # PG
-                row.append(None)   # RR
-            elif stream_type == "PG":
-                row.append(None)   # EDA
-                row.append(None)   # HR
-                row.append(None)   # BI
-                row.append(None)   # HRV
-                row.append(value)  # PG
-                row.append(derived_value if derived_value is not None else None)  # RR
-
-            row.append(baseline_status)
-
+            # Replace None with a default value ('N/A' or '0') for each field
+            row = [
+                current_row["timestamp"],                                           # timestamp
+                current_row["EDA"] if current_row["EDA"] is not None else 'N/A',    # EDA
+                current_row["HR"] if current_row["HR"] is not None else 'N/A',      # HR
+                current_row["BI"] if current_row["BI"] is not None else 'N/A',      # BI
+                current_row["HRV"] if current_row["HRV"] is not None else 'N/A',    # HRV
+                current_row["PG"] if current_row["PG"] is not None else 'N/A',      # PG
+                current_row["RR"] if current_row["RR"] is not None else 'N/A',      # RR
+                current_row["baseline_status"]  
+            ]
+            
             self.csv_writer.writerow(row)
         else:
             print("CSV writer is not initialized.")
@@ -296,7 +318,8 @@ class EmotiBitStreamer:
     def read_recent_csv_entries(self, csv_filename, cutoff_time):
         """
         Retrieve the most recent data from the CSV file that was collected within the
-        last two minutes. If there is no data from the last two minutes, returns an empty list.
+        specicifed cutoff_time threshold. If there is no data within the cutoff period 
+        it returns an empty list.
 
         Args:
             cutoff_time (datetime): The cutoff time to retrieve data from.
