@@ -4,6 +4,7 @@
 /pretrained_models/
 /classifier/
 /kaggle/
+/kaggle/*
 /kaggle/input/*
 /kaggle/input/OAF_Pleasant_surprise/*
 /tests/
