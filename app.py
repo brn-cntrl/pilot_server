@@ -20,7 +20,6 @@ from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer_2 import EmotiBitStreamer
 from ser_manager3 import SERManager
-# from csv_handler import CSVHandler
 from audio_file_manager import AudioFileManager
 from form_manager import FormManager
 from timestamp_manager import TimestampManager
@@ -69,10 +68,9 @@ def baseline_comparison() -> Response:
 @app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index() -> Response:
     # TODO: implement test manager class and remove global reference
-    global current_ser_question_index, test_manager
-    current_ser_question_index = 0
+    global test_manager
 
-    test_manager.current_question_index = 0
+    test_manager.current_ser_question_index = 0
 
     return jsonify({'status': 'SER questions reset'})
 
@@ -108,7 +106,7 @@ def stop_biometric_baseline() -> Response:
 
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
-    global current_ser_question_index, test_manager
+    global test_manager
     global recording_manager
     questions = test_manager.ser_questions.get('questions', [])
     
@@ -148,8 +146,8 @@ def process_ser_answer() -> Response:
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE, subject_manager, ser_manager, emotibit_streamer, test_manager
-    global recording_manager, audio_file_manager
+    global RECORDING_FILE, subject_manager, ser_manager, emotibit_streamer
+    global recording_manager, audio_file_manager, test_manager
 
     data = request.get_json()
     recording_manager.stop_recording()
@@ -173,7 +171,7 @@ def process_ser_answer() -> Response:
         # AUDIO STORAGE
         id = subject_manager.subject_id
         file_name = f"ID_{id}_SER_question_{test_manager.current_ser_question_index}.wav"
-        file_name = audio_file_manager.rename_audio_file(id, "SER_question_", current_ser_question_index)
+        file_name = audio_file_manager.rename_audio_file(id, "SER_question_", test_manager.current_ser_question_index)
         audio_file_manager.save_audio_file(RECORDING_FILE, file_name, 'audio_files')
 
         return jsonify({'status': 'Answer submitted.'})
@@ -219,6 +217,12 @@ def get_question() -> Response:
     question = questions[test_manager.current_question_index]
     return jsonify({'question': question['question'], "test_number": test_manager.current_test_index})
 
+@app.route('/get_current_test', methods=['POST'])
+def get_current_test() -> Response:
+    global test_manager
+
+    return jsonify({"test_number": test_manager.current_test_index})
+    
 @app.route('/get_next_test', methods=['POST'])
 def get_next_test() -> Response:
     # TODO: THIS FUNCTIONALITY SOULD BE IMPLEMENTED IN THE TEST MANAGER CLASS
@@ -233,6 +237,14 @@ def get_next_test() -> Response:
         # questions = test_manager.get_task_questions(test_manager.current_test_index)
     
         return jsonify({"message": "Next test initiated.", "test_number": test_manager.current_test_index})
+
+@app.route('/subject_final_balance', methods=['POST'])
+def subject_final_balance() -> Response:
+    data = request.get_json()
+    subject_manager.balance = data.get('balance')
+    subject_manager.write_balance()
+
+    return jsonify({'message': 'Balance written to file.'})
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:
@@ -359,30 +371,6 @@ def add_survey() -> Response:
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
-# @app.route('/submit_exit', methods=['POST'])
-# def submit_exit() -> Response:
-#     global subject_manager
-#     try:
-#         exit_survey_data = {
-#             'main_purpose': request.form.get('purpose'),
-#             'time_in_nature': request.form.get('time_in_nature'),
-#             'access_gardens': request.form.get('access_gardens'),
-#             'enjoy_time_natural': request.form.get('enjoy_time_natural'),
-#             'environment_preference': request.form.get('environment_preference'),
-#             'natural_elements': request.form.get('natural_elements'),
-#             'interior_preference': request.form.get('interior_preference'),
-#             'instructions': request.form.get('instructions'),
-#             'expectations': request.form.get('expectations'),
-#             'feedback': request.form.get('feedback')
-#         }
-
-#         subject_manager.subject_data['exit_survey_data'] = exit_survey_data 
-
-#         return jsonify({'message': 'Exit survey data submitted successfully.'}), 200
-    
-#     except Exception as e:
-#         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
 @app.route('/submit_student_data', methods=['POST'])
 def submit_student_data() -> Response:
     """
@@ -399,18 +387,6 @@ def submit_student_data() -> Response:
     
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
-# @app.route('/upload_subject_data', methods=['POST'])    
-# def upload_subject_data() -> Response:
-#     global subject_manager
-
-#     try:
-#         pass
-#         # csv_handler = CSVHandler(subject_manager)
-#         # csv_handler.create_csv()
-
-#     except Exception as e:
-#         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -508,7 +484,6 @@ def record_vr_task() -> Response:
         timestamp_manager.update_timestamp()  
         current_time_unix = timestamp_manager.get_raw_timestamp()
         
-
         if action == 'start':
             return jsonify({'message': 'Recording started.', 'task_id': event_marker}), 200
         

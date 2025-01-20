@@ -10,16 +10,17 @@
 
 <body>
     <h1>Experiment</h1>
-    <a href="/">Go Back (Requires Resubmission)</a><br>
     
     <div id="Instructions">
         <h2>Tasks</h2>
         <p>Press the button to start the first test then solve the subtraction problems. <b>Please speak each answer aloud.</b></p>
         <ul>
+            <li>Time: You have 5 minutes to complete the task.</li>
             <li>+10 cents for each correct answer.</li>
             <li>-15 cents for each wrong answer.</li>
             <li>Double your earnings after 20 correct answers.</li>
             <li>Total: You can see your total money earned or lost during the task.</li>
+            <li>Submit your balance when you are finished by clicking "Upload Balance"</li>
             <li>Payment: We will Venmo you the amount you earn at the end.</li>
         </ul>
     </div><br>
@@ -29,25 +30,33 @@
         <div id="clock">05:00</div><br><br>
         <div id="accountBalance">$0</div><br><br>
         <div id="test_container"></div> <br>
-        <!-- <div id="test_2_container"></div> <br> -->
     
         <button id="submitAnswerButton" disabled>Submit Answer</button> <br>
-        <button id="uploadData" disabled>Upload Results</button>
+        <button id="uploadBalance" disabled>Upload Balance</button>
         <p id="result"></p> <br>
         <p id="status"></p><br><br>
     </div>
     
     <script>
-        let testNumber = 1;
+        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
         let startTime;
         let elapsedTime = 0;
         let initialTime = 300;  // 5 minutes
         let timeLeft = initialTime;
         let timerInterval;
         let account = .00;
+
         const timeDisplay = document.getElementById('clock');
+        const startTestButton = document.getElementById('startTestButton');
+        const submitAnswerButton = document.getElementById('submitAnswerButton');
+        const testContainer = document.getElementById('test_container');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const statusContainer = document.getElementById('status');
         const accountBalance = document.getElementById('accountBalance');
-        
+        const clock = document.getElementById('clock');
+        const result = document.getElementById('result');
+        const uploadBalance = document.getElementById('uploadBalance');
+
         function getNextTest(){
             fetch('/get_next_test', {
                 method: 'POST',
@@ -68,17 +77,13 @@
             });
         }
         
-        function startClock() {
-            // startTime = Date.now() - elapsedTime;  
-            // clockInterval = setInterval(updateClock, 1000); 
+        function startClock() { 
             if(!timerInterval) {
                 timerInterval = setInterval(updateClock, 1000);
             }
         }
 
         function stopClock() {
-            // clearInterval(timerInterval); 
-            // elapsedTime = Date.now() - startTime;
             clearInterval(timerInterval); 
             timerInterval = null;
         }
@@ -98,35 +103,35 @@
             timeLeft--;
             if(timeLeft < 0) {
                 clearInterval(timerInterval);
-                document.getElementById('status').innerText = 'Time is up!';
+                statusContainer.innerText = 'Time is up!';
                 endTest();
             }
         }
 
         function endTest() {
-            document.getElementById('submitAnswerButton').style.display = 'none';
-            document.getElementById('submitAnswerButton').disabled = true;
+            submitAnswerButton.style.display = 'none';
+            submitAnswerButton.disabled = true;
 
-            if (testNumber === 1){
-                document.getElementById('status').innerText = 'Test completed! Please perform the next activity before starting the next test.';
-                document.getElementById('startTestButton').style.display = 'block';
-                document.getElementById('startTestButton').disabled = false;
-                document.getElementById('clock').innerText = '05:00';
-            } else if (testNumber === 2){
-                document.getElementById('status').innerText = 'All tests completed! Thank you for participating in the experiment.';
-                document.getElementById('startTestButton').style.display = 'none';
-                document.getElementById('startTestButton').disabled = true;
-                document.getElementById('clock').innerText = '00:00';
+            if (testNumber === 0){
+                statusContainer.innerText = 'Test completed! Please perform the next activity before starting the next test.';
+                startTestButton.style.display = 'block';
+                startTestButton.disabled = false;
+                clock.innerText = '05:00';
+            } else if (testNumber === 0){
+                statusContainer.innerText = 'All tests completed! Thank you for participating in the experiment.';
+                startTestButton.style.display = 'none';
+                startTestButton.disabled = true;
+                clock.innerText = '00:00';
             }
         }
 
         async function submitAnswer() {
-            document.getElementById('status').innerText = "Analyzing Answer...";
-            document.getElementById('submitAnswerButton').disabled = true;
+            statusContainer.innerText = "Analyzing Answer...";
+            submitAnswerButton.disabled = true;
             try {
                 const response = await fetch('/submit_answer', { method: 'POST' });
                 const data = await response.json();
-                document.getElementById('status').innerText = data.result;
+                statusContainer.innerText = data.result;
 
                 if (data.result === 'correct') {
                     account += 0.10;
@@ -138,45 +143,63 @@
 
                 if (data.result === 'correct' || data.result === 'incorrect') {
                     await getNextQuestion(); 
-                    document.getElementById('submitAnswerButton').disabled = false;
+                    submitAnswerButton.disabled = false;
 
                 } else if (data.result === 'error') {
-                    document.getElementById('status').innerText = "Sorry, I could not understand the response.";
-                    document.getElementById('submitAnswerButton').disabled = false;
+                    statusContainer.innerText = "Sorry, I could not understand the response.";
+                    submitAnswerButton.disabled = false;
 
                     stopClock();
                     await startRecording();
-                    document.getElementById('submitAnswerButton').disabled = false;
+                    submitAnswerButton.disabled = false;
                     startClock();
 
                 } else if (data.result === 'test_completed') {
-                    document.getElementById('submitAnswerButton').style.display = 'none';
-                    document.getElementById('startTestButton').style.display = 'none';
-                    document.getElementById('status').innerText = 'Test completed!';
+                    submitAnswerButton.style.display = 'none';
+                    startTestButton.style.display = 'none';
+                    statusContainer.innerText = 'Test completed!';
                     stopClock();
                     resetClock();
                 } 
-
             } catch (error) {
                     console.error('Error:', error);
             }       
         }
     
         document.addEventListener('DOMContentLoaded', (event) => {
-            document.getElementById('startTestButton').style.display = 'block';
-            document.getElementById('submitAnswerButton').disabled = true;
-            document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('uploadData').style.display = 'none';
+            fetch('/get_current_test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                testNumber = data.test_number;
+                console.log("Test Number: ", testNumber);
+                console.log(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            startTestButton.style.display = 'block';
+            submitAnswerButton.disabled = true;
+            loadingMessage.style.display = 'none';
             accountBalance.innerText = `$00.0${account}`;
         });
     
         document.addEventListener('DOMContentLoaded', (event) => {
-            const startTestButton = document.getElementById('startTestButton');
-            
             startTestButton.addEventListener('click', function() {
-                document.getElementById('submitAnswerButton').disabled = true;
-                document.getElementById('loadingMessage').style.display = 'block';
-                document.getElementById('status').innerText = '';
+                submitAnswerButton.disabled = true;
+                loadingMessage.style.display = 'block';
+                uploadBalance.disabled = true;
+                statusContainer.innerText = '';
 
                 startRecording()
                     .then(() => {
@@ -194,12 +217,11 @@
                         return response.json();
                     })
                     .then(data => {
-                        let testNumber = data.test_number;
-                        let testContainerId = "test_container";
+                        testNumber = data.test_number;
 
-                        document.getElementById('loadingMessage').style.display = 'none';
-                        document.getElementById('startTestButton').disabled = true;
-                        document.getElementById('test_container').innerHTML = `
+                        loadingMessage.style.display = 'none';
+                        startTestButton.disabled = true;
+                        testContainer.innerHTML = `
                             <h2>Test</h2>
                             <div id="questionsContainer">${data.question}</div>
                         `;
@@ -207,32 +229,35 @@
                         let checkInterval = setInterval(() => {
                             if (checkActiveStream()) {
                                 console.log("Stream is active.");
-                                document.getElementById(testContainerId).style.display = 'block';
-                                document.getElementById('submitAnswerButton').disabled = false;
+                                testContainer.style.display = 'block';
+                                submitAnswer.disabled = false;
                                 startClock();
-                                clearInterval(checkInterval); // Stop checking once stream is active
+                                clearInterval(checkInterval); 
                             } else {
                                 console.log("Stream is not active yet, checking again...");
-                                document.getElementById(testContainerId).style.display = 'none';
-                                document.getElementById('submitAnswerButton').disabled = true;
+                                testContainer.style.display = 'none';
+                                submitAnswer.disabled = true;
                             }
-                        }, 2000); // Check every 2 seconds
+                        }, 2000); 
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         alert('Failed to start test.');
                     });
             });
-        
         });
     
-        document.getElementById('submitAnswerButton').addEventListener('click', function() {
+        submitAnswerButton.addEventListener('click', function() {
             submitAnswer();
         });
 
-        document.getElementById('uploadData').addEventListener('click', function() {
-            fetch('/upload_data', {
-                method: 'POST'
+        uploadBalance.addEventListener('click', function() {
+            fetch('/submit_final_balance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ balance: account.toFixed(2) })
             })
             .then(response => response.json())
             .then(data => {
