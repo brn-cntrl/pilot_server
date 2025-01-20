@@ -34,5 +34,6 @@ emotibit_tester.py
 subject_manager.py
 ser_manager.py
 emotibit_streamer.py
+audonnx_test.py
 .DS_Store
 feature_extraction.py
