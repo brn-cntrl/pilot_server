@@ -9,10 +9,20 @@ class SubjectManager:
         self._subject_name = None
         self._subject_id = None
         self.csv_file_path = None
+        self.txt_file_path = None
         self._event_marker = None
         self.PID = None
         self.class_name = None
         self.headers = ['Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence']
+        self._balance = 0
+        
+    @property 
+    def balance(self):
+        return self._balance
+    
+    @balance.setter
+    def balance(self, value):
+        self._balance = value
 
     @property
     def subject_name(self) -> str:
@@ -54,7 +64,8 @@ class SubjectManager:
         self.class_name = subject_info["class_name"]
         
         current_date = datetime.now().strftime("%Y-%m-%d")
-        self.csv_file_path = f"{current_date}_{self.subject_name}_{self.subject_id}.csv"
+        self.csv_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}.csv"
+        self.txt_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}_final_balance.txt"
 
         if not os.path.exists(self.csv_file_path):
             with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
@@ -129,6 +140,14 @@ class SubjectManager:
         self.subject_name = None
         self.subject_id = None
         self.csv_file_path = None
+
+    def write_balance(self, balance: str) -> None:
+        with open(self.txt_file_path, mode='w', encoding='utf-8') as file:
+            file.write(self.subject_name)
+            file.write("\n")
+            file.write(self.subject_id)
+            file.write("\n")
+            file.write(balance)
 
     def append_temp_csv_to_main(self, temp_csv_path: str) -> None:
         """
