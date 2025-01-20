@@ -23,6 +23,10 @@
 /subject_files/*
 /audio_files/*
 /SER_MODEL/*
+/templates/background.html
+/templates/demographic_survey.html
+/templates/exit_survey.html
+/templates/pss4.html
 config.txt
 wav_to_emotion_test.py
 survey_routes.py
