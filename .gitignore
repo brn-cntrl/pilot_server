@@ -17,6 +17,7 @@
 /static/videos/*
 /EmotiBitSoftware-MacOS/
 /tmp/*
+/subject_files/*
 /audio_files/*
 /SER_MODEL/*
 config.txt
