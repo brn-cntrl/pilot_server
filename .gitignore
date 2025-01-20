@@ -30,5 +30,6 @@ Speaker.wav
 test_script.py
 csv_handler.py
 emotibit_tester.py
+subject_manager.py
 .DS_Store
 feature_extraction.py
