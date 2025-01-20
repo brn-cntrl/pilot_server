@@ -10,10 +10,8 @@ import time
 import pyaudio
 import librosa
 import signal 
-import json
 import re
 import speech_recognition as sr
-import numpy as np
 
 from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
