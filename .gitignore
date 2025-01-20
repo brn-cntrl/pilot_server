@@ -16,6 +16,8 @@
 /cache/
 /static/videos/*
 !/static/videos/.gitkeep
+!static/other_subfolder1/
+!static/other_subfolder2/
 /EmotiBitSoftware-MacOS/
 /tmp/*
 /subject_files/*
