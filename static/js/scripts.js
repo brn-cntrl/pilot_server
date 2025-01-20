@@ -117,41 +117,6 @@ async function submitSERAnswer(){
         });
 }
 
-function startClock() {
-    // startTime = Date.now() - elapsedTime;  
-    // clockInterval = setInterval(updateClock, 1000); 
-    if(!timerInterval) {
-        timerInterval = setInterval(updateClock, 1000);
-    }
-}
-
-function stopClock() {
-    // clearInterval(timerInterval); 
-    // elapsedTime = Date.now() - startTime;
-    clearInterval(timerInterval); 
-    timerInterval = null;
-}
-        
-function resetClock(){
-    stopClock();
-    timeLeft = initialTime;
-    timerDisplay.textContent = '05:00';
-}
-
-function updateClock() {
-    let minutes = Math.floor(timeLeft / 60);
-    let seconds = timeLeft % 60;
-    seconds = seconds < 10 ? '0' + seconds : seconds;
-    timeDisplay.textContent = `${minutes}:${seconds}`;
-    playTickSound();
-    timeLeft--;
-    if(timeLeft < 0) {
-        clearInterval(timerInterval);
-        timer.textContent = 'Time is up!';
-        endTest();
-    }
-}
-
 function playTickSound() {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -282,6 +247,7 @@ function getNextQuestion() {
     .catch(error => console.error('Error fetching next question:', error));
 }
 
+// NOT SURE WHAT THIS IS BUT LEAVE FOR NOW
 function handleOtherOption() {
     const otherOption = document.getElementById('otherOption');
     const otherText = document.getElementById('otherTextbox');
@@ -293,53 +259,104 @@ function handleOtherOption() {
     }
 }
 
-var restTime = 8;
+var restTime = 3;
 
-function compareToBaseline(label){
+function compareToBaseline() {
     fetch('/baseline_comparison', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            label: label
-        })
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        biometricBaselineData = data.baseline_means;
-        biometricData = data.data_means;
-        restTime = calculateTimeToRest(biometricBaselineData, biometricData);
+        let baselineElevatedCount = 0;
+        let liveElevatedCount = 0;
+
+        Object.keys(data).forEach(key => {
+            const result = data[key];
+            if (result.elevated === "Live data") {
+                liveElevatedCount++;
+            } else if (result.elevated === "Baseline data") {
+                baselineElevatedCount++;
+            }
+        });
+
+        if (baselineElevatedCount > liveElevatedCount) {
+            restTime = 3;
+        } else if (liveElevatedCount > baselineElevatedCount) {
+            restTime = 8;
+        } else {
+            restTime = 3;
+        }
+
+        console.log('Determined restTime:', restTime);
     })
     .catch(error => {
         console.error('Error comparing to baseline:', error);
     });
 }
 
-function calculateTimeToRest(bioBaseline, bioData){
-    let lowerCount = 0;
-    let higherCount = 0;
+async function startEmotibit(){
+    try{
+        const response = await fetch('/start_emotibit_stream', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        console.log(data.status);
+        return data.status;
+    } catch (error) {
+        console.error('Error starting EmotiBit stream:', error);
+        return 'error';
+    }
+}
 
-    for (const key in bioBaseline){
-        if(bioBaseline.hasOwnProperty(key) && bioData.hasOwnProperty(key)){
-            const baselineValue = bioBaseline[key];
-            const dataValue = bioData[key];
-            if(baselineValue < dataValue){
-                lowerCount++;
-            } else if (baselineValue > dataValue){
-                higherCount++;
-            }
+function startBaseline() {
+    fetch('/get_biometric_baseline', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
         }
-    }
-    let time
-    if (lowerCount > higherCount){
-        time = 8;
-    } else {
-        time = 5;
-    }
-    console.log(`Rest time is set to ${time} minutes.`);
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.status);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 
-    return time;
+    biometricBaselineComplete = false;
+}
+
+function stopBaseline() {
+    fetch("/stop_biometric_baseline", {
+        method: "POST"
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.status);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+    
+    biometricBaselineComplete = true;
 }
 
 function emotibitRecording(button, action){

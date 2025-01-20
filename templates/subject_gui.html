@@ -8,126 +8,215 @@
 </head>
 <body>
     <h1>Subject GUI Panel</h1>
-    <h2>Pretest</h2>
-    <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p>
-    <button id="beginSurveysButton">Surveys</button>
-    <div class="testModule" id="surveysDiv" style="display:none;">
-        <h2>Surveys and Participant Information</h2>
-        <p>Before performing the tasks, please fill out the following forms and surveys.</p><br>
+    <p>Please fill out each section in order. When each task is complete, a new one will appear until the trial is completed.</p>
+    <div id="pretestDiv">
+        <h2>Pretest</h2>
+        <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p>
+        <button id="beginSurveysButton">Surveys</button>
+        <div class="testModule" id="surveysDiv" style="display:block;">
+            <h2>Surveys and Participant Information</h2>
+            <p>Before performing the tasks, please fill out the following forms and surveys.</p><br>
 
-        <button id="participantInfoButton">Participant Information</button><br>
-        <div class="innerModule" id="participantInfoDiv" style="display:none;">
-            <form action="/submit" method="POST" id="nameForm">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required><br><br>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required><br><br>
-                <button type="submit" id="submitButton">Submit Information</button>
-            </form><br>
-            <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
-            <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
-        </div><br>
-    
-        <button id="studentSurveyButton">Student Information</button><br><br>
-            <div class="innerModule" id="studentDiv" style="display:none;" disabled>
-                <p>Please fill out the following information if applicable:</p>
-                <form action="/submit_student_data" id="studentForm" method="POST">
-                    <label for="PID">PID:<span class="required">*</span></label>
-                    <input type="text" id="PID" name="PID" required><br><br>
+            <button id="participantInfoButton">Participant Information</button>
+            <div class="innerModule" id="participantInfoDiv" style="display:none;">
+                <form action="/submit" method="POST" id="nameForm">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required><br><br>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required><br><br>
+                    <p>Please fill out the following information. If not applicable, please write "N/A" in each field:</p>
+                    <input type="text" id="PID" name="PID"><br><br>
                     <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
-                    <input type="text" id="class" name="class" required><br><br>
-                    <input type="submit" value="Submit">
+                    <input type="text" id="class" name="class"><br><br>
+                    <button type="submit" id="submitButton">Submit Information</button>
                 </form><br>
-                <div id="notification2" style="display:none; color: green;">Form submitted successfully!</div>
-                <div id="errorNotification2" style="display:none; color: red;">Error submitting form.</div>
+                <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
+                <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
+                <button id="subjectInfoComplete">Task Complete</button><br>
             </div>
 
-        <div id="surveyButtons">
-            <p id="surveysNote" style="display:None;">Note: These require both a subject and witness signature </p>
-            <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
-        </div>
+            <div id="surveyList" style="display:none;">
+                <p id="surveysNote" style="display:None;">Note: These require both a subject and witness signature </p>
+                <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
+                <button id="surveysCompletedButton">Task Complete</button>
+            </div>
+        </div><br><br>
 
-    </div><br><br>
+        <button id="biometricBaselineButton" style="display:none;">Biometrics Baseline</button>
+        <div class="testModule" id="biometricBaselineDiv" style="display:none;">
+            <p>The experimenter will now help you put on two devices needed to collect data for the session. Please press "Task Complete" when you return.</p>
+            <p id="biometricStatusMessage"></p>
+            <button id="biometricTaskComplete">Task Complete</button>
+        </div><br>
 
-    <button id="biometricBaselineButton">Biometrics Baseline</button>
-    <div class="testModule" id="biometricBaselineDiv" style="display:none;">
-        <p>The experimenter will now help you put on two devices needed to collect data for the session.</p>
-        <p id="biometricStatusMessage"></p>
-    </div><br><br>
+        <button id="stressBaselineButton" style="display:none;">Stress Baseline</button>
+        <div class="testModule" id="stressBaselineDiv" style="display:none;">
+            <p>Please fill out this form.</p>
+            <button id="pss4_button">Stress Baseline Survey</button><br><br>
+            <button id="stressBaselineTaskComplete">Task Complete</button>
+        </div><br>
 
-    <button id="stressBaselineButton">Stress Baseline</button>
-    <div class="testModule" id="stressBaselineDiv" style="display:none;">
-        <p>Please fill out this form.</p>
-        <button id="pss4_button">Stress Baseline Survey</button><br><br>
-    </div><br><br>
+        <button id="testAudioButton" style="display:none;">Test Audio</button>
+        <div class="testModule" id="testAudioDiv" style="display:none;">
+            <p>The experimenter will now attach a microphone to record audio for the session.</p>
+            <p>Please press "Record" and read the following out loud to test the audio connection:</p>
+            <button id="testAudio">Record</button>
+            <p id="audioStatusMessage"></p>
+            <button id="testAudioTaskComplete">Task Complete</button>
+        </div><br>
 
-    <button id="testAudioButton">Test Audio</button>
-    <div class="testModule" id="testAudioDiv" style="display:none;">
-        <p>The experimenter will now attach a microphone to record audio for the session.</p>
-        <p>Please press "Record" and read the following out loud to test the audio connection:</p>
-        <button id="testAudio">Record</button>
-        <p id="audioStatusMessage"></p>
-    </div> <br><br>
-
-    <button id="emotionBaselineButton">Emotion Baseline</button><br>
-    <div class="testModule" id="emotionBaselineDiv" style="display:none;">
-        <ul></ul>
-            <li>Press "Begin"</li>
-            <li>Read the first question when it appears</li>
-            <li>Speak your answer aloud</li>
-            <li>Press "Submit" to register your answer and receive the next question</li>
-        </ul> <br>
-        <button id="beginSERButton">Begin</button>
-        <p id="status" style="display:none;" disabled></p>
-        <p id="questionContainer" style="display:none;" disabled></p>
-        <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button>
-    </div><br>
-
-    <h2>Experimental Tasks</h2>
-    <p>The following is a set of experimental tasks to be completed.</p>
-    <p>After completing a task, please wait for instructions before advancing to the next task.</p>
-    <button id="testsButton">Begin Tasks</button>
-    <div class="testModule" id="testProceduresDiv" style="display:none;">
-        <button id="firstStressTask">First Stressor Task</button><br><br>
-        <button id="firstVRTask">First VR Task</button><br><br>
-        <div class="innerModule" id="vrTask1" style="display:none;">
-            <p>The test supervisor will now assist you with the VR headset.</p> 
-        </div>
-        <button class="breakButton">Take Break</button><br><br>
-        <button id="secondStressTask">Second Stressor Task</button><br><br>
-        <button id="secondVRTask">Second VR Task / Control</button><br><br>
-        <div class="innerModule" id="vrTask2" style="display:none;">
-            <p>The test supervisor will now assist you with the VR headset.</p>
-        </div>
-        <button class="breakButton">Take a Break</button>
+        <button id="emotionBaselineButton" style="display:none;">Emotion Baseline</button>
+        <div class="testModule" id="emotionBaselineDiv" style="display:none;">
+            <ul></ul>
+                <li>Press "Begin"</li>
+                <li>Read the first question when it appears</li>
+                <li>Speak your answer aloud</li>
+                <li>Press "Submit" to register your answer and receive the next question</li>
+            </ul> <br>
+            <button id="beginSERButton">Begin</button>
+            <p id="status" style="display:none;" disabled></p>
+            <p id="questionContainer" style="display:none;" disabled></p>
+            <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button><br><br>
+            <button id="emotionBaselineTaskComplete">Task Complete</button>
+        </div><br>
     </div>
+    <div id="experimentalDiv" style="display:none;">
+        <h2 >Experimental Tasks</h2>
+        <p>The following is a set of experimental tasks to be completed.</p>
+        <p>After completing a task, please wait for instructions before advancing to the next task.</p>
+        
+        <div class="testModule" id="testProceduresDiv" style="display:block;">
+            <button id="firstStressTask">First Stressor Task</button>
+            <div class="innerModule" id="stressTask1Div" style="display:none;">
+                <p>Stressor task window is now open.</p>
+                <button id="stressTask1Complete">Task Complete</button>
+            </div><br>
+            
+            <button id="firstVRTask" style="display:none;">First VR Task</button>
+            <div class="innerModule" id="vrTask1Div" style="display:none;">
+                <p>The test supervisor will now assist you with the VR headset.</p> 
+                <button id="VR1Complete">Task Complete</button>
+            </div><br>
+            
+            <button class="breakButton" id="break1Button" style="display:none;">Take Break</button>
+            <div id="break1Div" style="display:none;">
+                <p>The break window is now open.</p>
+                <button id="break1Complete">Break Complete</button>
+            </div><br>
+            
+            <button id="secondStressTask" style="display:none;">Second Stressor Task</button>
+            <div class="innerModule" id="stressTask2Div" style="display:none;">
+                <p>Stressor task window is open.</p>
+                <button id="stressTask2Complete">Task Complete</button>
+            </div><br>
 
+            <button id="secondVRTask" style="display:none;">Second VR Task / Control</button>
+            <div class="innerModule" id="vrTask2Div" style="display:none;">
+                <p>The test supervisor will now assist you with the VR headset.</p>
+                <button id="VR2Complete">Task Complete</button>
+            </div><br>
+
+            <button class="breakButton" id="break2Button" style="display:none">Take a Break</button>
+            <div class="innerModule" id="break2Div" style="display:none;">
+                <p>The break window is now open.</p>
+                <button id="break2Complete">Break Complete</button>
+                <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
+            </div>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
-        let breakWin;
-        let breakButtons = document.getElementsByClassName('breakButton');
-        for (let i = 0; i < breakButtons.length; i++) {
-            breakButtons[i].addEventListener('click', function() {
-                breakWin = window.open('/break_page', '_blank', 'width=800, height=600');
+        document.addEventListener('DOMContentLoaded', function(){
+            const studentForm = document.getElementById('studentForm');
+            const nameForm = document.getElementById('nameForm');
+            const subjectInfoComplete = document.getElementById('subjectInfoComplete');
+            const studentInfoComplete = document.getElementById('studentInfoComplete');
+            const stressTask1Complete = document.getElementById('stressTask1Complete');
+            const stressTask2Complete = document.getElementById('stressTask2Complete');
+            const stressTask1Div = document.getElementById('stressTask1Div');
+            const stressTask2Div = document.getElementById('stressTask2Div');
+            const break1Button = document.getElementById('break1Button');
+            const break2Button = document.getElementById('bream2Button');
+            const break1Div = document.getElementById('break1Div');
+            const break2Div = document.getElementById('break2Div');
+            const vr1Complete = document.getElementById('VR1Complete');
+            const vr2Complete = document.getElementById('VR2Complete');
+            const break1Complete = document.getElementById('break1Complete');
+            const break2Complete = document.getElementById('break2Complete');
+            const beginSurveysButton = document.getElementById('beginSurveysButton');
+            const surveysDiv = document.getElementById('surveysDiv');
+            const participantInfoButton = document.getElementById('participantInfoButton');
+            const studentSubmitButton = document.getElementById('studentSubmitButton');
+            const surveyList = document.getElementById('surveyList');
+            const surveysCompletedButton = document.getElementById('surveysCompletedButton');
+            const participantInfoDiv = document.getElementById('participantInfoDiv');
+            const biometricTaskComplete = document.getElementById('biometricTaskComplete');
+            const submitButton = document.getElementById('submitButton');
+            const notification1 = document.getElementById('notification1');
+            const errorNotification1 = document.getElementById('errorNotification1');
+            const studentDiv = document.getElementById('studentDiv');
+            const stressBaselineTaskComplete = document.getElementById('stressBaselineTaskComplete');
+            const notification2 = document.getElementById('notification2');
+            const errorNotification2 = document.getElementById('errorNotification2');
+            const surveysNote = document.getElementById('surveysNote');
+            const surveyStatus = document.getElementById('surveyStatus');
+            const biometricBaselineButton = document.getElementById('biometricBaselineButton');
+            const biometricBaselineDiv = document.getElementById('biometricBaselineDiv');
+            const biometricStatusMessage = document.getElementById('biometricStatusMessage');
+            const stressBaselineButton = document.getElementById('stressBaselineButton');
+            const stressBaselineDiv = document.getElementById('stressBaselineDiv');
+            const pss4_button = document.getElementById('pss4_button');
+            const testAudioButton = document.getElementById('testAudioButton');
+            const testAudioDiv = document.getElementById('testAudioDiv');
+            const testAudio = document.getElementById('testAudio');
+            const testAudioTaskComplete = document.getElementById('testAudioTaskComplete');
+            const audioStatusMessage = document.getElementById('audioStatusMessage');
+            const emotionBaselineButton = document.getElementById('emotionBaselineButton');
+            const emotionBaselineTaskComplete = document.getElementById('emotionBaselineTaskComplete');
+            const emotionBaselineDiv = document.getElementById('emotionBaselineDiv');
+            const beginSERButton = document.getElementById('beginSERButton');
+            const status = document.getElementById('status');
+            const questionContainer = document.getElementById('questionContainer');
+            const submitAnswer = document.getElementById('submitAnswer');
+            const experimentalDiv = document.getElementById('experimentalDiv');
+            const testProceduresDiv = document.getElementById('testProceduresDiv');
+            const firstStressTask = document.getElementById('firstStressTask');
+            const firstVRTask = document.getElementById('firstVRTask');
+            const vrTask1Div = document.getElementById('vrTask1Div');
+            const secondStressTask = document.getElementById('secondStressTask');
+            const secondVRTask = document.getElementById('secondVRTask');
+            const vrTask2Div = document.getElementById('vrTask2Div');
+            const completeMessage = document.getElementById('completeMessage');
+
+            let breakWin;
+            let breakButtons = document.getElementsByClassName('breakButton');
+            for (let i = 0; i < breakButtons.length; i++) {
+                breakButtons[i].addEventListener('click', function() {
+                    breakWin = window.open('/break_page', '_blank', 'width=800, height=600');
+                });
+            }
+
+            firstStressTask.addEventListener('click', function() {
+                window.open('/test_page', '_blank', 'width=800, height=600');
+                toggleVis('stressTask1Div');
             });
-        }
 
-        document.getElementById('firstStressTask').addEventListener('click', function() {
-            window.open('/test_page', '_blank', 'width=800, height=600');
+            secondStressTask.addEventListener('click', function() {
+                window.open('/test_page', '_blank', 'width=800, height=600');
+                toggleVis('stressTask2Div');
+            });
+
+            firstVRTask.addEventListener('click', function() {
+                vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
+                toggleVis('vrTask1Div');
+            });
+
+            secondVRTask.addEventListener('click', function() {
+                vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
+                toggleVis('vrTask2Div');
+            });
         });
-
-        document.getElementById('secondStressTask').addEventListener('click', function() {
-            window.open('/test_page', '_blank', 'width=800, height=600');
-        });
-
-        document.getElementById('firstVRTask').addEventListener('click', function() {
-            vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
-        });
-
-        document.getElementById('secondVRTask').addEventListener('click', function() {
-            vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
-        });
-
+    
         window.onload = function(){
             fetch("/reset_ser_question_index", {
                 method: "POST",
@@ -140,43 +229,96 @@
             .catch(error => console.error('Error:', error));
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('testsButton').addEventListener('click', function() {
-                toggleVis('testProceduresDiv');
-            });
-        });
-
         document.addEventListener('DOMContentLoaded', function(){
-            document.getElementById('beginSurveysButton').addEventListener('click', function() {
+            beginSurveysButton.addEventListener('click', function() {
                 toggleVis('surveysDiv');
             });
-            document.getElementById('participantInfoButton').addEventListener('click', function() {
+            participantInfoButton.addEventListener('click', function() {
                 toggleVis('participantInfoDiv');
             });
-            document.getElementById('emotionBaselineButton').addEventListener('click', function() {
+            emotionBaselineButton.addEventListener('click', function() {
                 toggleVis('emotionBaselineDiv');
             });
-            document.getElementById('studentSurveyButton').addEventListener('click', function() {
-                toggleVis('studentDiv');
-            });
-            document.getElementById('biometricBaselineButton').addEventListener('click', function() {
+            biometricBaselineButton.addEventListener('click', function() {
                 toggleVis('biometricBaselineDiv');
             });
-            document.getElementById("stressBaselineButton").addEventListener("click", function() {
+            stressBaselineButton.addEventListener("click", function() {
                 toggleVis('stressBaselineDiv');
             });
-            document.getElementById('testAudioButton').addEventListener('click', function() {
+            testAudioButton.addEventListener('click', function() {
                 toggleVis('testAudioDiv');
+            });
+
+            break1Button.addEventListener('click', function() {
+                toggleVis('break1Div');
+            });
+
+            break2Button.addEventListener('click', function() {
+                toggleVis('break2Div');
             });
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('studentForm');
-            form.addEventListener('submit', function(event) {
+            subjectInfoComplete.addEventListener('click', function() {
+                surveyList.style.display = 'block';
+            });
+
+            surveysCompletedButton.addEventListener('click', function(){
+                biometricBaselineButton.style.display = 'block';
+                biometricBaselineDiv.style.display = 'block';
+            });
+            
+            biometricTaskComplete.addEventListener('click', function() {
+                stressBaselineButton.style.display = 'block';
+                stressBaselineDiv.style.display = 'block';
+            });
+
+            stressBaselineTaskComplete.addEventListener('click', function(){
+                testAudioButton.style.display = 'block';
+                testAudioDiv.style.display = 'block';
+            });
+
+            testAudioTaskComplete.addEventListener('click', function(){
+                emotionBaselineButton.style.display = 'block';
+                emotionBaselineDiv.style.display = 'block';
+            });
+
+            emotionBaselineTaskComplete.addEventListener('click', function(){
+                experimentalDiv.style.display = 'block';
+                firstStressTask.style.display = 'block';
+            });
+
+            stressTask1Complete.addEventListener('click', function(){
+                firstVRTask.style.display = 'block';
+                vrTask1Div.style.display = 'block';
+            }); 
+
+            VR1Complete.addEventListener('click', function(){
+                break1Button.style.display = 'block';
+            });
+
+            break1Complete.addEventListener('click', function(){
+                secondStressTask.style.display = 'block';
+                stressTask2Div.style.display = 'block';
+            });
+
+            break2Complete.addEventListener('click', function(){
+                completeMessage.style.display = 'block';
+            });
+
+            stressTask2Complete.addEventListener('click', function(){
+                secondVRTask.style.display = 'block';
+                vrTask2Div.style.display = 'block';
+            });
+
+            VR2Complete.addEventListener('click', function(){
+                break2Button.style.display = 'block';
+                break2Div.style.display = 'block';
+            });
+
+            studentForm.addEventListener('submit', function(event) {
                 event.preventDefault(); 
-                const notification2 = document.getElementById('notification2');
-                const errorNotification2 = document.getElementById('errorNotification2');
-                const formData = new FormData(form); 
+                const formData = new FormData(studentForm); 
 
                 fetch('/submit_student_data', { 
                     method: 'POST',
@@ -196,12 +338,9 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('nameForm');
-            const notification1 = document.getElementById('notification1');
-            const errorNotification1 = document.getElementById('errorNotification1');
-            form.addEventListener('submit', function(event){
+            nameForm.addEventListener('submit', function(event){
                 event.preventDefault();
-                const formData = new FormData(form);
+                const formData = new FormData(nameForm);
                 fetch('/submit', {
                     method: 'POST',
                     headers: {
@@ -224,15 +363,14 @@
             })
         });
 
-        let statusMessage = document.getElementById('status');
-        document.getElementById('beginSERButton').addEventListener('click', function(){
-            document.getElementById('beginSERButton').disabled = true;
-            document.getElementById('questionContainer').style.display = 'block';
-            document.getElementById('questionContainer').disabled = false;
-            statusMessage.style.display = 'block';
-            statusMessage.disabled = false;
-            document.getElementById('submitAnswer').style.display = 'block';
-            document.getElementById('submitAnswer').disabled = false;
+        beginSERButton.addEventListener('click', function(){
+            beginSERButton.disabled = true;
+            questionContainer.style.display = 'block';
+            questionContainer.disabled = false;
+            status.style.display = 'block';
+            status.disabled = false;
+            submitAnswer.style.display = 'block';
+            submitAnswer.disabled = false;
 
             // Start recording audio stream
             startRecording()
@@ -242,13 +380,13 @@
                         if (streamActive) {
                             clearInterval(checkInterval); 
                             console.log('Stream is active');
-                            document.getElementById('submitAnswer').disabled = false;
-                            statusMessage.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
+                            submitAnswer.disabled = false;
+                            status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                         
                         } else {
                             console.log('Stream is not active');
-                            statusMessage.innerText = "Please wait...";
-                            document.getElementById('submitAnswer').disabled = true;
+                            status.innerText = "Please wait...";
+                            submitAnswer.disabled = true;
                         }
                     }, 2000);
                 })
@@ -268,11 +406,11 @@
                     .then(data => {
                         console.log('Received data:', data);
                         let q = data.question;
-                        document.getElementById('questionContainer').innerText = q;
+                        questionContainer('questionContainer').innerText = q;
                         if (q === 'SER task completed.') {
                             stopRecording();
-                            document.getElementById('submitAnswer').disabled = true;
-                            document.getElementById('submitAnswer').style.display = 'none';
+                            submitAnswer('submitAnswer').disabled = true;
+                            submitAnswer('submitAnswer').style.display = 'none';
                         }
                     })
                     .catch(error => {
@@ -281,43 +419,40 @@
                     });
             });
 
-        document.getElementById('testAudio').addEventListener('click', async function() {
-            let button = document.getElementById('testAudio');
-            let statusMessage = document.getElementById('audioStatusMessage');
-            
-            if (button.innerText === 'Record') {
+        testAudio.addEventListener('click', async function() {
+            if (testAudio.innerText === 'Record') {
                 startRecording()
                 .then(() => {
                     let checkInterval = setInterval(() => {
                         let streamActive = checkActiveStream();  
                         if(streamActive) {
                             console.log('Stream is active');
-                            statusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
-                            button.innerText = 'Stop';
+                            AudioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
+                            testAudio.innerText = 'Stop';
                             clearInterval(checkInterval); 
                         } else {
                             console.log('Stream is not active');
-                            statusMessage.innerText = "Please wait...";
+                            AudioStatusMessage.innerText = "Please wait...";
                         }
                     }, 2000);
                 })
             }
-            else if (button.innerText === 'Stop') {
+            else if (testAudio.innerText === 'Stop') {
                 try {
                     const response = await fetch('/test_audio', { method: 'POST' });
                     const data = await response.json();
                     statusMessage.innerText = `I got: ${data.result}`;
                 } catch (error) {
                     console.error('Error:', error);
-                    statusMessage.innerText = "Error occurred during recording or transcription.";
+                    AudioStatusMessage.innerText = "Error occurred during recording or transcription.";
                 } finally {
-                    button.innerText = 'Record';
+                    testAudio.innerText = 'Record';
                     audioTestComplete = true;
                 }
             }
         });
 
-        document.getElementById('submitAnswer').addEventListener('click', function() {
+        submitAnswer.addEventListener('click', function() {
             // First, submit the SER answer via POST
             fetch("/process_ser_answer", {
                 method: "POST"
@@ -329,23 +464,21 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Received data:', data); // Log the full response data
+                console.log('Received data:', data); 
                 if (data.status === 'error') {
-                    document.getElementById("status").innerHTML = data.message;
-                    document.getElementById("status").style.display = "block";
-                    document.getElementById("status").disabled = false;
+                    status.innerHTML = data.message;
+                    status.style.display = "block";
+                    status.disabled = false;
                 } else {
                     // document.getElementById("status").innerHTML = data.message;
-                    statusMessage.style.display = "block";
-                    statusMessage.disabled = false;
-                    statusMessage.innerText = "Answer submitted successfully. Please wait for the next question.";
+                    status.style.display = "block";
+                    status.disabled = false;
+                    status.innerText = "Answer submitted successfully. Please wait for the next question.";
 
-                    // Ensure recording starts only after answer is processed
                     return startRecording();
                 }
             })
             .then(() => {
-                let statusMessage = document.getElementById('status');
                 let checkInterval = setInterval(() => {
                     let streamActive = checkActiveStream();  
                     if (streamActive) {
@@ -353,11 +486,10 @@
                         clearInterval(checkInterval); 
                     } else {
                         console.log('Stream is not active');
-                        statusMessage.innerText = "Please wait...";
+                        status.innerText = "Please wait...";
                     }
                 }, 2000);
 
-                // Fetch the next question only after recording has started successfully
                 return fetch('/get_ser_question', { method: 'GET' });
             })
             .then(response => {
@@ -369,23 +501,22 @@
             .then(data => {
                 console.log('Received data:', data);
                 let q = data.question;
-                document.getElementById('questionContainer').innerText = q;
+                questionContainer.innerText = q;
 
                 if (q === 'SER task completed.') {
                     stopRecording();
                     emotionBaselineComplete = true;
-                    document.getElementById('submitAnswer').disabled = true;
-                    document.getElementById('submitAnswer').style.display = 'none';
+                    submitAnswer.disabled = true;
+                    submitAnswer.style.display = 'none';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById("status").innerHTML = "Error occurred while processing the answer.";
-                document.getElementById("status").style.display = "block";
-                document.getElementById("status").disabled = false;
+                status.innerHTML = "Error occurred while processing the answer.";
+                status.style.display = "block";
+                status.disabled = false;
             });
         });
-
     </script>
 </body>
 </html>

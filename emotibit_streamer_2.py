@@ -25,25 +25,29 @@ class EmotiBitStreamer:
         self.csv_filename = csv_filename
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
-        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"]}
-        self.last_received = {key: None for key in self._baseline_data.keys()}
+        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
+        self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PG"]}  # Sliding window for derived metrics
-
+        self._event_marker = None
         self.collecting_baseline = False
-
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
-
         self.server = osc_server.ThreadingOSCUDPServer((self._ip, self._port), self.dispatcher)
         self.server_thread = None
         self.shutdown_event = Event()
-
         self.default_value = 0
-
         self.csv_file = None
         self.csv_writer = None
-
+        
         atexit.register(self.stop)
+
+    @property 
+    def event_marker(self) -> str:
+        return self._event_marker
+
+    @event_marker.setter
+    def event_marker(self, value: str) -> None:
+        self._event_marker = value
 
     def start_baseline_collection(self) -> None:
         if self.collecting_baseline:
@@ -108,7 +112,7 @@ class EmotiBitStreamer:
             self.current_timestamp = self.timestamp_manager.get_iso_timestamp()
 
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
-            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"]}
+            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
         
         stream_type = address.split('/')[-1]
         timestamp = self.current_timestamp
@@ -117,6 +121,7 @@ class EmotiBitStreamer:
         derived_value = None
 
         self.current_row["timestamp"] = timestamp
+        self.current_row["event_marker"] = self.event_marker
 
         if stream_type in self.data_window:
             self.data_window[stream_type].append(value)
@@ -135,11 +140,7 @@ class EmotiBitStreamer:
             self.current_row["BI"] = value
         elif stream_type == "PG":
             self.current_row["PG"] = value
-            self.record_null_values()
 
-        self.current_row["baseline_status"] = "baseline" if self.collecting_baseline else "live"
-
-        # Write data to CSV
         self.write_to_csv(self.current_row)
 
     ###########################################
@@ -238,7 +239,6 @@ class EmotiBitStreamer:
     def get_averages(self, data) -> dict:
         """
         Calculate the averages of the given data.
-
         Args:
             data (list): A list of dictionaries containing data to calculate averages from.
 
@@ -289,7 +289,7 @@ class EmotiBitStreamer:
             
             comparison_results[key] = {
                 "baseline_avg": baseline_avg,
-                "non_baseline_avg": live_avg,
+                "live_avg": live_avg,
                 "elevated": higher
             }
     
@@ -320,7 +320,6 @@ class EmotiBitStreamer:
         Retrieve the most recent data from the CSV file that was collected within the
         specicifed cutoff_time threshold. If there is no data within the cutoff period 
         it returns an empty list.
-
         Args:
             cutoff_time (datetime): The cutoff time to retrieve data from.
 

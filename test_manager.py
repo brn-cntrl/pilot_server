@@ -51,7 +51,7 @@ class TestManager:
     @task_2_questions.setter
     def task_2_questions(self, task_2_questions):
         self._task_2_questions = task_2_questions
-
+    
     @property
     def current_question_index(self):
         return self._current_question_index
@@ -76,17 +76,28 @@ class TestManager:
     def current_ser_question_index(self, index):
         self._current_ser_question_index = index
     
-    def get_task_questions(self):
-        return {1: self.task_1_questions, 2: self.task_2_questions}
-    
-    def increment_ser_question_index(self):
-        self.current_ser_question_index += 1
+    def get_task_questions(self, index):
+        task_questions = [self.task_1_questions, self.task_2_questions]
 
-    def increment_question_index(self):
-        self.current_question_index += 1
+        if index >= len(task_questions):
+            return None
+        
+        return task_questions[index]
     
-    def increment_test_index(self):
-        self.current_test_index += 1
+    def get_ser_question(self, index):      
+        if index >= len(self.ser_questions):
+            return None
+        
+        return self.ser_questions[index]
+    
+    # def increment_ser_question_index(self):
+    #     self.current_ser_question_index += 1
+
+    # def increment_question_index(self):
+    #     self.current_question_index += 1
+    
+    # def increment_test_index(self):
+    #     self.current_test_index += 1
 
     def get_next_question(self, task_number, index):
         if task_number == 1:

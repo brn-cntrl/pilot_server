@@ -28,8 +28,8 @@
         <p id="loadingMessage"></p>
         <div id="clock">05:00</div><br><br>
         <div id="accountBalance">$0</div><br><br>
-        <div id="test_1_container"></div> <br>
-        <div id="test_2_container"></div> <br>
+        <div id="test_container"></div> <br>
+        <!-- <div id="test_2_container"></div> <br> -->
     
         <button id="submitAnswerButton" disabled>Submit Answer</button> <br>
         <button id="uploadData" disabled>Upload Results</button>
@@ -66,6 +66,41 @@
                 console.log("Test Number: ", testNumber);
                 console.log(data.message);
             });
+        }
+        
+        function startClock() {
+            // startTime = Date.now() - elapsedTime;  
+            // clockInterval = setInterval(updateClock, 1000); 
+            if(!timerInterval) {
+                timerInterval = setInterval(updateClock, 1000);
+            }
+        }
+
+        function stopClock() {
+            // clearInterval(timerInterval); 
+            // elapsedTime = Date.now() - startTime;
+            clearInterval(timerInterval); 
+            timerInterval = null;
+        }
+                
+        function resetClock(){
+            stopClock();
+            timeLeft = initialTime;
+            timerDisplay.textContent = '05:00';
+        }
+
+        function updateClock() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            timeDisplay.textContent = `${minutes}:${seconds}`;
+            playTickSound();
+            timeLeft--;
+            if(timeLeft < 0) {
+                clearInterval(timerInterval);
+                document.getElementById('status').innerText = 'Time is up!';
+                endTest();
+            }
         }
 
         function endTest() {
@@ -137,59 +172,58 @@
     
         document.addEventListener('DOMContentLoaded', (event) => {
             const startTestButton = document.getElementById('startTestButton');
-            if (startTestButton) {
-                startTestButton.addEventListener('click', function() {
-                    document.getElementById('submitAnswerButton').disabled = true;
-                    document.getElementById('loadingMessage').style.display = 'block';
-                    document.getElementById('status').innerText = '';
+            
+            startTestButton.addEventListener('click', function() {
+                document.getElementById('submitAnswerButton').disabled = true;
+                document.getElementById('loadingMessage').style.display = 'block';
+                document.getElementById('status').innerText = '';
 
-                    startRecording()
-                        .then(() => {
-                            return fetch('/get_question', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                startRecording()
+                    .then(() => {
+                        return fetch('/get_question', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            let testNumber = data.test_number;
-                            // let testContainerId = `test_${testNumber}_container`;
-                            let testContainerId = "test_1_container";
-
-                            document.getElementById('loadingMessage').style.display = 'none';
-                            document.getElementById('startTestButton').disabled = true;
-                            document.getElementById('test_1_container').innerHTML = `
-                                <h2>Test 1</h2>
-                                <div id="questionsContainer">${data.question}</div>
-                            `;
-
-                            let checkInterval = setInterval(() => {
-                                if (checkActiveStream()) {
-                                    console.log("Stream is active.");
-                                    document.getElementById(testContainerId).style.display = 'block';
-                                    document.getElementById('submitAnswerButton').disabled = false;
-                                    startClock();
-                                    clearInterval(checkInterval); // Stop checking once stream is active
-                                } else {
-                                    console.log("Stream is not active yet, checking again...");
-                                    document.getElementById(testContainerId).style.display = 'none';
-                                    document.getElementById('submitAnswerButton').disabled = true;
-                                }
-                            }, 2000); // Check every 2 seconds
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Failed to start test.');
                         });
-                });
-            }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        let testNumber = data.test_number;
+                        let testContainerId = "test_container";
+
+                        document.getElementById('loadingMessage').style.display = 'none';
+                        document.getElementById('startTestButton').disabled = true;
+                        document.getElementById('test_container').innerHTML = `
+                            <h2>Test</h2>
+                            <div id="questionsContainer">${data.question}</div>
+                        `;
+
+                        let checkInterval = setInterval(() => {
+                            if (checkActiveStream()) {
+                                console.log("Stream is active.");
+                                document.getElementById(testContainerId).style.display = 'block';
+                                document.getElementById('submitAnswerButton').disabled = false;
+                                startClock();
+                                clearInterval(checkInterval); // Stop checking once stream is active
+                            } else {
+                                console.log("Stream is not active yet, checking again...");
+                                document.getElementById(testContainerId).style.display = 'none';
+                                document.getElementById('submitAnswerButton').disabled = true;
+                            }
+                        }, 2000); // Check every 2 seconds
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to start test.');
+                    });
+            });
+        
         });
     
         document.getElementById('submitAnswerButton').addEventListener('click', function() {

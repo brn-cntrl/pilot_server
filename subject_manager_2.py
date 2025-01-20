@@ -1,0 +1,173 @@
+import csv
+import os
+from aws_handler import AWSHandler
+from datetime import datetime
+
+class SubjectManager:
+    def __init__(self) -> None:
+        # Attributes to hold subject's name and ID
+        self._subject_name = None
+        self._subject_id = None
+        self.csv_file_path = None
+        self._event_marker = None
+        self.PID = None
+        self.class_name = None
+        self.headers = ['Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence']
+
+    @property
+    def subject_name(self) -> str:
+        return self._subject_name
+
+    @subject_name.setter
+    def subject_name(self, value: str) -> None:
+        self._subject_name = value
+
+    @property
+    def subject_id(self) -> str:
+        return self._subject_id
+
+    @subject_id.setter
+    def subject_id(self, value: str) -> None:
+        self._subject_id = value
+
+    @property
+    def event_marker(self) -> str:
+        return self._event_marker
+    
+    @event_marker.setter
+    def event_marker(self, value: str) -> None:
+        self._event_marker = value
+
+    def set_subject(self, subject_info: dict) -> None:
+        """
+            Set the subject's name, ID, and email, PID (if any), class name (if any) and initialize the CSV file.
+            Args:
+                subject_info (dict): Dictionary containing the subject's name, ID, and email.
+                Expected format: {"name": str, "id": str, "email": str, "PID": str, "class_name": str} 
+            Returns:
+                None
+        """
+        self.subject_name = subject_info["name"]
+        self.subject_id = subject_info["id"]
+        self.subject_email = subject_info["email"]
+        self.PID = subject_info["PID"]
+        self.class_name = subject_info["class_name"]
+        
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        self.csv_file_path = f"{current_date}_{self.subject_name}_{self.subject_id}.csv"
+
+        if not os.path.exists(self.csv_file_path):
+            with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
+                writer = csv.writer(csv_file)
+                
+                writer.writerow([f"Subject Name: {self.subject_name}"])
+                writer.writerow([f"Subject ID: {self.subject_id}"])
+                writer.writerow([f"Email: {self.subject_email}"])
+                writer.writerow([f"PID: {self.PID}"])
+                writer.writerow([f"Class Name: {self.class_name}"])  
+                writer.writerow(self.headers)  
+
+    def append_data(self, data: dict) -> None:
+        """
+        Append data to the main CSV file, ignoring columns that are not relevant to the current data collection.
+    
+        Args:
+            data (dict): Dictionary containing the data to be appended, where keys are column names and values are the corresponding data.
+            Expected format: {'Timestamp': str, 'Event_Marker': str, 'Transcription': str, 'SER_Emotion': str, 'SER_Confidence': str}
+        """
+        try:
+            with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
+                
+                reader = csv.reader(csvfile)
+
+                # Skip the metadata rows (subject info)
+                next(reader)  # Subject Name
+                next(reader)  # Subject ID
+                next(reader)  # Email
+                next(reader)  # PID
+                next(reader)  # Class Name
+
+                while True:
+                    headers = next(reader) 
+                    if headers:  
+                        break
+
+                rows = list(reader)  # Get existing rows
+
+                # debugging statements
+                print(f"Headers: {headers}")
+                print(f"Rows: {rows}")
+
+        except FileNotFoundError:
+            # If the file doesn't exist, create it with the headers from data
+            print(f"CSV file not found. Enter subject information first.")
+
+        # Filter the data to only include keys that are in the existing headers and have non-empty values
+        filtered_data = {key: value for key, value in data.items() if key in headers and value != ""}
+
+        # Prepare the row based on the order of the headers
+        row = [filtered_data.get(header, "") for header in headers]
+
+        with open(self.csv_file_path, mode='a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+
+            writer.writerow(row)
+
+        print(f"Data has been successfully appended to {self.csv_file_path}.")
+
+    def load_data(self) -> list[dict]:
+        """Load and return all data from the CSV file."""
+        if not self.csv_file_path:
+            raise ValueError("Subject has not been set. Call 'set_subject' first.")
+        
+        with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as csv_file:
+            reader = csv.DictReader(csv_file)
+            return list(reader)
+
+    def reset_subject(self) -> None:
+        """Reset the subject details and clear the CSV file reference."""
+        self.subject_name = None
+        self.subject_id = None
+        self.csv_file_path = None
+
+    def append_temp_csv_to_main(self, temp_csv_path: str) -> None:
+        """
+        Append the data from a temporary CSV to the main CSV, aligning headers.
+
+        Args:
+            main_csv_path (str): Path to the main CSV file.
+            temp_csv_path (str): Path to the temporary CSV file.
+        """
+        # Read temporary CSV headers and data
+        with open(temp_csv_path, mode='r', newline='', encoding='utf-8') as temp_csv:
+            temp_reader = list(csv.reader(temp_csv))
+            temp_headers = temp_reader[0]
+            temp_data = temp_reader[1:]
+
+        # Read main CSV headers and data
+        with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as main_csv:
+            main_reader = list(csv.reader(main_csv))
+            main_headers = main_reader[0]
+            main_data = main_reader[1:]
+
+        # Combine headers
+        combined_headers = list(dict.fromkeys(main_headers + temp_headers))
+
+        # Align data from both CSVs
+        main_data_aligned = [
+            [row[main_headers.index(header)] if header in main_headers else "" for header in combined_headers]
+            for row in main_data
+        ]
+        temp_data_aligned = [
+            [row[temp_headers.index(header)] if header in temp_headers else "" for header in combined_headers]
+            for row in temp_data
+        ]
+
+        # Write the combined data back to the main CSV
+        with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as main_csv:
+            writer = csv.writer(main_csv)
+            writer.writerow(combined_headers)  # Write unified headers
+            writer.writerows(main_data_aligned)  # Write main CSV data
+            writer.writerows(temp_data_aligned)  # Append temporary data
+
+        print(f"Temporary CSV data has been successfully appended to {self.csv_file_path}.")
