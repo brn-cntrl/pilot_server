@@ -5,7 +5,7 @@ import re
 
 class FormManager:
     def __init__(self) -> None:
-        self._surveys_file = "surveys.json"
+        self._surveys_file = "surveys/surveys.json"
         self._surveys = self.load_surveys()
         self._formatted_surveys = []
 
