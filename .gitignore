@@ -28,6 +28,7 @@ ser_manager_2.py
 signal_processor.py
 Speaker.wav
 test_script.py
+csv_handler.py
 emotibit_tester.py
 .DS_Store
 feature_extraction.py
