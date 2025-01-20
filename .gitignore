@@ -15,6 +15,7 @@
 /tests/
 /cache/
 /static/videos/*
+!/static/videos/.gitkeep
 /EmotiBitSoftware-MacOS/
 /tmp/*
 /subject_files/*
