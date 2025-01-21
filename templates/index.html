@@ -86,7 +86,7 @@
             
         </div><br>
 
-        <button id="VRTaskButton1">VR Task 1</button>
+        <button id="VRTaskButton1">VR Task 1</button><br>
         <div class="innerModule" id="VRTaskDiv1" style="display:none">
             <button id="VRBiometrics1">Start EmotiBit</button><br><br>
             <p id="emotibitStatus1" style="display:none;">Please wait...</p>
@@ -96,7 +96,7 @@
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
-        <button id="breakButton1">Take Break</button>
+        <button id="breakButton1">Take Break</button><br>
         <div class="innerModule" id="break1Div" style="display:none;">
             <p>Instructions for the break:</p>
             <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
@@ -106,7 +106,7 @@
             <button id="startBreak1">Start Break</button><br>
         </div><br>
 
-        <button id="secondStressTask">Stressor Task 2</button>
+        <button id="secondStressTask">Stressor Task 2</button><br>
         <div class="innerModule" id="secondStressDiv" style="display:none;">
             <p>Instructions for the second stressor task:</p>
             <p>1. If the EmotiBit has not been fitted to subject, do so now.</p>
@@ -118,7 +118,7 @@
             <p id="stressStatus2" style="display:none;">Please wait...</p>
         </div><br>
 
-        <button id="VRTaskButton2">VR Task 2</button>
+        <button id="VRTaskButton2">VR Task 2</button><br>
         <div class="innerModule" id="VRTaskDiv2" style="display:none">
             <button id="VRBiometrics2">Start EmotiBit</button><br><br>
             <p id="emotibitStatus2" style="display:none;">Please wait...</p>
@@ -128,7 +128,7 @@
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
-        <button id="breakButton2">Take a Break</button>
+        <button id="breakButton2">Take a Break</button><br>
         <div class="innerModule" id="break2Div" style="display:none;">
             <p>Instructions for the break:</p>
             <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
@@ -148,62 +148,88 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
-        // TODO: Add disabling for task completion logic.
+        const addSurveyButton = document.getElementById('addSurveyButton')
+        const beginExperimentButton = document.getElementById('beginExperimentButton');
+        const launchSubjectGUI = document.getElementById('launchSubjectGUI');
+        const exitSurveyButton = document.getElementById('exitSurveyButton');
+        const testAudioButton = document.getElementById('testAudioButton');
+        const tasksButton = document.getElementById('tasksButton');
+        const biometricBaselineButton = document.getElementById('biometricBaselineButton');
+        const firstStressTask = document.getElementById('firstStressTask');
+        const secondStressTask = document.getElementById('secondStressTask');
+        const VRTaskButton1 = document.getElementById('VRTaskButton1');
+        const VRTaskButton2 = document.getElementById('VRTaskButton2');
+        const breakButton1 = document.getElementById('breakButton1');
+        const breakButton2 = document.getElementById('breakButton2');
+        const baselineButton = document.getElementById("startBiometricBaseline");
+        const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
+        const audioDevicesDropdown = document.getElementById('audioDevices');
+        const shutdownButton = document.getElementById('shutdownButton');
+        const stress1Button = document.getElementById('startStressBiometrics1');
+        const stress1Status = document.getElementById('stressStatus1');
+        const stress2Button = document.getElementById('startStressBiometrics2');
+        const stress2Status = document.getElementById('stressStatus2');
+        const VRAudio1 = document.getElementById('VRAudio1');
+        const VRAudio2 = document.getElementById('VRAudio2');
+        const notification3 = document.getElementById('notification3');
+        const errorNotification3 = document.getElementById('errorNotification3');
+        const VRBiom1 = document.getElementById('VRBiometrics1');
+        const VRBiom2 = document.getElementById('VRBiometrics2');
+        const startBreakButton1 = document.getElementById('startBreak1');
+        const startBreakButton2 = document.getElementById('startBreak2');
+        const uploadSubjectData = document.getElementById('uploadSubjectData')
+
         document.addEventListener('DOMContentLoaded', function(){
-            document.getElementById('addSurveyButton').addEventListener('click', function() {
+            addSurveyButton.addEventListener('click', function() {
                 toggleVis('addSurveyDiv');
             });
 
-            document.getElementById('beginExperimentButton').addEventListener('click', function() {
+            beginExperimentButton.addEventListener('click', function() {
                 toggleVis('surveysDiv');
             });
 
-            document.getElementById('launchSubjectGUI').addEventListener('click', function() {
+            launchSubjectGUI.addEventListener('click', function() {
                 window.open('/subject_gui', '_blank', 'width=1200, height=720');
             });
-
-            document.getElementById('exitSurveyButton').addEventListener('click', function() {
+            
+            // TODO: add G Form surveys
+            exitSurveyButton.addEventListener('click', function() {
                 window.open('/exit_survey', '_blank');
             });
 
-            document.getElementById('testAudioButton').addEventListener('click', function() {
+            testAudioButton.addEventListener('click', function() {
                 toggleVis('testAudioDiv');
             });
 
-            // document.getElementById('participantInfoButton').addEventListener('click', function() {
-            //     toggleVis('participantInfoDiv');
-            // });
-
-            document.getElementById('tasksButton').addEventListener('click', function(){
+            tasksButton.addEventListener('click', function(){
                 toggleVis('tasksDiv');
             });
 
-            document.getElementById('biometricBaselineButton').addEventListener('click', function() {
+            biometricBaselineButton.addEventListener('click', function() {
                 toggleVis('biometricBaselineDiv');
             });
 
-            document.getElementById('firstStressTask').addEventListener('click', function() {
+            firstStressTask.addEventListener('click', function() {
                 toggleVis('firstStressDiv');
             });
 
-            document.getElementById('secondStressTask').addEventListener('click', function() {
+            secondStressTask.addEventListener('click', function() {
                 toggleVis('secondStressDiv');
             });
 
-            document.getElementById("VRTaskButton1").addEventListener('click', function(){
+            VRTaskButton1.addEventListener('click', function(){
                 toggleVis('VRTaskDiv1');
             });
                 
-            document.getElementById("VRTaskButton2").addEventListener('click', function(){
+            VRTaskButton2.addEventListener('click', function(){
                 toggleVis('VRTaskDiv2');
             });
 
-            
-            document.getElementById('breakButton1').addEventListener('click', function() {
+            breakButton1.addEventListener('click', function() {
                 toggleVis('break1Div');
             });
 
-            document.getElementById('breakButton2').addEventListener('click', function() {
+            breakButton2.addEventListener('click', function() {
                 toggleVis('break2Div');
             }); 
         });
@@ -212,8 +238,6 @@
             const form = document.getElementById('addSurveyForm');
             form.addEventListener('submit', function(event){
                 event.preventDefault();
-                const notification3 = document.getElementById('notification3');
-                const errorNotification3 = document.getElementById('errorNotification3');
                 const formData = new FormData(form);
                 fetch('/add_survey', {
                     method: 'POST',
@@ -232,7 +256,6 @@
                 });
             });
 
-            baselineButton = document.getElementById("startBiometricBaseline");
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     pushTaskId('biometric_baseline');
@@ -245,7 +268,6 @@
                 }
             });
 
-            const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
             compareBaselineButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     compareToBaseline();
@@ -256,19 +278,14 @@
         document.addEventListener('DOMContentLoaded', (event) => {
             console.log('Fetching audio devices...');
             fetchAudioDevices();
-            const audioDevicesDropdown = document.getElementById('audioDevices');
             audioDevicesDropdown.addEventListener('change', setDevice);
-
-            const shutdownButton = document.getElementById('shutdownButton');
             shutdownButton.addEventListener('click', shutdownServer);
         });
 
         document.addEventListener('DOMContentLoaded', function(){
-            let stress1Button = document.getElementById('startStressBiometrics1');
-            let stress1Status = document.getElementById('stressStatus1');
             stress1Button.addEventListener('click', function() {
                 if(stress1Button.innerText == 'Start Biometrics'){
-                    pushTaskId('stressor_test_1')
+                    setEventMarker('stressor_test_1');
                     fetch('/start_emotibit_stream', {
                         method: 'POST'
                     })
@@ -281,26 +298,13 @@
                     })
                     .catch(error => console.error('Error:', error));
                 } else {
-                    pushTaskId('subject_idle')
-                    fetch('/push_emotibit_data', {
-                        method: 'POST',
-                        label: 'stress_test_1'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                        stress1Button.innerText = 'Start Biometrics';
-                        stress1Status.style.display = 'none';
-                    })
-                    .catch(error => console.error('Error:', error));
+                    setEventMarker('subject_idle');
                 }
             });
 
-            let stress2Button = document.getElementById('startStressBiometrics2');
-            let stress2Status = document.getElementById('stressStatus2');
             stress2Button.addEventListener('click', function() {
                 if(stress2Button.innerText == 'Start Biometrics'){
-                    pushTaskId('stressor_test_2');
+                    setEventMarker('stressor_test_2');
                     fetch('/start_emotibit_stream', {
                         method: 'POST'
                     })
@@ -313,23 +317,9 @@
                     })
                     .catch(error => console.error('Error:', error));
                 } else {
-                    pushTaskId('subject_idle')
-                    fetch('/push_emotibit_data', {
-                        method: 'POST',
-                        label: 'stress_test_2'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                        stress2Button.innerText = 'Start Biometrics';
-                        stress2Status.style.display = 'none';
-                    })
-                    .catch(error => console.error('Error:', error));
+                    setEventMarker('subject_idle');
                 }
             });
-
-            let VRAudio1 = document.getElementById('VRAudio1');
-            let VRAudio2 = document.getElementById('VRAudio2');
 
             VRAudio1.addEventListener('click', function() {
                 if (VRAudio1.innerText == "Start Recording"){
@@ -350,9 +340,6 @@
                     VRRecording(button, 'stop');
                 }
             });
-
-            let VRBiom1 = document.getElementById('VRBiometrics1');
-            let VRBiom2 = document.getElementById('VRBiometrics2');
 
             VRBiom1.addEventListener('click', function() {
                 if (VRBiom1.innerText == "Start EmotiBit"){
@@ -408,26 +395,23 @@
                 }
             });
 
-            let breakButton1 = document.getElementById('startBreak1');
-            let breakButton2 = document.getElementById('startBreak2');
-
-            breakButton1.addEventListener('click', function(){
-                if(breakButton1.innerText == "Start Break"){
-                    pushTaskId('break_1');
-                    breakButton1.innerText = "End Break";
+            startBreakButton1.addEventListener('click', function(){
+                if(startBreakButton1.innerText == "Start Break"){
+                    setEventMarker('break_1');
+                    startBreakButton1.innerText = "End Break";
                 } else {
-                    pushTaskId('subject_idle');
-                    breakButton1.innerText = "Start Break";
+                    setEventMarker('subject_idle');
+                    startBreakButton1.innerText = "Start Break";
                 }
             });
 
-            breakButton2.addEventListener('click', function(){
-                if(breakButton2.innerText == "Start Break"){
-                    pushTaskId('break_2');
-                    breakButton2.innerText = "End Break";
+            startBreakButton2.addEventListener('click', function(){
+                if(startBreakButton2.innerText == "Start Break"){
+                    setEventMarker('break_2');
+                    startBreakButton2.innerText = "End Break";
                 } else {
-                    pushTaskId('subject_idle');
-                    breakButton1.innerText = "Start Break";
+                    setEventMarker('subject_idle');
+                    startBreakButton1.innerText = "Start Break";
                 }
             });
 
@@ -461,7 +445,6 @@
                     }, 2000); 
 
                 } else if (action == 'stop'){
-                    console.log(`taskID: ${taskID}, action: ${action}`);
                     if(taskID == 'taskID1'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
@@ -502,7 +485,7 @@
                 }
             }
 
-            document.getElementById('uploadSubjectData').addEventListener('click', function() {
+            uploadSubjectData.addEventListener('click', function() {
                 fetch('/upload_subject_data', {
                     method: 'POST'
                 })

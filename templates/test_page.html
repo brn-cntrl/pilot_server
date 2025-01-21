@@ -24,7 +24,7 @@
             <li>Payment: We will Venmo you the amount you earn at the end.</li>
         </ul>
     </div><br>
-    <button id="startTestButton" style="display:none;">Start Test 1</button> <br>
+    <button id="startTestButton" style="display:none;">Start Test</button> <br>
     <div class="testModule">
         <p id="loadingMessage"></p>
         <div id="clock">05:00</div><br><br>
@@ -45,6 +45,7 @@
         let timeLeft = initialTime;
         let timerInterval;
         let account = .00;
+        let eventMarker;
 
         const timeDisplay = document.getElementById('clock');
         const startTestButton = document.getElementById('startTestButton');
@@ -109,6 +110,7 @@
         }
 
         function endTest() {
+            setEventMarker('subject_idle');
             submitAnswerButton.style.display = 'none';
             submitAnswerButton.disabled = true;
 
@@ -129,7 +131,13 @@
             statusContainer.innerText = "Analyzing Answer...";
             submitAnswerButton.disabled = true;
             try {
-                const response = await fetch('/submit_answer', { method: 'POST' });
+                const response = await fetch('/submit_answer', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ "event_marker": eventMarker })
+                 });
                 const data = await response.json();
                 statusContainer.innerText = data.result;
 
@@ -181,8 +189,10 @@
             })
             .then(data => {
                 testNumber = data.test_number;
-                console.log("Test Number: ", testNumber);
-                console.log(data.message);
+                eventMarker = "stressor_test_" + testNumber;
+                
+                //DEBUG STATEMENT
+                console.log("Event Marker: ", eventMarker);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -196,6 +206,13 @@
     
         document.addEventListener('DOMContentLoaded', (event) => {
             startTestButton.addEventListener('click', function() {
+                if (eventMarker === undefined) {
+                    alert('Failed to start test. Please refresh the page and try again.');
+                    return;
+                }
+
+                setEventMarker(eventMarker);
+                
                 submitAnswerButton.disabled = true;
                 loadingMessage.style.display = 'block';
                 uploadBalance.disabled = true;

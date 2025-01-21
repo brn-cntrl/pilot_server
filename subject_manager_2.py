@@ -10,7 +10,6 @@ class SubjectManager:
         self._subject_id = None
         self.csv_file_path = None
         self.txt_file_path = None
-        self._event_marker = None
         self.PID = None
         self.class_name = None
         self.headers = ['Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence']
@@ -39,14 +38,6 @@ class SubjectManager:
     @subject_id.setter
     def subject_id(self, value: str) -> None:
         self._subject_id = value
-
-    @property
-    def event_marker(self) -> str:
-        return self._event_marker
-    
-    @event_marker.setter
-    def event_marker(self, value: str) -> None:
-        self._event_marker = value
 
     def set_subject(self, subject_info: dict) -> None:
         """
@@ -148,45 +139,3 @@ class SubjectManager:
             file.write(self.subject_id)
             file.write("\n")
             file.write(balance)
-
-    def append_temp_csv_to_main(self, temp_csv_path: str) -> None:
-        """
-        Append the data from a temporary CSV to the main CSV, aligning headers.
-
-        Args:
-            main_csv_path (str): Path to the main CSV file.
-            temp_csv_path (str): Path to the temporary CSV file.
-        """
-        # Read temporary CSV headers and data
-        with open(temp_csv_path, mode='r', newline='', encoding='utf-8') as temp_csv:
-            temp_reader = list(csv.reader(temp_csv))
-            temp_headers = temp_reader[0]
-            temp_data = temp_reader[1:]
-
-        # Read main CSV headers and data
-        with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as main_csv:
-            main_reader = list(csv.reader(main_csv))
-            main_headers = main_reader[0]
-            main_data = main_reader[1:]
-
-        # Combine headers
-        combined_headers = list(dict.fromkeys(main_headers + temp_headers))
-
-        # Align data from both CSVs
-        main_data_aligned = [
-            [row[main_headers.index(header)] if header in main_headers else "" for header in combined_headers]
-            for row in main_data
-        ]
-        temp_data_aligned = [
-            [row[temp_headers.index(header)] if header in temp_headers else "" for header in combined_headers]
-            for row in temp_data
-        ]
-
-        # Write the combined data back to the main CSV
-        with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as main_csv:
-            writer = csv.writer(main_csv)
-            writer.writerow(combined_headers)  # Write unified headers
-            writer.writerows(main_data_aligned)  # Write main CSV data
-            writer.writerows(temp_data_aligned)  # Append temporary data
-
-        print(f"Temporary CSV data has been successfully appended to {self.csv_file_path}.")

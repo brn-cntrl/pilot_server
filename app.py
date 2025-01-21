@@ -52,6 +52,18 @@ timestamp_manager = TimestampManager()
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/set_event_marker', methods=['POST'])
+def set_event_marker():
+    global emotibit_streamer
+    data = request.get_json()
+
+    # NOTE: the event marker for the subject manager is for transcription and SER.
+    # It might not be needed in this endpoint, but I am setting it here for future-proofing.
+
+    emotibit_streamer.event_marker = data.get('event_marker')
+
+    return jsonify({'message': 'Event marker set.'})
+
 @app.route('/baseline_comparison', methods=['POST'])
 def baseline_comparison() -> Response:
     global emotibit_streamer
@@ -65,7 +77,6 @@ def baseline_comparison() -> Response:
     
 @app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index() -> Response:
-    # TODO: implement test manager class and remove global reference
     global test_manager
 
     test_manager.current_ser_question_index = 0
@@ -152,7 +163,6 @@ def process_ser_answer() -> Response:
 
     try:
         event_marker = data.get('event_marker')
-        subject_manager.event_marker = "SER_Baseline"
         emotibit_streamer.event_marker = event_marker
 
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
@@ -299,9 +309,12 @@ def submit_answer() -> Response:
     global recording_manager, subject_manager, audio_file_manager, ser_manager
     global RECORDING_FILE
 
+    data = request.get_json()
+    event_marker = data.get('event_marker')
+
     questions = test_manager.get_task_questions(test_manager.current_test_index)
     id = subject_manager.subject_id
-    file_name = f"ID_{id}_test_{test_manager.current_test_index}_question_{test_manager.current_question_index}.wav"
+    file_name = f"ID_{id}_test_{event_marker}_question_{test_manager.current_question_index}.wav"
 
     try:
         recording_manager.stop_recording()
@@ -326,7 +339,7 @@ def submit_answer() -> Response:
 
         else:
             # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'Test', 'Transcription': transcription, 'SER_Emotion': ser[0], 'SER_Confidence': ser[1]})
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Transcription': transcription, 'SER_Emotion': ser[0], 'SER_Confidence': ser[1]})
 
         correct_answer = questions[test_manager.current_question_index]['answer']
         result = 'incorrect'
@@ -471,8 +484,8 @@ def record_vr_task() -> Response:
                    with a 400 HTTP status code.
     """
 
-    global recording_manager, ser_manager, subject_manager, audio_file_manager, timestamp_manager
-    global RECORDING_FILE
+    global recording_manager, ser_manager, subject_manager, audio_file_manager
+    global RECORDING_FILE, timestamp_manager, emotibit_streamer
 
     try:
         data = request.get_json()
@@ -483,6 +496,7 @@ def record_vr_task() -> Response:
         current_time_unix = timestamp_manager.get_raw_timestamp()
         
         if action == 'start':
+            emotibit_streamer.event_marker = event_marker
             return jsonify({'message': 'Recording started.', 'task_id': event_marker}), 200
         
         elif action == 'stop':
@@ -518,6 +532,9 @@ def record_vr_task() -> Response:
                 subject_manager.append_data(data)
             
             audio_file_manager.backup_tmp_audio_files()
+
+            # NOTE: This is because the emotitbit is continuous.
+            emotibit_streamer.event_marker = "subject_idle"
 
             return jsonify({'message': 'Audio successfully processed.', 'task_id': event_marker}), 200
         else:

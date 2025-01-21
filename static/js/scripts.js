@@ -11,14 +11,14 @@ var secondStressTaskComplete = false;
 var secondVRTaskComplete = false;
 var secondBreak = false;
 
-function pushTaskId(taskId){
-    fetch('/set_task_id', {
+function setEventMarker(eventMarker){
+    fetch('/set_event_marker', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            task_id: taskId
+            'event_marker': eventMarker
         })
     })
     .then(response => response.json())

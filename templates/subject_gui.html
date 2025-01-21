@@ -455,7 +455,11 @@
         submitAnswer.addEventListener('click', function() {
             // First, submit the SER answer via POST
             fetch("/process_ser_answer", {
-                method: "POST"
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'event_marker': 'SER_Baseline' })
             })
             .then(response => {
                 if (!response.ok) {
