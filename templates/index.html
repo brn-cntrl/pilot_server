@@ -258,11 +258,11 @@
 
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
-                    pushTaskId('biometric_baseline');
+                    setEventMarker('biometric_baseline');
                     startBaseline();
                     baselineButton.innerText = "Stop Collecting Baseline";
                 } else {
-                    pushTaskId('subject_idle')
+                    setEventMarker('subject_idle')
                     stopBaseline();
                     baselineButton.innerText = "Start Collecting Baseline";
                 }
@@ -343,7 +343,7 @@
 
             VRBiom1.addEventListener('click', function() {
                 if (VRBiom1.innerText == "Start EmotiBit"){
-                    pushTaskId('VR_task_1');
+                    setEventMarker('vr_task_1');
                     VRBiom1.innerText = "Stop Task";
                     fetch('/start_emotibit_stream', {
                         method: 'POST'
@@ -354,7 +354,7 @@
                     })
                     .catch(error => console.error('status:', error));
                 } else {
-                    pushTaskId('subject_idle');
+                    setEventMarker('subject_idle');
                     VRBiom1.innerText = "Start EmotiBit"
                     fetch('/push_emotibit_data', {
                         method: 'POST',
@@ -370,7 +370,7 @@
 
             VRBiom2.addEventListener('click', function() {
                 if (VRBiom2.innerText == "Start EmotiBit"){
-                    pushTaskId('VR_task_2');
+                    setEventMarker('vr_task_2');
                     VRBiom2.innerText = "Stop Task"
                     fetch('/start_emotibit_stream', {
                         method: 'POST'
@@ -381,17 +381,8 @@
                     })
                     .catch(error => console.error('status:', error));
                 } else {
-                    pushTaskId('subject_idle');
+                    setEventMarker('subject_idle');
                     VRBiom2.innerText = "Start EmotiBit"
-                    fetch('/push_emotibit_data', {
-                        method: 'POST',
-                        label: 'VR_task_2'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                    })
-                    .catch(error => console.error('message:', error));
                 }
             });
 

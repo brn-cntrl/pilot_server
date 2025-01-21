@@ -83,20 +83,23 @@ def reset_ser_question_index() -> Response:
 
     return jsonify({'status': 'SER questions reset'})
 
-@app.route('/start_emotibit_stream', methods=['POST'])
-def start_emotibit_stream() -> Response:
-    start_emotibit()
+# @app.route('/start_emotibit_stream', methods=['POST'])
+# def start_emotibit_stream() -> Response:
+#     global emotibit_streamer
 
-    try:
-        return jsonify({'status': 'Starting EmotiBit stream'})
+#     start_emotibit()
+
+#     try:
+#         return jsonify({'status': 'Starting EmotiBit stream'})
     
-    except Exception as e:
-        return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
+#     except Exception as e:
+#         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
 
-@app.route('/get_biometric_baseline', methods=['POST'])
-def get_biometric_baseline() -> Response:
-    global subject_manager
+@app.route('/start_biometric_baseline', methods=['POST'])
+def start_biometric_baseline() -> Response:
+    global emotibit_streamer
     try:
+        emotibit_streamer.start()
         emotibit_streamer.start_baseline_collection()
         return jsonify({'status': 'Collecting baseline data.'})
     
@@ -105,7 +108,7 @@ def get_biometric_baseline() -> Response:
     
 @app.route('/stop_biometric_baseline', methods=['POST'])
 def stop_biometric_baseline() -> Response:
-    global subject_manager
+    global emotibit_streamer
     try:
         emotibit_streamer.stop_baseline_collection()
         return jsonify({'status': 'Baseline data collection stopped.'})
@@ -115,8 +118,7 @@ def stop_biometric_baseline() -> Response:
 
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
-    global test_manager
-    global recording_manager
+    global test_manager, recording_manager
     questions = test_manager.ser_questions.get('questions', [])
     
     try:
@@ -371,6 +373,14 @@ def shutdown() -> Response:
 
 @app.route('/add_survey', methods=['POST'])
 def add_survey() -> Response:
+    """
+    Route for adding surveys to the form manager.
+    Args:
+        survey_name (str): The name of the survey.
+        url (str): The URL of the survey.
+    Returns:
+        Response: A JSON response indicating the status of the survey
+    """
     global subject_manager, form_manager
     try:
         survey_name = request.form.get('surveyName')
@@ -411,20 +421,19 @@ def submit() -> Response:
     """
     global subject_manager, form_manager
     try:
-        if request.method == 'POST': 
-            # NOTE: get_available_id() is a temporary test method to generate unique IDs
-            # The aws_handler will assign the ID when subject instance is created
-            # at the end of the test session
-            
-            subject_info = {"name": request.form['name'], "email": request.form['email'], 
-                            "PID": request.form.get('PID'), "class_name": request.form.get('class')}
+        # NOTE: get_available_id() is a temporary test method to generate unique IDs
+        # The aws_handler will assign the ID when subject instance is created
+        # at the end of the test session
+        
+        subject_info = {"name": request.form['name'], "email": request.form['email'], 
+                        "PID": request.form.get('PID'), "class_name": request.form.get('class')}
 
-            subject_manager.set_subject(subject_info)
+        subject_manager.set_subject(subject_info)
 
-            # Prep all forms with username and unique id
-            form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
-            print(form_manager.surveys)
-            return jsonify({'message': 'User information submitted.'}), 200
+        # Prep all forms with username and unique id
+        form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
+        print(form_manager.surveys)
+        return jsonify({'message': 'User information submitted.'}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
@@ -440,12 +449,19 @@ def get_audio_devices() -> Response:
 
 @app.route('/set_device', methods=['POST'])
 def set_device() -> Response:
-    global device_index
-    global recording_manager
+    global device_index, recording_manager
+    """
+    Route for setting the audio device for the session.
+    Args:
+        device_index (int): The index of the audio device to set.
+    Returns:
+        Response: A JSON response indicating the status of the device setting.
+    """
     data = request.get_json()
+    device_index = int(data.get('device_index'))
 
     p = pyaudio.PyAudio()
-    device_index = int(data.get('device_index'))
+    
     if device_index is not None:
         try:
             info = p.get_device_info_by_index(device_index)
@@ -679,7 +695,6 @@ def initialize_ids(filename="available_ids.txt") -> None:
             for i in range (1, 501):
                 f.write(f"1_1_{i}\n")
 
-# NOTE: This function only for test purposes
 def get_available_id(filename='available_ids.txt') -> str:
     # TODO: The list of available ids should be determined by a call to the AWS server
     # and not by a txt file. This is a temporary solution until the server is set up.
@@ -757,7 +772,8 @@ if __name__ == '__main__':
     # TODO: replace this with a call to the AWS server to retrieve the list of available IDs
     initialize_ids()
 
-    # Debug must be set to false when Emotibit streaming code is active
+    # TODO: For now, debug must be set to false when Emotibit streaming code is active.
+    # This is because the port used by the EmotiBit will report as in use when in debug mode.
     app.run(port=PORT_NUMBER,debug=False)
     
     # Uncomment when switching to pywebview

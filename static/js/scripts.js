@@ -1,16 +1,3 @@
-//Booleans to control flow.
-var surveysComplete = true;
-var biometricBaselineComplete = false;
-var stressBaselineComplete = true;
-var audioTestComplete = false;
-var emotionBaselineComplete = false;
-var firstStressTaskComplete = false;
-var firstVRTaskComplete = false;
-var firstBreak = false;
-var secondStressTaskComplete = false;
-var secondVRTaskComplete = false;
-var secondBreak = false;
-
 function setEventMarker(eventMarker){
     fetch('/set_event_marker', {
         method: 'POST',
@@ -186,19 +173,19 @@ function fetchAudioDevices(){
     fetch('/get_audio_devices')
     .then(response => response.json())
     .then(data => {
-            console.log(data)
-            const audioDevicesDropdown = document.getElementById('audioDevices');
-            data.forEach(device => {
-                const option = document.createElement('option');
-                option.value = device.index;
-                option.text = device.name;
-                audioDevicesDropdown.appendChild(option);
-            });
+        console.log(data)
+        const audioDevicesDropdown = document.getElementById('audioDevices');
+        data.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.index;
+            option.text = device.name;
+            audioDevicesDropdown.appendChild(option);
+        });
 
-            // Handle for only one device
-            if(data.length === 1){
-                setDevice();
-            }
+        // Handle for only one device
+        if(data.length === 1){
+            setDevice();
+        }
     })
     .catch(error => alert('Error:' + error));
 }
@@ -317,11 +304,8 @@ async function startEmotibit(){
 }
 
 function startBaseline() {
-    fetch('/get_biometric_baseline', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+    fetch('/start_biometric_baseline', {
+        method: 'POST'
     })
     .then(response => {
         if (!response.ok) {
@@ -335,13 +319,11 @@ function startBaseline() {
     .catch(error => {
         console.error('Error:', error);
     });
-
-    biometricBaselineComplete = false;
 }
 
 function stopBaseline() {
     fetch("/stop_biometric_baseline", {
-        method: "POST"
+        method: "POST",
     })
     .then(response => {
         if (!response.ok) {
@@ -355,8 +337,6 @@ function stopBaseline() {
     .catch(error => {
         console.error('Error:', error);
     });
-    
-    biometricBaselineComplete = true;
 }
 
 function emotibitRecording(button, action){
