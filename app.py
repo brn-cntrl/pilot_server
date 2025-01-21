@@ -505,7 +505,7 @@ def record_vr_task() -> Response:
 
     try:
         data = request.get_json()
-        event_marker = data.get('task_id')
+        event_marker = data.get('event_marker')
         action = data.get('action')
 
         timestamp_manager.update_timestamp()  
@@ -513,7 +513,7 @@ def record_vr_task() -> Response:
         
         if action == 'start':
             emotibit_streamer.event_marker = event_marker
-            return jsonify({'message': 'Recording started.', 'task_id': event_marker}), 200
+            return jsonify({'message': 'Recording started.', 'event_marker': event_marker}), 200
         
         elif action == 'stop':
             recording_manager.stop_recording()
@@ -552,7 +552,7 @@ def record_vr_task() -> Response:
             # NOTE: This is because the emotitbit is continuous.
             emotibit_streamer.event_marker = "subject_idle"
 
-            return jsonify({'message': 'Audio successfully processed.', 'task_id': event_marker}), 200
+            return jsonify({'message': 'Audio successfully processed.', 'event_marker': event_marker}), 200
         else:
             print("Invalid Action")
             return jsonify({'message': 'Invalid action.'}), 400

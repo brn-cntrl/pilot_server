@@ -14,22 +14,36 @@
 
     <button id="beginExperimentButton">Surveys</button><br>
     <div class="testModule" id="surveysDiv" style="display: none">
-        <h2>Surveys and Participant Information</h2>
-        <p>Before performing the tasks, please have the subject fill out initial forms and any necessary surveys.</p><br>
-        
-        <!-- Add survey list here -->
+        <h3>Subject Instructions</h3>
+        <ul>
+            <li>Subject must complete the tasks on their page in the order they appear.</li>
+            <li>Subject must click "Task Completed" after each task is performed</li>
+            <li>After "Task Completed" is clicked, the next task will appear.</li>
+        </ul><br>
+      
+        <h3>Surveys and Participant Information</h3>
+        <h4>Survey Instructions</h4>
+        <ul>
+            <li>Subject must first fill out the "Subject Information" survey.</li>
+            <li>Subject must fill out any additional surveys as they appear.</li>
+            <li>Additional surveys may be added below.</li>
+        </ul><br>
+
+        <!-- TODO: Add survey list here -->
 
         <p><span class="required">*</span>Add any additional surveys and be sure to submit participant information before filling out surveys</p>
         <button id="addSurveyButton">Add Survey</button><br>
         <div class="innerModule" id="addSurveyDiv" style="display:none;" disabled>
-            <h3>Instructions for adding surveys</h3>
-            <p>1. Enter the survey name (no spaces) in the first field.</p>
-            <p>2. In Google Forms, Be sure to create "Name" and "ID" fields at the top of the survey.</p>
-            <p>3. Prefill each of these with the dummy values: "Sample Name", and "Sample ID"</p>
-            <p>4. In "Edit" mode, select "more" in the upper right corner (three pip menu)</p>
-            <p>5. Select "Get prefilled link" and copy the generated link</p>
-            <p>6. Paste the link in the URL field of this form.</p>
-            <p>7. Click "Submit Survey" to add the survey to the list of surveys.</p>
+            <h4>Instructions for adding surveys</h4>
+            <ul>
+                <li>Enter the survey name (no spaces) in the first field.</li>
+                <li>In Google Forms, be sure to create "Name" and "ID" fields at the top of the survey.</li>
+                <li>Prefill each of these with the dummy values: "Sample Name", and "Sample ID".</li>
+                <li>In "Edit" mode, select "more" in the upper right corner (three pip menu).</li>
+                <li>Select "Get prefilled link" and copy the generated link.</li>
+                <li>Paste the link in the URL field of this form.</li>
+                <li>Click "Submit Survey" to add the survey to the list of surveys.</li>
+            </ul>
 
             <form action="/add_survey" id="addSurveyForm" method="POST">
                 <label for="surveyName">Survey Name:</label>
@@ -43,7 +57,7 @@
         </div><br>
 
         <div id="surveyList">
-            <p>Current Surveys in Test Procedure</p>
+            <h4>Current Surveys in Test Procedure</h4>
             <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
         </div>
 
@@ -51,7 +65,14 @@
 
     <button id="biometricBaselineButton">Biometrics Baseline</button>
     <div class="testModule" id="biometricBaselineDiv" style="display:none;">
-        <p>Once the subject is fitted with the Emotibit, click the button below to collect baseline data.</p>
+        <h4>Instructions for EmotiBit</h4>
+        <p>Important: Subject must complete the "Subject Information" survey task before the EmotiBit can be started.</p>
+        <ul>
+            <li>Fit subject with the Emotibit (See supplementary material for fitting device onto subject).</li>
+            <li>Power on the EmotiBit by sliding the DIP switch to the right.</li>
+            <li>Press "Start Collecting Baseline" to start the EmotiBit streamer and begin collecting baseline data.</li>
+            <li>NOTE: EmotiBit will run continuously until "Stop Emotibit" is clicked ("Post-Test" at bottom of page).</li>
+        </ul>
         <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
     </div><br><br>
@@ -64,7 +85,11 @@
 
     <button id="testAudioButton">Test Audio</button>
     <div class="testModule" id="testAudioDiv" style="display:none;">
-        <p>Please select your audio input or microphone.</p>
+        <h4>Instructions</h4>
+        <ul>
+            <li>Please select your audio input or microphone.</li>
+            <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
+        </ul>
         <label for="audioDevices">Select Audio Input Device:</label><br>
         <select id="audioDevices" onchange="setDevice()"></select>
     </div> <br>
@@ -72,75 +97,86 @@
     <h2>Experimental Tasks</h2>
     <button id="tasksButton">Begin Tasks</button>
     <div class="testModule" id="tasksDiv" style="display:none;">
-        <h2>Experimental Tasks</h2>
+        <h3>Experimental Tasks</h3>
         <button id="firstStressTask">Stressor Task 1</button><br>
         <div class="innerModule" id="firstStressDiv" style="display:none;">
-            <p>Instructions for the first stressor task:</p>
-            <p>1. If the EmotiBit has not been fitted to subject, do so now.</p>
-            <p>2. Have the subject read the instructions on their screen before starting the task.</p>
-            <p>3. The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</p>
-            <p>4. When the subject is ready, press the "Start Biometrics" button below.</p>
-            <p>5. Press "Stop Biometrics" when the task is completed</p>
-            <button id="startStressBiometrics1">Start Biometrics</button>
+            <h4>Instructions for the first stressor task:</h4>
+            <ul>
+                <li>Have the subject read the instructions on their screen before starting the task.</li>
+                <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
+            </ul>
             <p id="stressStatus1" style="display:none;">Please wait...</p>
+    
             
         </div><br>
 
         <button id="VRTaskButton1">VR Task 1</button><br>
         <div class="innerModule" id="VRTaskDiv1" style="display:none">
-            <button id="VRBiometrics1">Start EmotiBit</button><br><br>
-            <p id="emotibitStatus1" style="display:none;">Please wait...</p>
-            <button id="VRAudio1">Start Recording</button><br><br>
-            <p>Please note that when recording is stopped, post-processing may take several minutes</p>
+            <h4>Instructions for the VR task:</h4>
+            <ul>
+                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
+                <li>Press "Start Recording" to begin the task.</li>
+                <li>Press "Stop Recording" when the task is completed.</li>
+                <li>Please note that post-processing may take several minutes.</li>
+                <li>After the task is completed, press "Calculate Rest Time."</li>
+            </ul>
+
+            <button id="vr_task_1">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
         <button id="breakButton1">Take Break</button><br>
         <div class="innerModule" id="break1Div" style="display:none;">
-            <p>Instructions for the break:</p>
-            <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
-            <p>2. Have the subject click the "Take Break" button.</p>
-            <p>3. Once they are on the break page, have them select the "Break 1" button.</p>
-            <p>4. Instruct the subject to watch the video for the amount of time listed in the instructions on their screen</p>
+            <h4>Instructions for the break:</h4>
+            <ul>
+                <li>Have the subject click the "Take Break" button.</li>
+                <li>Once they are on the break page, have them select the "Break 1" button.</li>
+                <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
+            </ul>
             <button id="startBreak1">Start Break</button><br>
         </div><br>
 
         <button id="secondStressTask">Stressor Task 2</button><br>
         <div class="innerModule" id="secondStressDiv" style="display:none;">
-            <p>Instructions for the second stressor task:</p>
-            <p>1. If the EmotiBit has not been fitted to subject, do so now.</p>
-            <p>2. Have the subject read the instructions on their screen before starting the task.</p>
-            <p>3. The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</p>
-            <p>4. When the subject is ready, press the "Start Biometrics" button below.</p>
-            <p>5. Press "Stop Biometrics" when the task is completed</p>
-            <button id="startStressBiometrics2">Start Biometrics</button><br>
-            <p id="stressStatus2" style="display:none;">Please wait...</p>
+            <h4>Instructions for the second stressor task:</h4>
+            <ul>
+                <li>Have the subject read the instructions on their screen before starting the task.</li>
+                <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
+            </ul>
         </div><br>
 
         <button id="VRTaskButton2">VR Task 2</button><br>
         <div class="innerModule" id="VRTaskDiv2" style="display:none">
-            <button id="VRBiometrics2">Start EmotiBit</button><br><br>
-            <p id="emotibitStatus2" style="display:none;">Please wait...</p>
-            <button id="VRAudio2">Start Recording</button><br><br>
-            <p>Please note that when recording is stopped, post-processing may take several minutes</p>
+            <h4>Instructions for the VR task:</h4>
+            <ul>
+                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
+                <li>Press "Start Recording" to begin the task.</li>
+                <li>Press "Stop Recording" when the task is completed.</li>
+                <li>Please note that post-processing may take several minutes.</li>
+                <li>After the task is completed, press "Calculate Rest Time."</li>
+            </ul>
+
+            <button id="vr_task_2">Start Recording</button><br><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
         <button id="breakButton2">Take a Break</button><br>
         <div class="innerModule" id="break2Div" style="display:none;">
-            <p>Instructions for the break:</p>
-            <p>1.First be sure that both biometrics and audio recording has been stopped.</p>
-            <p>2. Have the subject click the "Take Break" button.</p>
-            <p>3. Once they are on the break page, have them select the "Break 2" button.</p>
-            <p>4. Instruct the subject to watch the video for the amount of time listed in the instructions on their screen</p>
-            <p>5. Press the "Start Break" button below.</p>
+            <h4>Instructions for the break:</h4>
+            <ul>
+                <li>Have the subject click the "Take Break" button.</li>
+                <li>Once they are on the break page, have them select the "Break 2" button.</li>
+                <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
+                <li>Press the "Start Break" button below.</li>
+            </ul>
             <button id="startBreak2">Start Break</button><br>
         </div><br>
     </div><br>
 
     <h2>Post-Test</h2>
+    <button id="stopEmotibit">Stop Emotibit</button><br><br>
     <button id="exitSurveyButton">Exit Survey</button><br><br>
     <button id="uploadSubjectData">Upload Experiment Data</button><br><br>
 
@@ -169,8 +205,8 @@
         const stress1Status = document.getElementById('stressStatus1');
         const stress2Button = document.getElementById('startStressBiometrics2');
         const stress2Status = document.getElementById('stressStatus2');
-        const VRAudio1 = document.getElementById('VRAudio1');
-        const VRAudio2 = document.getElementById('VRAudio2');
+        const VRAudio1 = document.getElementById('vr_task_1'); //NOTE: the button id is passed as the event marker to the VRRecord function
+        const VRAudio2 = document.getElementById('vr_task_2');
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
         const VRBiom1 = document.getElementById('VRBiometrics1');
@@ -327,7 +363,7 @@
                     VRRecording(VRAudio1, 'start');
                 } else {
                     VRAudio1.innerText = "Start Recording";
-                    VRRecording(button, 'stop');
+                    VRRecording(VRAudio1, 'stop');
                 }
             });
 
@@ -337,7 +373,7 @@
                     VRRecording(VRAudio1, 'start');
                 } else {
                     VRAudio2.innerText = "Start Recording";
-                    VRRecording(button, 'stop');
+                    VRRecording(VRAudio1, 'stop');
                 }
             });
 
@@ -407,8 +443,8 @@
             });
 
             function VRRecording(button, action){
-                const taskID = button.id;
-                console.log(`taskID: ${taskID}, action: ${action}`);  // Debugging statement
+                const eventMarker = button.id;
+                console.log(`eventMarker: ${eventMarker}, action: ${action}`);  // Debugging statement
                 statusId1 = document.getElementById("recordingStatus1");
                 statusId2 = document.getElementById("recordingStatus2");
                 if(action == 'start'){
@@ -416,19 +452,19 @@
                     let checkInterval = setInterval(() => {
                         if (checkActiveStream()) {
                             console.log("Stream is active.");
-                            if (taskID == 'VRAudio1'){
+                            if (eventMarker == 'vr_task_1'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream active.';
-                            } else if (taskID == 'VRAudio2'){
+                            } else if (eventMarker == 'vr_task_2'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream active.';
                             }
                             clearInterval(checkInterval); // Stop checking once stream is active
                         } else {
-                            if(taskID == 'VRAudio1'){
+                            if(eventMarker == 'vr_task_1'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
-                            } else if (taskID == 'VRAudio2'){
+                            } else if (eventMarker == 'vr_task_2'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
                             }
@@ -436,10 +472,10 @@
                     }, 2000); 
 
                 } else if (action == 'stop'){
-                    if(taskID == 'taskID1'){
+                    if(eventMarker == 'vr_task_1'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
-                    } else if (taskID == 'taskID2'){
+                    } else if (taskID == 'vr_task_2'){
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
                     }
@@ -450,7 +486,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            task_id: taskID,
+                            event_marker: eventMarker,
                             action: action
                         })
                     })
@@ -462,10 +498,10 @@
                     })
                     .then(data => {
                         console.log('Success:', data);
-                        if(taskID == 'taskID1'){
+                        if(eventMarker == 'vr_task_1'){
                             statusId1.style.display = 'block';
                             statusId1.innerHTML = data.message;
-                        } else if (taskID == 'taskID2'){
+                        } else if (eventMarker == 'vr_task_2'){
                             statusId2.style.display = 'block';
                             statusId2.innerHTML = data.message;
                         }
