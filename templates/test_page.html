@@ -31,14 +31,15 @@
         <div id="accountBalance">$0</div><br><br>
         <div id="test_container"></div> <br>
     
-        <button id="submitAnswerButton" disabled>Submit Answer</button> <br>
-        <button id="uploadBalance" disabled>Upload Balance</button>
+        <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
+        <button id="uploadBalance" disabled>Upload Balance</button><br><br>
+        <button id="taskComplete">Task Complete</button>
         <p id="result"></p> <br>
         <p id="status"></p><br><br>
     </div>
     
     <script>
-        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
+        let testNumber = 1; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
         let startTime;
         let elapsedTime = 0;
         let initialTime = 300;  // 5 minutes
@@ -57,6 +58,7 @@
         const clock = document.getElementById('clock');
         const result = document.getElementById('result');
         const uploadBalance = document.getElementById('uploadBalance');
+        const taskComplete = document.getElementById('taskComplete');
 
         function getNextTest(){
             fetch('/get_next_test', {
@@ -72,8 +74,9 @@
                 return response.json();
             })
             .then(data => {
-                testNumber = data.test_number;
-                console.log("Test Number: ", testNumber);
+                testNumber = data.test_number + 1;
+                eventMarker = "stressor_test_" + testNumber;
+                console.log("Test Number: ", eventMarker);
                 console.log(data.message);
             });
         }
@@ -106,11 +109,13 @@
                 clearInterval(timerInterval);
                 statusContainer.innerText = 'Time is up!';
                 endTest();
+                getNextTest();
             }
         }
 
         function endTest() {
-            setEventMarker('subject_idle');
+            eventMarker = 'subject_idle';
+            setEventMarker(eventMarker);
             submitAnswerButton.style.display = 'none';
             submitAnswerButton.disabled = true;
 
@@ -188,7 +193,7 @@
                 return response.json();
             })
             .then(data => {
-                testNumber = data.test_number;
+                testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
                 eventMarker = "stressor_test_" + testNumber;
                 
                 //DEBUG STATEMENT
@@ -212,7 +217,7 @@
                 }
 
                 setEventMarker(eventMarker);
-                
+
                 submitAnswerButton.disabled = true;
                 loadingMessage.style.display = 'block';
                 uploadBalance.disabled = true;
@@ -262,27 +267,33 @@
                         alert('Failed to start test.');
                     });
             });
+
+            taskComplete.addEventListener('click', function() {
+                getNextTest();
+            });
+
+            submitAnswerButton.addEventListener('click', function() {
+                submitAnswer();
+            });
+
+            uploadBalance.addEventListener('click', function() {
+                fetch('/submit_final_balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ balance: account.toFixed(2) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    result.innerText = data.message;
+                })
+                .catch(error => console.error('Error:', error));
+            });
         });
     
-        submitAnswerButton.addEventListener('click', function() {
-            submitAnswer();
-        });
-
-        uploadBalance.addEventListener('click', function() {
-            fetch('/submit_final_balance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ balance: account.toFixed(2) })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                result.innerText = data.message;
-            })
-            .catch(error => console.error('Error:', error));
-        });
+        
     </script>
 </body>
 </html> 

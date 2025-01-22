@@ -56,12 +56,14 @@ class SubjectManager:
         
         current_date = datetime.now().strftime("%Y-%m-%d")
         self.csv_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}.csv"
-        self.txt_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}_final_balance.txt"
+        # self.txt_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}_final_balance.txt"
 
         if not os.path.exists(self.csv_file_path):
             with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
                 writer = csv.writer(csv_file)
                 
+                # writer.writerow([f"Experiment Name: {self.experiment_name}"])
+                # writer.writerow([f"Trial Name: {self.trial_name}"])
                 writer.writerow([f"Subject Name: {self.subject_name}"])
                 writer.writerow([f"Subject ID: {self.subject_id}"])
                 writer.writerow([f"Email: {self.subject_email}"])
@@ -132,10 +134,10 @@ class SubjectManager:
         self.subject_id = None
         self.csv_file_path = None
 
-    def write_balance(self, balance: str) -> None:
-        with open(self.txt_file_path, mode='w', encoding='utf-8') as file:
-            file.write(self.subject_name)
-            file.write("\n")
-            file.write(self.subject_id)
-            file.write("\n")
-            file.write(balance)
+    # def write_balance(self, balance: str) -> None:
+    #     with open(self.txt_file_path, mode='w', encoding='utf-8') as file:
+    #         file.write(self.subject_name)
+    #         file.write("\n")
+    #         file.write(self.subject_id)
+    #         file.write("\n")
+    #         file.write(balance)

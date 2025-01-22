@@ -45,7 +45,6 @@
         <button id="biometricBaselineButton" style="display:none;">Biometrics Baseline</button>
         <div class="testModule" id="biometricBaselineDiv" style="display:none;">
             <p>The experimenter will now help you put on two devices needed to collect data for the session. Please press "Task Complete" when you return.</p>
-            <p id="biometricStatusMessage"></p>
             <button id="biometricTaskComplete">Task Complete</button>
         </div><br>
 
@@ -162,7 +161,6 @@
             const surveyStatus = document.getElementById('surveyStatus');
             const biometricBaselineButton = document.getElementById('biometricBaselineButton');
             const biometricBaselineDiv = document.getElementById('biometricBaselineDiv');
-            const biometricStatusMessage = document.getElementById('biometricStatusMessage');
             const stressBaselineButton = document.getElementById('stressBaselineButton');
             const stressBaselineDiv = document.getElementById('stressBaselineDiv');
             const pss4_button = document.getElementById('pss4_button');
@@ -372,6 +370,7 @@
             submitAnswer.style.display = 'block';
             submitAnswer.disabled = false;
 
+            setEventMarker('ser_baseline');
             // Start recording audio stream
             startRecording()
                 .then(() => {
@@ -409,6 +408,7 @@
                         questionContainer('questionContainer').innerText = q;
                         if (q === 'SER task completed.') {
                             stopRecording();
+                            setEventMarker('subject_idle');
                             submitAnswer('submitAnswer').disabled = true;
                             submitAnswer('submitAnswer').style.display = 'none';
                         }
@@ -459,7 +459,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ 'event_marker': 'SER_Baseline' })
+                body: JSON.stringify({ 'event_marker': 'ser_baseline' })
             })
             .then(response => {
                 if (!response.ok) {

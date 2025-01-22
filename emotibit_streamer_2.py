@@ -1,4 +1,5 @@
 import csv
+import h5py
 from pythonosc import dispatcher, osc_server
 from threading import Thread, Event
 import numpy as np
@@ -23,12 +24,13 @@ class EmotiBitStreamer:
         self._ip = "127.0.0.1"
         self._port = port
         self.csv_filename = csv_filename
+        
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
         self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PG"]}  # Sliding window for derived metrics
-        self._event_marker = None
+        self._event_marker = 'subject_idle'
         self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
@@ -38,8 +40,35 @@ class EmotiBitStreamer:
         self.default_value = 0
         self.csv_file = None
         self.csv_writer = None
-        
+
+        # Variables for h5 file
+        self.hdf5_filename = "emotibit_data.h5"
+        self.hdf5_file = None
+        self.dataset = None
+        self._initialize_hdf5_file()
+            
         atexit.register(self.stop)
+
+    def _initialize_hdf5_file(self):
+        """Initializes the HDF5 file and dataset if not already created."""
+        try:
+            self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
+            if 'data' not in self.hdf5_file:  
+                dtype = np.dtype([
+                    ('timestamp', 'O'),
+                    ('EDA', 'f8'),
+                    ('HR', 'f8'),
+                    ('BI', 'f8'),
+                    ('HRV', 'f8'),
+                    ('PG', 'f8'),
+                    ('RR', 'f8'),
+                    ('event_marker', 'O')
+                ])
+                self.dataset = self.hdf5_file.create_dataset('data', shape=(0,), maxshape=(None,), dtype=dtype)
+            else:
+                self.dataset = self.hdf5_file['data']  
+        except Exception as e:
+            print(f"Error initializing HDF5 file: {e}")
 
     @property 
     def event_marker(self) -> str:
@@ -94,6 +123,10 @@ class EmotiBitStreamer:
                 self.csv_file.close()
                 self.csv_file = None
 
+            # Close the h5 file
+            if self.hdf5_file:
+                self.hdf5_file.close()
+
             print("Server stopped successfully.")
         else:
             print("Server is not running.")
@@ -142,6 +175,7 @@ class EmotiBitStreamer:
             self.current_row["PG"] = value
 
         self.write_to_csv(self.current_row)
+        # self.write_to_hdf5(self.current_row)
 
     ###########################################
     # Derived Metrics
@@ -173,6 +207,7 @@ class EmotiBitStreamer:
         return resp_freq * 60  # Convert to breaths per minute
 
     def bandpass_filter(self, data, lowcut, highcut, fs, order=4):
+        #TODO CHECK COEFFICIENT VALUES
         nyquist = 0.5 * fs
         low = lowcut / nyquist
         high = highcut / nyquist
@@ -182,6 +217,56 @@ class EmotiBitStreamer:
     ###########################################
     # Utility Methods
     ###########################################
+
+    def write_to_hdf5(self, row: dict) -> None:
+        """Write the incoming dictionary to the HDF5 dataset as a single row."""
+        try:
+            # Create a numpy array with the values from the dictionary
+            new_data = np.array([[
+                row['timestamp'],
+                row['EDA'],
+                row['HR'],
+                row['BI'],
+                row['HRV'],
+                row['PG'],
+                row['RR'],
+                row['event_marker']
+            ]], dtype=self.dataset.dtype)  # Ensuring the data matches the dataset's dtype
+
+            # Resize the dataset to make room for one new row
+            current_size = self.dataset.shape[0]
+            self.dataset.resize((current_size + 1,))  # Increase the size by one row
+
+            # Insert the new row into the dataset
+            self.dataset[current_size] = new_data[0]  # Directly assign the row from new_data
+
+        except Exception as e:
+            print(f"Error writing to HDF5: {e}")
+
+    def get_baseline_entries(self) -> list:
+        """Check the HDF5 file for rows with 'baseline' under 'baseline_status' and return as a list of dictionaries."""
+        baseline_entries = []
+
+        try:
+            # Open the HDF5 file
+            with h5py.File(self.h5_filename, 'r') as f:
+                dataset = f['data']
+
+                baseline_status = dataset['event_marker']  
+                
+                for i in range(dataset.shape[0]):
+                    if baseline_status[i] == 'baseline':
+                        entry = {key: dataset[key][i] for key in dataset.keys()}
+                        baseline_entries.append(entry)
+
+            return baseline_entries
+
+        except FileNotFoundError:
+            print(f"Error: The file {self.h5_filename} was not found.")
+            return []
+        except Exception as e:
+            print(f"Error reading the HDF5 file: {e}")
+            return []
 
     def get_baseline_entries(self) -> list:
         """Check the CSV file for rows with 'baseline' under 'baseline_status' and return as a list of dictionaries."""
@@ -236,6 +321,7 @@ class EmotiBitStreamer:
         except Exception as e:
             print(f"Error reading the CSV file: {e}")
             return []
+        
     def get_averages(self, data) -> dict:
         """
         Calculate the averages of the given data.

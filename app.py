@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, send_file, Response
+from flask import Flask, request, jsonify, render_template, render_template_string, redirect, send_file, Response
 import webview
 import warnings
 import threading
@@ -157,7 +157,7 @@ def process_ser_answer() -> Response:
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE, subject_manager, ser_manager, emotibit_streamer
+    global RECORDING_FILE, subject_manager, ser_manager
     global recording_manager, audio_file_manager, test_manager
 
     data = request.get_json()
@@ -165,7 +165,6 @@ def process_ser_answer() -> Response:
 
     try:
         event_marker = data.get('event_marker')
-        emotibit_streamer.event_marker = event_marker
 
         sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
@@ -573,6 +572,40 @@ def start_recording() -> Response:
 ##################################################################
 ## Views 
 ##################################################################
+@app.route('/prs.html')
+def generate_random_audio_page():
+    import random
+    AUDIO_DIR = 'prs_audio_files'
+    prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3')]
+
+    random.shuffle(prs_audio_files)
+
+    html_template = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Random Audio Player</title>
+    </head>
+    <body>
+        <h1>Randomized Audio Players</h1>
+        {% for audio in audio_files %}
+        <div>
+            <p>{{ audio }}</p>
+            <audio controls>
+                <source src="{{ url_for('static', filename='mp3/' + audio) }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        {% endfor %}
+    </body>
+    </html>
+    """
+
+    # Render the HTML with the randomized audio files
+    return render_template_string(html_template, audio_files=prs_audio_files)
+
 @app.route('/')
 def home() -> Response:
     return render_template('index.html')

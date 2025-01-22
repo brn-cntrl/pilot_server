@@ -12,6 +12,25 @@
     <button id="launchSubjectGUI">Launch Subject GUI</button><br><br>
     <h2>Pre-Test</h2>
 
+    <button id="experimentTrialNameButton">Experiment/Trial Information</button>
+    <div class="testModule" id="experimentTrialNameDiv" style="display:block;">
+        <h3>Experiment/Trial Information</h3>
+        <p>Instructions</p>
+        <ul>
+            <li>Enter the name of the experiment and the name of the trial in the fields below.</li>
+            <li>Click "Submit" to save the experiment and trial names.</li>
+            <li>IMPORTANT: This information must be entered before starting the experiment</li>
+        </ul>
+        <form action="submit" method="POST">
+            <label for="experimentTrialNames">Experiment Name:</label>
+            <input type="text" id="experimentName" name="experimentName" required><br><br>
+            <label for="trialName">Trial Name:</label>
+            <input type="text" id="trialName" name="trialName" required><br><br>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
+        <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div><br>
+    </div>
     <button id="beginExperimentButton">Surveys</button><br>
     <div class="testModule" id="surveysDiv" style="display: none">
         <h3>Subject Instructions</h3>
@@ -110,7 +129,7 @@
             
         </div><br>
 
-        <button id="VRTaskButton1">VR Task 1</button><br>
+        <button id="VRTaskButton1">Task 1</button><br>
         <div class="innerModule" id="VRTaskDiv1" style="display:none">
             <h4>Instructions for the VR task:</h4>
             <ul>
@@ -120,7 +139,7 @@
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
             </ul>
-
+            <button id="openPrs">Begin PRS Survey</button><br><br>
             <button id="vr_task_1">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
             <button class="compareToBaseline">Calculate Rest Time</button>
@@ -146,7 +165,7 @@
             </ul>
         </div><br>
 
-        <button id="VRTaskButton2">VR Task 2</button><br>
+        <button id="VRTaskButton2">Task 2</button><br>
         <div class="innerModule" id="VRTaskDiv2" style="display:none">
             <h4>Instructions for the VR task:</h4>
             <ul>
@@ -184,6 +203,7 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
+        const experimentTrialNameButton = document.getElementById('experimentTrialNameButton');
         const addSurveyButton = document.getElementById('addSurveyButton')
         const beginExperimentButton = document.getElementById('beginExperimentButton');
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
@@ -215,7 +235,40 @@
         const startBreakButton2 = document.getElementById('startBreak2');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
 
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector('form[action="/experiment_trial_names"]');
+            const notification = document.getElementById("notification1");
+            const errorNotification = document.getElementById("errorNotification1");
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault(); 
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch("/experiment_trial_names", {
+                    method: "POST",
+                    body: formData,
+                    });
+
+                    if (response.ok) {
+                        notification.style.display = "block"; 
+                        errorNotification.style.display = "none"; 
+                        form.reset(); 
+                    } else {
+                        throw new Error("Failed to submit");
+                    }
+                } catch (error) {
+                    notification.style.display = "none"; 
+                    errorNotification.style.display = "block"; 
+                }
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', function(){
+            experimentTrialNameButton.addEventListener('click', function() {
+                toggleVis('experimentTrialNameDiv');
+            });
+
             addSurveyButton.addEventListener('click', function() {
                 toggleVis('addSurveyDiv');
             });
