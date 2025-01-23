@@ -481,8 +481,8 @@ def set_device() -> Response:
         p.terminate()
         return jsonify({'message': 'Device index not provided.'}), 400
     
-@app.route('/record_vr_task', methods=['POST'])
-def record_vr_task() -> Response:
+@app.route('/record_task', methods=['POST'])
+def record_task() -> Response:
     """
     Endpoint to handle VR task recording actions.
     This function processes incoming JSON requests to start or stop a VR task recording.
@@ -575,7 +575,7 @@ def start_recording() -> Response:
 @app.route('/prs.html')
 def prs():
     import random
-    AUDIO_DIR = 'prs_audio_files'
+    AUDIO_DIR = 'static/prs_audio'
     prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3')]
 
     random.shuffle(prs_audio_files)
@@ -591,14 +591,22 @@ def prs():
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     </head>
     <body>
-        <h1>Randomized Audio Players</h1>
+        <h1>PRS Task</h1>
+        <h2> Instruction Text</h2>
+        <p>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</p> 
+        <p>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</p> 
+        <p>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</p> 
+        <p>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</p>
+        <p>Please provide a brief explanation for your answer after each question.</p>
+
         {% for audio in audio_files %}
         <div>
             <p>{{ audio }}</p>
             <audio controls>
-                <source src="{{ url_for('static', filename='mp3/' + audio) }}" type="audio/mpeg">
+                <source src="{{ url_for('static', filename='prs_audio/' + audio) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
+            <button class="record-button">Record</button><br><br>
         </div>
         {% endfor %}
     </body>

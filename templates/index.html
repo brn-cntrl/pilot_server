@@ -30,7 +30,8 @@
         </form>
         <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
         <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div><br>
-    </div>
+    </div><br>
+    
     <button id="beginExperimentButton">Surveys</button><br>
     <div class="testModule" id="surveysDiv" style="display: none">
         <h3>Subject Instructions</h3>
@@ -124,24 +125,51 @@
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
             </ul>
-            <p id="stressStatus1" style="display:none;">Please wait...</p>
-    
-            
         </div><br>
 
-        <button id="VRTaskButton1">Task 1</button><br>
-        <div class="innerModule" id="VRTaskDiv1" style="display:none">
-            <h4>Instructions for the VR task:</h4>
+        <!-- Task for continuous recording -->
+        <button id="taskButton1">Task 1</button><br>
+        <div class="innerModule" id="taskDiv1" style="display:none">
+            <h4>Instructions for the task 1:</h4>
             <ul>
-                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
+                <li>NOTE: Recording for this task is continuous for the length of the task</li>
                 <li>Press "Start Recording" to begin the task.</li>
                 <li>Press "Stop Recording" when the task is completed.</li>
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
             </ul>
-            <button id="openPrs">Begin PRS Survey</button><br><br>
-            <button id="vr_task_1">Start Recording</button><br><br>
+
+            <button id="task_1">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
+            <button class="compareToBaseline">Calculate Rest Time</button>
+        </div><br>
+
+        <!-- <button id="taskButton2">Task 2</button><br>
+        <div class="innerModule" id="taskDiv2" style="display:none">
+            <h4>Instructions for the task 2:</h4>
+            <ul>
+                <li>NOTE: Recording for this task is continuous for the length of the task</li>
+                <li>Press "Start Recording" to begin the task.</li>
+                <li>Press "Stop Recording" when the task is completed.</li>
+                <li>Please note that post-processing may take several minutes.</li>
+                <li>After the task is completed, press "Calculate Rest Time."</li>
+            </ul>
+
+            <button id="task_2">Start Recording</button><br><br>
+            <p id="recordingStatus2" style="display:none;">Please wait...</p>
+            <button class="compareToBaseline">Calculate Rest Time</button>
+        </div><br> -->
+
+        <button id="prsButton1">PRS Task</button><br>
+        <div class="innerModule" id="prsDiv1" style="display:none">
+            <h4>Instructions for PRS Task:</h4>
+            <ul>
+                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
+                <li>Press "Start Task" to open the PRS task window</li>
+                <li>Continue with the instructions there.</li>
+                <li>After the task is completed, return here and press "Calculate Rest Time."</li>
+            </ul>
+            <button id="startPRSTask">Start Task</button><br><br>
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
@@ -163,27 +191,6 @@
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
             </ul>
-        </div><br>
-
-        <button id="taskButton2">Task 2</button><br>
-        <div class="innerModule" id="taskDiv2" style="display:none">
-            <h4>Instructions for Task 2:</h4>
-            <!-- <ul>
-                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
-                <li>Press "Start Recording" to begin the task.</li>
-                <li>Press "Stop Recording" when the task is completed.</li>
-                <li>Please note that post-processing may take several minutes.</li>
-                <li>After the task is completed, press "Calculate Rest Time."</li>
-            </ul> -->
-            <p>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</p> 
-            <p>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</p> 
-            <p>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</p> 
-            <p>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</p>
-            <p>Please provide a brief explanation for your answer after each question.</p>
-
-            <button id="startTask2">Start Task</button><br><br>
-            <!-- <p id="recordingStatus2" style="display:none;">Please wait...</p> -->
-            <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
         <button id="breakButton2">Take a Break</button><br>
@@ -218,25 +225,23 @@
         const biometricBaselineButton = document.getElementById('biometricBaselineButton');
         const firstStressTask = document.getElementById('firstStressTask');
         const secondStressTask = document.getElementById('secondStressTask');
-        const VRTaskButton1 = document.getElementById('VRTaskButton1');
-        const VRTaskButton2 = document.getElementById('VRTaskButton2');
+        const taskButton1 = document.getElementById('taskButton1');
+        // const taskButton2 = document.getElementById('taskButton2');
+        const prsButton1 = document.getElementById('prsButton1');
+        const startPRSTask = document.getElementById('startPRSTask');
         const breakButton1 = document.getElementById('breakButton1');
         const breakButton2 = document.getElementById('breakButton2');
         const baselineButton = document.getElementById("startBiometricBaseline");
         const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
         const shutdownButton = document.getElementById('shutdownButton');
-        const stress1Button = document.getElementById('startStressBiometrics1');
-        const stress1Status = document.getElementById('stressStatus1');
-        const stress2Button = document.getElementById('startStressBiometrics2');
-        const stress2Status = document.getElementById('stressStatus2');
-        const VRAudio1 = document.getElementById('vr_task_1'); //NOTE: the button id is passed as the event marker to the VRRecord function
-        const startTask2 = document.getElementById('startTask2');
-        // const VRAudio2 = document.getElementById('vr_task_2');
+        const task1Record = document.getElementById('task_1'); //NOTE: the button id is passed as the event marker to the recordTask function
+
+        // Uncomment when needed
+        // const task2Record = document.getElementById('task_2'); //NOTE: the button id is passed as the event marker to the recordTask function
+
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
-        const VRBiom1 = document.getElementById('VRBiometrics1');
-        const VRBiom2 = document.getElementById('VRBiometrics2');
         const startBreakButton1 = document.getElementById('startBreak1');
         const startBreakButton2 = document.getElementById('startBreak2');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
@@ -312,12 +317,16 @@
                 toggleVis('secondStressDiv');
             });
 
-            VRTaskButton1.addEventListener('click', function(){
-                toggleVis('VRTaskDiv1');
+            taskButton1.addEventListener('click', function(){
+                toggleVis('taskDiv1');
             });
-                
-            VRTaskButton2.addEventListener('click', function(){
-                toggleVis('VRTaskDiv2');
+
+            // taskButton2.addEventListener('click', function(){
+            //     toggleVis('taskDiv2');
+            // });
+
+            prsButton1.addEventListener('click', function() {
+                toggleVis('prsDiv1');
             });
 
             breakButton1.addEventListener('click', function() {
@@ -371,7 +380,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', (event) => {
-            startTask2.addEventListener('click', function(){
+            startPRSTask.addEventListener('click', function(){
                 window.open('/prs', '_blank', 'width=800, height=600');
             });
         });
@@ -422,68 +431,24 @@
                 }
             });
 
-            VRAudio1.addEventListener('click', function() {
-                if (VRAudio1.innerText == "Start Recording"){
-                    VRAudio1.innerText = "Stop Recording";
-                    VRRecording(VRAudio1, 'start');
+            task1Record.addEventListener('click', function() {
+                if (task1Record.innerText == "Start Recording"){
+                    task1Record.innerText = "Stop Recording";
+                    recordTask(task1Record, 'start');
                 } else {
-                    VRAudio1.innerText = "Start Recording";
-                    VRRecording(VRAudio1, 'stop');
+                    task1Record.innerText = "Start Recording";
+                    recordTask(task1Record, 'stop');
                 }
             });
-
-            // VRAudio2.addEventListener('click', function() {
-            //     if (VRAudio2.innerText == "Start Recording"){
-            //         VRAudio2.innerText = "Stop Recording";
-            //         VRRecording(VRAudio1, 'start');
+            
+            // Uncomment when needed
+            // task2Record.addEventListener('click', function() {
+            //     if (task2Record.innerText == "Start Recording"){
+            //         task2Record.innerText = "Stop Recording";
+            //         recordTask(task2Record, 'start');
             //     } else {
-            //         VRAudio2.innerText = "Start Recording";
-            //         VRRecording(VRAudio1, 'stop');
-            //     }
-            // });
-
-            // VRBiom1.addEventListener('click', function() {
-            //     if (VRBiom1.innerText == "Start EmotiBit"){
-            //         setEventMarker('vr_task_1');
-            //         VRBiom1.innerText = "Stop Task";
-            //         fetch('/start_emotibit_stream', {
-            //             method: 'POST'
-            //         })
-            //         .then(response => response.json())
-            //         .then(data => {
-            //             console.log(data.message);
-            //         })
-            //         .catch(error => console.error('status:', error));
-            //     } else {
-            //         setEventMarker('subject_idle');
-            //         VRBiom1.innerText = "Start EmotiBit"
-            //         fetch('/push_emotibit_data', {
-            //             method: 'POST',
-            //             label: 'VR_task_1'
-            //         })
-            //         .then(response => response.json())
-            //         .then(data => {
-            //             console.log(data.message);
-            //         })
-            //         .catch(error => console.error('message:', error));
-            //     }
-            // });
-
-            // VRBiom2.addEventListener('click', function() {
-            //     if (VRBiom2.innerText == "Start EmotiBit"){
-            //         setEventMarker('vr_task_2');
-            //         VRBiom2.innerText = "Stop Task"
-            //         fetch('/start_emotibit_stream', {
-            //             method: 'POST'
-            //         })
-            //         .then(response => response.json())
-            //         .then(data => {
-            //             console.log(data.message);
-            //         })
-            //         .catch(error => console.error('status:', error));
-            //     } else {
-            //         setEventMarker('subject_idle');
-            //         VRBiom2.innerText = "Start EmotiBit"
+            //         task1Record.innerText = "Start Recording";
+            //         recordTask(task2Record, 'stop');
             //     }
             // });
 
@@ -507,7 +472,7 @@
                 }
             });
 
-            function VRRecording(button, action){
+            function recordTask(button, action){
                 const eventMarker = button.id;
                 console.log(`eventMarker: ${eventMarker}, action: ${action}`);  // Debugging statement
                 statusId1 = document.getElementById("recordingStatus1");
@@ -517,19 +482,19 @@
                     let checkInterval = setInterval(() => {
                         if (checkActiveStream()) {
                             console.log("Stream is active.");
-                            if (eventMarker == 'vr_task_1'){
+                            if (eventMarker == 'task_1'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream active.';
-                            } else if (eventMarker == 'vr_task_2'){
+                            } else if (eventMarker == 'task_2'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream active.';
                             }
                             clearInterval(checkInterval); // Stop checking once stream is active
                         } else {
-                            if(eventMarker == 'vr_task_1'){
+                            if(eventMarker == 'task_1'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
-                            } else if (eventMarker == 'vr_task_2'){
+                            } else if (eventMarker == 'task_2'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
                             }
@@ -537,15 +502,15 @@
                     }, 2000); 
 
                 } else if (action == 'stop'){
-                    if(eventMarker == 'vr_task_1'){
+                    if(eventMarker == 'task_1'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
-                    } else if (taskID == 'vr_task_2'){
+                    } else if (taskID == 'task_2'){
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
                     }
 
-                    fetch('/record_vr_task', {
+                    fetch('/record_task', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -563,10 +528,10 @@
                     })
                     .then(data => {
                         console.log('Success:', data);
-                        if(eventMarker == 'vr_task_1'){
+                        if(eventMarker == 'task_1'){
                             statusId1.style.display = 'block';
                             statusId1.innerHTML = data.message;
-                        } else if (eventMarker == 'vr_task_2'){
+                        } else if (eventMarker == 'task_2'){
                             statusId2.style.display = 'block';
                             statusId2.innerHTML = data.message;
                         }
