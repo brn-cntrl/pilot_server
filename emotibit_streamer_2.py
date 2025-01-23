@@ -20,11 +20,9 @@ https://github.com/EmotiBit/EmotiBit_Docs/blob/master/Working_with_emotibit_data
 """
 
 class EmotiBitStreamer:
-    def __init__(self, port: int, csv_filename: str = "tmp.csv") -> None:
+    def __init__(self, port: int, h5_filename: str = "tmp.csv") -> None:
         self._ip = "127.0.0.1"
         self._port = port
-        self.csv_filename = csv_filename
-        
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
@@ -38,33 +36,40 @@ class EmotiBitStreamer:
         self.server_thread = None
         self.shutdown_event = Event()
         self.default_value = 0
-        self.csv_file = None
+        self.csv_filename = None
         self.csv_writer = None
 
         # Variables for h5 file
-        self.hdf5_filename = "emotibit_data.h5"
+        self.hdf5_filename = None
         self.hdf5_file = None
         self.dataset = None
-        self._initialize_hdf5_file()
             
         atexit.register(self.stop)
 
-    def _initialize_hdf5_file(self):
-        """Initializes the HDF5 file and dataset if not already created."""
+    def initialize_hdf5_file(self, test_name, experiment_name, subject_name, subject_id):
+        """
+        Initializes the HDF5 file and dataset if not already created.
+        Called once the test and subject information are both posted from the front end.
+        """
+        self.hdf5_filename = f"{test_name}_{experiment_name}_{subject_name}_{subject_id}.h5"
+        self.csv_filename = f"{test_name}_{experiment_name}_{subject_name}_{subject_id}.csv"
+
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
-                    ('timestamp', 'O'),
+                    ('timestamp', h5py.string_dtype(encoding='utf-8')),
                     ('EDA', 'f8'),
                     ('HR', 'f8'),
                     ('BI', 'f8'),
                     ('HRV', 'f8'),
                     ('PG', 'f8'),
                     ('RR', 'f8'),
-                    ('event_marker', 'O')
+                    ('event_marker', h5py.string_dtype(encoding='utf-8'))
                 ])
-                self.dataset = self.hdf5_file.create_dataset('data', shape=(0,), maxshape=(None,), dtype=dtype)
+                self.dataset = self.hdf5_file.create_dataset(
+                    'data', shape=(0,), maxshape=(None,), dtype=dtype
+                )
             else:
                 self.dataset = self.hdf5_file['data']  
         except Exception as e:
@@ -118,12 +123,6 @@ class EmotiBitStreamer:
             self.server_thread.join()
             self.server_thread = None
 
-            # Close CSV file
-            if self.csv_file:
-                self.csv_file.close()
-                self.csv_file = None
-
-            # Close the h5 file
             if self.hdf5_file:
                 self.hdf5_file.close()
 
@@ -174,8 +173,8 @@ class EmotiBitStreamer:
         elif stream_type == "PG":
             self.current_row["PG"] = value
 
-        self.write_to_csv(self.current_row)
-        # self.write_to_hdf5(self.current_row)
+        # self.write_to_csv(self.current_row)
+        self.write_to_hdf5(self.current_row)
 
     ###########################################
     # Derived Metrics
@@ -184,9 +183,9 @@ class EmotiBitStreamer:
         """Calculate HRV (RMSSD) from BI values."""
         bi_values = np.array(self.data_window["BI"])
         if len(bi_values) < 30: # 30 beat interval values
-            return None  # Not enough data
+            return None  
 
-        intervals = np.diff(bi_values) / 1000.0  # Convert to seconds
+        intervals = np.diff(bi_values) / 1000.0  
         rmssd = np.sqrt(np.mean(np.square(np.diff(intervals))))
         return rmssd
 
@@ -194,7 +193,7 @@ class EmotiBitStreamer:
         """Calculate RR from PG values."""
         ppg_values = np.array(self.data_window["PG"])
         if len(ppg_values) < 100:
-            return None  # Not enough data
+            return None  
 
         # Bandpass filter
         filtered_signal = self.bandpass_filter(ppg_values, 0.1, 0.5, 25)  # Assuming 25 Hz sampling rate
@@ -221,24 +220,21 @@ class EmotiBitStreamer:
     def write_to_hdf5(self, row: dict) -> None:
         """Write the incoming dictionary to the HDF5 dataset as a single row."""
         try:
-            # Create a numpy array with the values from the dictionary
-            new_data = np.array([[
-                row['timestamp'],
-                row['EDA'],
-                row['HR'],
-                row['BI'],
-                row['HRV'],
-                row['PG'],
-                row['RR'],
-                row['event_marker']
-            ]], dtype=self.dataset.dtype)  # Ensuring the data matches the dataset's dtype
+            # Create a structured array for the new row
+            new_data = np.zeros(1, dtype=self.dataset.dtype)  
+            new_data[0]['timestamp'] = row.get('timestamp', '')  
+            new_data[0]['EDA'] = row.get('EDA', np.nan)
+            new_data[0]['HR'] = row.get('HR', np.nan)
+            new_data[0]['BI'] = row.get('BI', np.nan)
+            new_data[0]['HRV'] = row.get('HRV', np.nan)
+            new_data[0]['PG'] = row.get('PG', np.nan)
+            new_data[0]['RR'] = row.get('RR', np.nan)
+            new_data[0]['event_marker'] = row.get('event_marker', '')
 
-            # Resize the dataset to make room for one new row
             current_size = self.dataset.shape[0]
-            self.dataset.resize((current_size + 1,))  # Increase the size by one row
+            self.dataset.resize((current_size + 1,))  
 
-            # Insert the new row into the dataset
-            self.dataset[current_size] = new_data[0]  # Directly assign the row from new_data
+            self.dataset[current_size] = new_data[0]  
 
         except Exception as e:
             print(f"Error writing to HDF5: {e}")
@@ -248,16 +244,19 @@ class EmotiBitStreamer:
         baseline_entries = []
 
         try:
-            # Open the HDF5 file
-            with h5py.File(self.h5_filename, 'r') as f:
+            with h5py.File(self.hdf5_filename, 'r') as f:
                 dataset = f['data']
 
-                baseline_status = dataset['event_marker']  
+                event_marker = dataset['event_marker'].asstr()
+                baseline_status = np.where(event_marker == 'baseline')[0]
                 
-                for i in range(dataset.shape[0]):
-                    if baseline_status[i] == 'baseline':
-                        entry = {key: dataset[key][i] for key in dataset.keys()}
-                        baseline_entries.append(entry)
+                for idx in baseline_status:
+                    entry = {
+                        field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' else dataset[field][idx]
+                        for field in dataset.dtype.names
+                    }
+
+                    baseline_entries.append(entry)
 
             return baseline_entries
 
@@ -268,60 +267,46 @@ class EmotiBitStreamer:
             print(f"Error reading the HDF5 file: {e}")
             return []
 
-    def get_baseline_entries(self) -> list:
-        """Check the CSV file for rows with 'baseline' under 'baseline_status' and return as a list of dictionaries."""
-        baseline_entries = []
-        
-        try:
-            with open(self.csv_filename, 'r') as file:
-                csv_reader = csv.DictReader(file)
-
-                for row in csv_reader:
-                    if row.get("baseline_status") == "baseline":
-                        baseline_entries.append(row)
-            
-            return baseline_entries
-
-        except FileNotFoundError:
-            print(f"Error: The file {self.csv_filename} was not found.")
-            return []
-        except Exception as e:
-            print(f"Error reading the CSV file: {e}")
-            return []
-        
-    def get_live_entries(self, lookback_minutes: int = 2) -> list: 
+    def get_live_entries(self, lookback_minutes: int = 2) -> list:
         """Retrieve non-baseline entries (live data) from the last 'lookback_minutes' minutes.
-            Args:
-                lookback_minutes (int): The number of minutes to look back for live data.
-            Returns:
-                list: A list of dictionaries containing live data from the CSV file.
+
+        Args:
+            lookback_minutes (int): The number of minutes to look back for live data.
+        
+        Returns:
+            list: A list of dictionaries containing live data from the HDF5 file.
         """
         non_baseline_entries = []
+
         try:
-            with open(self.csv_filename, 'r') as file:
-                csv_reader = csv.DictReader(file)
+            # Open the HDF5 file
+            with h5py.File(self.hdf5_filename, 'r') as f:
+                dataset = f['data']
                 
                 current_time = datetime.now()
                 time_threshold = current_time - timedelta(minutes=lookback_minutes)
                 
-                for row in csv_reader:
-                    baseline_status = row.get("baseline_status")
-                    timestamp = row.get("timestamp")
+                for idx in range(dataset.shape[0]):
+                    event_marker = dataset['event_marker'][idx].decode('utf-8')  
+                    timestamp = dataset['timestamp'][idx].decode('utf-8')  
                     
-                    if baseline_status != "baseline" and timestamp:
-                        row_time = datetime.fromisoformat(timestamp)
+                    if event_marker != 'baseline' and timestamp:
+                        row_time = datetime.fromisoformat(timestamp)  
                         if row_time >= time_threshold:
-                            non_baseline_entries.append(row)
-            
+                            entry = {
+                                        field: dataset[field][idx] if dataset[field].dtype.kind != 'S' 
+                                        else dataset[field][idx].decode('utf-8') 
+                                        for field in dataset.dtype.names
+                                    }
+                            non_baseline_entries.append(entry)
+
             return non_baseline_entries
-        
+
         except FileNotFoundError:
-            print(f"Error: The file {self.csv_filename} was not found.")
+            print(f"Error: The file {self.hdf5_filename} was not found.")
             return []
-        except Exception as e:
-            print(f"Error reading the CSV file: {e}")
-            return []
-        
+
+
     def get_averages(self, data) -> dict:
         """
         Calculate the averages of the given data.
@@ -381,52 +366,44 @@ class EmotiBitStreamer:
     
         return comparison_results
 
-    def write_to_csv(self, current_row) -> None:
-        """Write the current row to the CSV file."""
-        
-        if self.csv_writer:
-            # Replace None with a default value ('N/A' or '0') for each field
-            row = [
-                current_row["timestamp"],                                           # timestamp
-                current_row["EDA"] if current_row["EDA"] is not None else 'N/A',    # EDA
-                current_row["HR"] if current_row["HR"] is not None else 'N/A',      # HR
-                current_row["BI"] if current_row["BI"] is not None else 'N/A',      # BI
-                current_row["HRV"] if current_row["HRV"] is not None else 'N/A',    # HRV
-                current_row["PG"] if current_row["PG"] is not None else 'N/A',      # PG
-                current_row["RR"] if current_row["RR"] is not None else 'N/A',      # RR
-                current_row["baseline_status"]  
-            ]
-            
-            self.csv_writer.writerow(row)
-        else:
-            print("CSV writer is not initialized.")
-
-    def read_recent_csv_entries(self, csv_filename, cutoff_time):
+    def hdf5_to_csv(self) -> None:
         """
-        Retrieve the most recent data from the CSV file that was collected within the
-        specicifed cutoff_time threshold. If there is no data within the cutoff period 
-        it returns an empty list.
+        Convert an HDF5 file to a CSV file.
+
         Args:
-            cutoff_time (datetime): The cutoff time to retrieve data from.
-
-        Returns:
-            list: A list of dictionaries containing data from the last 2 minutes.
+            h5_filename (str): The path to the HDF5 file.
+            csv_filename (str): The path to the CSV file to be created.
         """
-        recent_data = []
-
         try:
-            with open(csv_filename, mode="r") as csv_file:
-                csv_reader = csv.DictReader(csv_file)
-                for row in csv_reader:
-                    timestamp_str = row["timestamp"]
-                    timestamp = datetime.fromisoformat(timestamp_str)
-
-                    if timestamp >= cutoff_time:
-                        recent_data.append(row)
+            # Open the HDF5 file in read mode
+            with h5py.File(self.hdf5_filename, 'r') as h5_file:
+                # Check if the 'data' dataset exists
+                if 'data' not in h5_file:
+                    print(f"Dataset 'data' not found in the file {self.hdf5_filename}.")
+                    return
+                
+                dataset = h5_file['data']
+                
+                # Get the field names (column names) from the dataset
+                field_names = dataset.dtype.names
+                
+                # Open the CSV file for writing
+                with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=field_names)
+                    
+                    writer.writeheader()
+                    
+                    for idx in range(dataset.shape[0]):
+                        row = {
+                            field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' 
+                                else dataset[field][idx]
+                            for field in field_names
+                        }
+                        writer.writerow(row)
+            
+            print(f"HDF5 file '{self.hdf5_filename}' successfully converted to CSV file '{self.csv_filename}'.")
 
         except FileNotFoundError:
-            print(f"Error: File {self.csv_filename} not found.")
+            print(f"Error: The HDF5 file '{self.hdf5_filename}' was not found.")
         except Exception as e:
-            print(f"Error reading CSV file: {e}")
-
-        return recent_data
+            print(f"Error converting HDF5 to CSV: {e}")
