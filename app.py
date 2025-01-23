@@ -573,7 +573,7 @@ def start_recording() -> Response:
 ## Views 
 ##################################################################
 @app.route('/prs.html')
-def generate_random_audio_page():
+def prs():
     import random
     AUDIO_DIR = 'prs_audio_files'
     prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3')]
@@ -586,7 +586,9 @@ def generate_random_audio_page():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Random Audio Player</title>
+        <title>PRS</title>
+        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     </head>
     <body>
         <h1>Randomized Audio Players</h1>
