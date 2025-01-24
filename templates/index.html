@@ -31,7 +31,7 @@
         <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
         <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div><br>
     </div><br>
-    
+
     <button id="beginExperimentButton">Surveys</button><br>
     <div class="testModule" id="surveysDiv" style="display: none">
         <h3>Subject Instructions</h3>
@@ -97,12 +97,6 @@
         <p id="biometricStatusMessage"></p>
     </div><br><br>
 
-    <!-- <button id="stressBaselineButton">Stress Baseline</button>
-    <div class="testModule" id="stressBaselineDiv" style="display:none;">
-        <p>Please fill out this form.</p>
-        <button id="pss4_button">Stress Baseline Survey</button><br><br>
-    </div><br><br> -->
-
     <button id="testAudioButton">Test Audio</button>
     <div class="testModule" id="testAudioDiv" style="display:none;">
         <h4>Instructions</h4>
@@ -115,12 +109,15 @@
     </div> <br>
 
     <h2>Experimental Tasks</h2>
+
     <button id="tasksButton">Begin Tasks</button>
     <div class="testModule" id="tasksDiv" style="display:none;">
+
         <h3>Experimental Tasks</h3>
+
         <button id="firstStressTask">Stressor Task 1</button><br>
         <div class="innerModule" id="firstStressDiv" style="display:none;">
-            <h4>Instructions for the first stressor task:</h4>
+            <h4>Task Instructions</h4>
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
@@ -128,9 +125,9 @@
         </div><br>
 
         <!-- Task for continuous recording -->
-        <button id="taskButton1">Task 1</button><br>
-        <div class="innerModule" id="taskDiv1" style="display:none">
-            <h4>Instructions for the task 1:</h4>
+        <button id="taskButtonGeneral1">Task 1 (General Recording)</button><br>
+        <div class="innerModule" id="taskGenDiv1" style="display:none">
+            <h4>Task Instructions</h4>
             <ul>
                 <li>NOTE: Recording for this task is continuous for the length of the task</li>
                 <li>Press "Start Recording" to begin the task.</li>
@@ -138,44 +135,58 @@
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
             </ul>
+            <select>
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
 
-            <button id="task_1">Start Recording</button><br><br>
+            <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
-        <!-- <button id="taskButton2">Task 2</button><br>
-        <div class="innerModule" id="taskDiv2" style="display:none">
-            <h4>Instructions for the task 2:</h4>
+        <button id="taskButton1">Task 1</button><br>
+        <div class="innerModule" id="taskDiv1" style="display:none">
+            <h4>Task Instructions</h4>
             <ul>
-                <li>NOTE: Recording for this task is continuous for the length of the task</li>
-                <li>Press "Start Recording" to begin the task.</li>
-                <li>Press "Stop Recording" when the task is completed.</li>
-                <li>Please note that post-processing may take several minutes.</li>
-                <li>After the task is completed, press "Calculate Rest Time."</li>
+                <li>Have the subject read the instructions on their screen before starting the task.</li>
             </ul>
+            <select onchange="updateCondition('taskDiv1', 'task_1')">
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
 
-            <button id="task_2">Start Recording</button><br><br>
-            <p id="recordingStatus2" style="display:none;">Please wait...</p>
-            <button class="compareToBaseline">Calculate Rest Time</button>
-        </div><br> -->
+        </div><br>
 
         <button id="prsButton1">PRS Task</button><br>
         <div class="innerModule" id="prsDiv1" style="display:none">
-            <h4>Instructions for PRS Task:</h4>
+            <h4>PRS Instructions</h4>
             <ul>
                 <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
                 <li>Press "Start Task" to open the PRS task window</li>
                 <li>Continue with the instructions there.</li>
                 <li>After the task is completed, return here and press "Calculate Rest Time."</li>
             </ul>
-            <button id="startPRSTask">Start Task</button><br><br>
+            <select onchange="updateCondition('prsDiv1', 'prs_1')">
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
+            <button class="startPRSTask">Start Task</button><br><br>
             <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
         <button id="breakButton1">Take Break</button><br>
         <div class="innerModule" id="break1Div" style="display:none;">
-            <h4>Instructions for the break:</h4>
+            <h4>Break Instructions</h4>
             <ul>
                 <li>Have the subject click the "Take Break" button.</li>
                 <li>Once they are on the break page, have them select the "Break 1" button.</li>
@@ -183,14 +194,73 @@
             </ul>
             <button id="startBreak1">Start Break</button><br>
         </div><br>
+                    <!-------------------------------------------------------------------->
 
         <button id="secondStressTask">Stressor Task 2</button><br>
         <div class="innerModule" id="secondStressDiv" style="display:none;">
-            <h4>Instructions for the second stressor task:</h4>
+            <h4>Task Instructions</h4>
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
             </ul>
+        </div><br>
+
+        <button id="taskButtonGeneral2">Task 2 (General Recording)</button><br>
+        <div class="innerModule" id="taskGenDiv2" style="display:none">
+            <h4>Task Instructions</h4>
+            <ul>
+                <li>NOTE: Recording for this task is continuous for the length of the task</li>
+                <li>Press "Start Recording" to begin the task.</li>
+                <li>Press "Stop Recording" when the task is completed.</li>
+                <li>Please note that post-processing may take several minutes.</li>
+                <li>After the task is completed, press "Calculate Rest Time."</li>
+            </ul>
+            <select>
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
+
+            <button id="task_2_recording">Start Recording</button><br><br>
+            <p id="recordingStatus2" style="display:none;">Please wait...</p>
+            <button class="compareToBaseline">Calculate Rest Time</button>
+        </div><br>
+
+        <button id="taskButton2">Task 2</button><br>
+        <div id="taskDiv2" style="display:none">
+            <h4>Task Instructions</h4>
+            <ul>
+                <li>Have the subject read the instructions on their screen before starting the task.</li>
+            </ul>
+            <select onchange="updateCondition('taskDiv2', 'task_2')">
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
+        </div><br>
+        
+        <button id="prsButton2">PRS Task</button><br>
+        <div class="innerModule" id="prsDiv2" style="display:none">
+            <h4>PRS Instructions</h4>
+            <ul>
+                <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
+                <li>Press "Start Task" to open the PRS task window</li>
+                <li>Continue with the instructions there.</li>
+                <li>After the task is completed, return here and press "Calculate Rest Time."</li>
+            </ul>
+            <select onchange="updateCondition('prsDiv2', 'prs_2')">
+                <option value="no_condition" selected>Select an option</option>
+                <option value="physical_plants">Physical / Plants</option>
+                <option value="physical_no_plants">Physical / No Plants</option>
+                <option value="virtual_plants">Virtual / Plants</option>
+                <option value="virtual_no_plants">Virtual / No Plants</option>
+            </select>
+            <button class="startPRSTask">Start Task</button><br><br>
+            <button class="compareToBaseline">Calculate Rest Time</button>
         </div><br>
 
         <button id="breakButton2">Take a Break</button><br>
@@ -221,29 +291,29 @@
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
         const exitSurveyButton = document.getElementById('exitSurveyButton');
         const testAudioButton = document.getElementById('testAudioButton');
-        const tasksButton = document.getElementById('tasksButton');
-        const biometricBaselineButton = document.getElementById('biometricBaselineButton');
         const firstStressTask = document.getElementById('firstStressTask');
         const secondStressTask = document.getElementById('secondStressTask');
+        const tasksButton = document.getElementById('tasksButton');
+        const taskButtonGeneral1 = document.getElementById('taskButtonGeneral1');
+        const taskButtonGeneral2 = document.getElementById('taskButtonGeneral2');
+        const recTaskGen1 = document.getElementById('task_1_recording');
+        const recTaskGen2 = document.getElementById('task_2_recording');
         const taskButton1 = document.getElementById('taskButton1');
-        // const taskButton2 = document.getElementById('taskButton2');
+        const taskButton2 = document.getElementById('taskButton2');
         const prsButton1 = document.getElementById('prsButton1');
-        const startPRSTask = document.getElementById('startPRSTask');
+        const prsButton2 = document.getElementById('prsButton2');
+        const biometricBaselineButton = document.getElementById('biometricBaselineButton');
+        const startPRSTaskButtons = document.querySelectorAll('.startPRSTask');
         const breakButton1 = document.getElementById('breakButton1');
         const breakButton2 = document.getElementById('breakButton2');
         const baselineButton = document.getElementById("startBiometricBaseline");
+        const startBreakButton1 = document.getElementById('startBreak1');
+        const startBreakButton2 = document.getElementById('startBreak2');
         const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
         const shutdownButton = document.getElementById('shutdownButton');
-        const task1Record = document.getElementById('task_1'); //NOTE: the button id is passed as the event marker to the recordTask function
-
-        // Uncomment when needed
-        // const task2Record = document.getElementById('task_2'); //NOTE: the button id is passed as the event marker to the recordTask function
-
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
-        const startBreakButton1 = document.getElementById('startBreak1');
-        const startBreakButton2 = document.getElementById('startBreak2');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -317,13 +387,25 @@
                 toggleVis('secondStressDiv');
             });
 
+            taskButtonGeneral1.addEventListener('click', function() {
+                toggleVis('taskGenDiv1');
+            });
+
+            taskButtonGeneral2.addEventListener('click', function() {
+                toggleVis('taskGenDiv2');
+            });
+
             taskButton1.addEventListener('click', function(){
                 toggleVis('taskDiv1');
             });
 
-            // taskButton2.addEventListener('click', function(){
-            //     toggleVis('taskDiv2');
-            // });
+            taskButton2.addEventListener('click', function(){
+                toggleVis('taskDiv2');
+            });
+
+            prsButton1.addEventListener('click', function() {
+                toggleVis('prsDiv1');
+            });
 
             prsButton1.addEventListener('click', function() {
                 toggleVis('prsDiv1');
@@ -377,12 +459,13 @@
                     compareToBaseline();
                 });
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', (event) => {
-            startPRSTask.addEventListener('click', function(){
-                window.open('/prs', '_blank', 'width=800, height=600');
-            });
+            startPRSTaskButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // setEventMarker('prs_task');
+                    window.open('/prs', '_blank', 'width=800, height=600');
+                });
+            })
         });
 
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -393,64 +476,25 @@
         });
 
         document.addEventListener('DOMContentLoaded', function(){
-            stress1Button.addEventListener('click', function() {
-                if(stress1Button.innerText == 'Start Biometrics'){
-                    setEventMarker('stressor_test_1');
-                    fetch('/start_emotibit_stream', {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                        stress1Button.innerText = 'Stop Biometrics';
-                        stress1Status.innerText = 'Collecting Biometrics...';
-                        stress1Status.style.display = 'block';
-                    })
-                    .catch(error => console.error('Error:', error));
+            recTaskGen1.addEventListener('click', function() {
+                if (recTaskGen1.innerText == "Start Recording"){
+                    recTaskGen1.innerText = "Stop Recording";
+                    recordTask(recTaskGen1, 'start');
                 } else {
-                    setEventMarker('subject_idle');
-                }
-            });
-
-            stress2Button.addEventListener('click', function() {
-                if(stress2Button.innerText == 'Start Biometrics'){
-                    setEventMarker('stressor_test_2');
-                    fetch('/start_emotibit_stream', {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                        stress2Button.innerText = 'Stop Biometrics';
-                        stress2Status.innerText = 'Collecting Biometrics...';
-                        stress2Status.style.display = 'block';
-                    })
-                    .catch(error => console.error('Error:', error));
-                } else {
-                    setEventMarker('subject_idle');
-                }
-            });
-
-            task1Record.addEventListener('click', function() {
-                if (task1Record.innerText == "Start Recording"){
-                    task1Record.innerText = "Stop Recording";
-                    recordTask(task1Record, 'start');
-                } else {
-                    task1Record.innerText = "Start Recording";
-                    recordTask(task1Record, 'stop');
+                    recTaskGen1.innerText = "Start Recording";
+                    recordTask(recTaskGen1, 'stop');
                 }
             });
             
-            // Uncomment when needed
-            // task2Record.addEventListener('click', function() {
-            //     if (task2Record.innerText == "Start Recording"){
-            //         task2Record.innerText = "Stop Recording";
-            //         recordTask(task2Record, 'start');
-            //     } else {
-            //         task1Record.innerText = "Start Recording";
-            //         recordTask(task2Record, 'stop');
-            //     }
-            // });
+            recTaskGen2.addEventListener('click', function() {
+                if (recTaskGen2.innerText == "Start Recording"){
+                    recTaskGen2.innerText = "Stop Recording";
+                    recordTask(recTaskGen2, 'start');
+                } else {
+                    task1Record.innerText = "Start Recording";
+                    recordTask(recTaskGen2, 'stop');
+                }
+            });
 
             startBreakButton1.addEventListener('click', function(){
                 if(startBreakButton1.innerText == "Start Break"){
@@ -473,8 +517,13 @@
             });
 
             function recordTask(button, action){
-                const eventMarker = button.id;
+                const buttonId = button.id;
+                const parentDiv = button.closest('div');
+                const selectedCondition = parentDiv.querySelector('select').value;
+                let eventMarker = `${buttonId}_${selectedCondition}`;
+                
                 console.log(`eventMarker: ${eventMarker}, action: ${action}`);  // Debugging statement
+
                 statusId1 = document.getElementById("recordingStatus1");
                 statusId2 = document.getElementById("recordingStatus2");
                 if(action == 'start'){
@@ -482,19 +531,19 @@
                     let checkInterval = setInterval(() => {
                         if (checkActiveStream()) {
                             console.log("Stream is active.");
-                            if (eventMarker == 'task_1'){
+                            if (buttonId == 'task_1_recording'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream active.';
-                            } else if (eventMarker == 'task_2'){
+                            } else if (buttonId == 'task_2_recording'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream active.';
                             }
                             clearInterval(checkInterval); // Stop checking once stream is active
                         } else {
-                            if(eventMarker == 'task_1'){
+                            if(buttonId == 'task_1_recording'){
                                 statusId1.style.display = 'block';
                                 statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
-                            } else if (eventMarker == 'task_2'){
+                            } else if (buttonId == 'task_2_recording'){
                                 statusId2.style.display = 'block';
                                 statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
                             }
@@ -502,10 +551,10 @@
                     }, 2000); 
 
                 } else if (action == 'stop'){
-                    if(eventMarker == 'task_1'){
+                    if(buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
-                    } else if (taskID == 'task_2'){
+                    } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
                     }

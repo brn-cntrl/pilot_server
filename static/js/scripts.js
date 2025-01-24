@@ -1,3 +1,15 @@
+let currentEventMarker = "";
+
+document.addEventListener('DOMContentLoaded', function() {
+    function updateCondition(parentDiv, event) {
+        const selectElement = document.querySelector(`#${parentDiv} select`);
+        const selectedCondition = selectElement.value;
+        const eventMarker = `${event}_${selectedCondition}`;
+        currentEventMarker = eventMarker;
+        setEventMarker(eventMarker);
+    }
+});
+
 function setEventMarker(eventMarker){
     fetch('/set_event_marker', {
         method: 'POST',
