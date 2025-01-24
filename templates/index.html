@@ -21,7 +21,7 @@
             <li>Click "Submit" to save the experiment and trial names.</li>
             <li>IMPORTANT: This information must be entered before starting the experiment</li>
         </ul>
-        <form action="submit" method="POST">
+        <form id="experimentNameForm" action="submit" method="POST">
             <label for="experimentTrialNames">Experiment Name:</label>
             <input type="text" id="experimentName" name="experimentName" required><br><br>
             <label for="trialName">Trial Name:</label>
@@ -134,14 +134,15 @@
                 <li>Press "Stop Recording" when the task is completed.</li>
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
-            </ul>
+                <li>Select condition before beginning task.</li>
+            </ul><br>
             <select>
-                <option value="no_condition" selected>Select an option</option>
+                <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
+            </select><br>
 
             <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
@@ -153,15 +154,16 @@
             <h4>Task Instructions</h4>
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
-            </ul>
+                <li>Select condition before beginning the task</li>
+            </ul><br>
             <select onchange="updateCondition('taskDiv1', 'task_1')">
-                <option value="no_condition" selected>Select an option</option>
+                <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
-
+            </select><br>
+            <button class="openRoomObservationTask">Go to Task</button>
         </div><br>
 
         <button id="prsButton1">PRS Task</button><br>
@@ -221,7 +223,7 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
+            </select><br>
 
             <button id="task_2_recording">Start Recording</button><br><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
@@ -240,7 +242,8 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
+            </select><br>
+            <button class="openRoomObservationTask">Go to Task</button>
         </div><br>
         
         <button id="prsButton2">PRS Task</button><br>
@@ -315,9 +318,10 @@
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
+        const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
 
         document.addEventListener("DOMContentLoaded", () => {
-            const form = document.querySelector('form[action="/experiment_trial_names"]');
+            const form = document.getElementById('experimentNameForm');
             const notification = document.getElementById("notification1");
             const errorNotification = document.getElementById("errorNotification1");
 
@@ -460,9 +464,16 @@
                 });
             });
 
+            roomObservationButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // setEventMarker(currentEventMarker);
+                    window.open('/room_observation', '_blank', 'width=800, height=600');
+                });
+            });
+
             startPRSTaskButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    // setEventMarker('prs_task');
+                    // setEventMarker(currentEventMarker);
                     window.open('/prs', '_blank', 'width=800, height=600');
                 });
             })

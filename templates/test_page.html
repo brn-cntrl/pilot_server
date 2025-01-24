@@ -12,27 +12,27 @@
     <h1>Experiment</h1>
     
     <div id="Instructions">
-        <h2>Tasks</h2>
-        <p>Press the button to start the first test then solve the subtraction problems. <b>Please speak each answer aloud.</b></p>
+        <h2>Task</h2>
         <ul>
-            <li>Time: You have 5 minutes to complete the task.</li>
-            <li>+10 cents for each correct answer.</li>
-            <li>-15 cents for each wrong answer.</li>
-            <li>Double your earnings after 20 correct answers.</li>
-            <li>Total: You can see your total money earned or lost during the task.</li>
-            <li>Submit your balance when you are finished by clicking "Upload Balance"</li>
-            <li>Payment: We will Venmo you the amount you earn at the end.</li>
+            <li>Press the start button to begin.</li>
+            <li>You will start with the number 1,022</li>
+            <li>Subtract 13 from 1,022, and continue subtracting 13 from each new result.</li>
+            <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
+            <li>Try to be as accurate and fast as possible while completing the task.</li>
+            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,022.</li>
+            <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
+            <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
         </ul>
     </div><br>
     <button id="startTestButton" style="display:none;">Start Test</button> <br>
     <div class="testModule">
         <p id="loadingMessage"></p>
-        <div id="clock">05:00</div><br><br>
-        <div id="accountBalance">$0</div><br><br>
+        <!-- <div id="clock">05:00</div><br><br> -->
+        <!-- <div id="accountBalance">$0</div><br><br> -->
         <div id="test_container"></div> <br>
     
         <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
-        <button id="uploadBalance" disabled>Upload Balance</button><br><br>
+        <!-- <button id="uploadBalance" disabled>Upload Balance</button><br><br> -->
         <button id="taskComplete">Task Complete</button>
         <p id="result"></p> <br>
         <p id="status"></p><br><br>
@@ -45,19 +45,19 @@
         let initialTime = 300;  // 5 minutes
         let timeLeft = initialTime;
         let timerInterval;
-        let account = .00;
+        // let account = .00;
         let eventMarker;
 
-        const timeDisplay = document.getElementById('clock');
+        // const timeDisplay = document.getElementById('clock');
         const startTestButton = document.getElementById('startTestButton');
         const submitAnswerButton = document.getElementById('submitAnswerButton');
         const testContainer = document.getElementById('test_container');
         const loadingMessage = document.getElementById('loadingMessage');
         const statusContainer = document.getElementById('status');
-        const accountBalance = document.getElementById('accountBalance');
-        const clock = document.getElementById('clock');
+        // const accountBalance = document.getElementById('accountBalance');
+        // const clock = document.getElementById('clock');
         const result = document.getElementById('result');
-        const uploadBalance = document.getElementById('uploadBalance');
+        // const uploadBalance = document.getElementById('uploadBalance');
         const taskComplete = document.getElementById('taskComplete');
 
         function getNextTest(){
@@ -95,7 +95,7 @@
         function resetClock(){
             stopClock();
             timeLeft = initialTime;
-            timerDisplay.textContent = '05:00';
+            // timerDisplay.textContent = '05:00';
         }
 
         function updateClock() {
@@ -107,7 +107,7 @@
             timeLeft--;
             if(timeLeft < 0) {
                 clearInterval(timerInterval);
-                statusContainer.innerText = 'Time is up!';
+                statusContainer.innerText = 'Time is up! Please stop.';
                 endTest();
                 getNextTest();
             }
@@ -123,12 +123,12 @@
                 statusContainer.innerText = 'Test completed! Please perform the next activity before starting the next test.';
                 startTestButton.style.display = 'block';
                 startTestButton.disabled = false;
-                clock.innerText = '05:00';
+                // clock.innerText = '05:00';
             } else if (testNumber === 0){
                 statusContainer.innerText = 'All tests completed! Thank you for participating in the experiment.';
                 startTestButton.style.display = 'none';
                 startTestButton.disabled = true;
-                clock.innerText = '00:00';
+                // clock.innerText = '00:00';
             }
         }
 
@@ -147,13 +147,14 @@
                 statusContainer.innerText = data.result;
 
                 if (data.result === 'correct') {
-                    account += 0.10;
-                    accountBalance.innerText = `$${account.toFixed(2)}`;
+                    // account += 0.10;
+                    // accountBalance.innerText = `$${account.toFixed(2)}`;
                 } else if (data.result === 'incorrect') {
-                    account -= 0.15;
-                    accountBalance.innerText = `$${account.toFixed(2)}`;
+                    // account -= 0.15;
+                    // accountBalance.innerText = `$${account.toFixed(2)}`;
                 }
 
+                // TODO: REFACTOR FOR NEW LOGIC
                 if (data.result === 'correct' || data.result === 'incorrect') {
                     await getNextQuestion(); 
                     submitAnswerButton.disabled = false;
@@ -206,7 +207,7 @@
             startTestButton.style.display = 'block';
             submitAnswerButton.disabled = true;
             loadingMessage.style.display = 'none';
-            accountBalance.innerText = `$00.0${account}`;
+            // accountBalance.innerText = `$00.0${account}`;
         });
     
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -220,7 +221,7 @@
 
                 submitAnswerButton.disabled = true;
                 loadingMessage.style.display = 'block';
-                uploadBalance.disabled = true;
+                // uploadBalance.disabled = true;
                 statusContainer.innerText = '';
 
                 startRecording()
@@ -243,15 +244,15 @@
 
                         loadingMessage.style.display = 'none';
                         startTestButton.disabled = true;
-                        testContainer.innerHTML = `
-                            <h2>Test</h2>
-                            <div id="questionsContainer">${data.question}</div>
-                        `;
+                        // testContainer.innerHTML = `
+                        //     <h2>Test</h2>
+                        //     <div id="questionsContainer">${data.question}</div>
+                        // `;
 
                         let checkInterval = setInterval(() => {
                             if (checkActiveStream()) {
                                 console.log("Stream is active.");
-                                testContainer.style.display = 'block';
+                                // testContainer.style.display = 'block';
                                 submitAnswer.disabled = false;
                                 startClock();
                                 clearInterval(checkInterval); 
@@ -276,21 +277,21 @@
                 submitAnswer();
             });
 
-            uploadBalance.addEventListener('click', function() {
-                fetch('/submit_final_balance', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ balance: account.toFixed(2) })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    result.innerText = data.message;
-                })
-                .catch(error => console.error('Error:', error));
-            });
+            // uploadBalance.addEventListener('click', function() {
+            //     fetch('/submit_final_balance', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({ balance: account.toFixed(2) })
+            //     })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         console.log(data);
+            //         result.innerText = data.message;
+            //     })
+            //     .catch(error => console.error('Error:', error));
+            // });
         });
     
         

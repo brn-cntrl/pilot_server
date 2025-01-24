@@ -56,8 +56,8 @@ class AudioFileManager:
         except Exception as e:
             print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
 
-    def rename_audio_file(self, id, name_param1, name_param2) -> str:
-        filename = f"ID_{id}_{name_param1}_{name_param2}.wav"
+    def rename_audio_file(self, timestamp, id, name_param1, name_param2) -> str:
+        filename = f"{timestamp}_ID_{id}_{name_param1}_{name_param2}.wav"
 
         return filename
 
@@ -157,7 +157,7 @@ class AudioFileManager:
         audio_array = audio / np.max(np.abs(audio))
         return audio_array
     
-    def split_wav_to_segments(self, task_id, input_wav, segment_duration=20, output_folder="tmp/") -> list:
+    def split_wav_to_segments(self, id, task_id, input_wav, segment_duration=20, output_folder="tmp/") -> list:
         """
         Splits a WAV file into user defined number of segments and saves each segment in the specified output folder.
 
@@ -194,7 +194,7 @@ class AudioFileManager:
                 
                     frames = wf.readframes(segment_frames)
 
-                    segment_file = os.path.join(output_folder, f"{task_id}_segment_{i}.wav")
+                    segment_file = os.path.join(output_folder, f"{id}_{task_id}_segment_{i}.wav")
                     print(f"Creating segment file: {segment_file}")  # Debugging statement
                     
                     with wave.open(segment_file, 'wb') as segment_wf:

@@ -12,7 +12,7 @@ class SubjectManager:
         self.txt_file_path = None
         self.PID = None
         self.class_name = None
-        self.headers = ['Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence']
+        self.headers = ['Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence']
         self._balance = 0
         
     @property 

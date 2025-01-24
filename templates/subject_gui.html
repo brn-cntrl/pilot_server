@@ -44,7 +44,12 @@
 
         <button id="biometricBaselineButton" style="display:none;">Biometrics Baseline</button>
         <div class="testModule" id="biometricBaselineDiv" style="display:none;">
-            <p>The experimenter will now help you put on two devices needed to collect data for the session. Please press "Task Complete" when you return.</p>
+            <ul>
+                <li>The experimenter will now help you put on two devices needed to collect data for the session.</li>
+                <li>Press "Go to Survey" and complete the survey.</li>
+                <p> Please press "Task Complete" when you finish and return.</p>
+            </ul>
+            <button id="pss4Button">Go to Survey</button>
             <button id="biometricTaskComplete">Task Complete</button>
         </div><br>
 
@@ -126,6 +131,7 @@
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function(){
+            const pss4Button = document.getElementById('pss4Button');
             const studentForm = document.getElementById('studentForm');
             const nameForm = document.getElementById('nameForm');
             const subjectInfoComplete = document.getElementById('subjectInfoComplete');

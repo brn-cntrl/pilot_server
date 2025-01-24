@@ -1,14 +1,10 @@
-let currentEventMarker = "";
-
-document.addEventListener('DOMContentLoaded', function() {
-    function updateCondition(parentDiv, event) {
-        const selectElement = document.querySelector(`#${parentDiv} select`);
-        const selectedCondition = selectElement.value;
-        const eventMarker = `${event}_${selectedCondition}`;
-        currentEventMarker = eventMarker;
-        setEventMarker(eventMarker);
-    }
-});
+function updateCondition(parentDiv, event) {
+    const selectElement = document.querySelector(`#${parentDiv} select`);
+    const selectedCondition = selectElement.value;
+    currentEventMarker = `${event}_${selectedCondition}`
+    localStorage.setItem('currentEventMarker', currentEventMarker);
+    console.log(currentEventMarker);
+}
 
 function setEventMarker(eventMarker){
     fetch('/set_event_marker', {
@@ -20,6 +16,62 @@ function setEventMarker(eventMarker){
             'event_marker': eventMarker
         })
     })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+    })
+    .catch(error => console.error('status:', error));
+}
+// function monitorAudio(audioElement, secondsBeforeEnd = 2) {
+//     audioElement.addEventListener('timeupdate', () => {
+//         // Check if the audio is within the last `secondsBeforeEnd` seconds
+//         if (audioElement.duration - audioElement.currentTime <= secondsBeforeEnd && !audioElement.dataset.recordingStarted) {
+//             audioElement.dataset.recordingStarted = "true"; // Prevent multiple triggers
+//             startRecordingTask(); // Trigger the recording
+//             updateRecordingUI(audioElement.id, "started"); // Update UI to show recording started
+//         }
+//     });
+//     // Add event listener to handle when audio finishes playing
+//     audioElement.addEventListener('ended', () => {
+//         // When audio finishes, update the status div
+//         updateRecordingUI(audioElement.id, 'finished');
+//     });
+// }
+// function updateRecordingUI(audioId, status) {
+//     const recordingDiv = document.getElementById(`${audioId}-status`);
+//     if (status === "started") {
+//         recordingDiv.innerHTML = `
+//             <p>Recording has started... </p>
+//             <button onclick="stopRecordingTask(recordingDiv)">Stop Recording</button>
+//         `;
+//     } else if (status === "finished") {
+//         recordingDiv.innerHTML = `
+//             <p>Recording has started... Audio has finished playing for the subject</p>
+//             <button onclick="stopRecordingTask(recordingDiv)">Stop Recording</button>
+//         `;
+//     } else if (status === "stopped") {
+//         recordingDiv.innerHTML = `
+//             <p>Recording has stopped...</p>
+//             <button onclick="stopRecordingTask(recordingDiv)" disabled>Stop Recording</button>
+//         `;
+//     }
+// }
+// const audios = document.querySelectorAll('audio');
+// audios.forEach(audio => {
+//     monitorAudio(audio);
+// });
+
+function recordTask(eventMarker, action, question){
+    fetch('/record_task_audio', { method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'event_marker': eventMarker,
+            'action': action,
+            'question': question
+        })
+     })
     .then(response => response.json())
     .then(data => {
         console.log(data.status);
@@ -38,7 +90,6 @@ async function startRecording() {
         console.error('Recording Error:', error);
     }
 }
-
 async function stopRecording(){
     try{
         const response = await fetch('/stop_recording', {
@@ -50,22 +101,18 @@ async function stopRecording(){
         console.error('Recording Error:', error);
     }
 }
-
 function getTranscription() {
     try {
         const response = fetch('/get_test_transcription', {
             method: 'POST'
         })
-
         const data = response.json();
         console.log(data.transcription);
         return data.transcription;
-
     } catch (error) {
         console.error('Error getting transcription:', error);
     }
 }
-
 async function processSERTest() {
     try {
         const response = await fetch('/process_ser_test', {
@@ -77,7 +124,6 @@ async function processSERTest() {
         console.error('SER Test Error:', error);
     }
 }
-
 function getSERQuestion(){
     fetch('/get_ser_question', {
         method: 'GET'
@@ -91,7 +137,6 @@ function getSERQuestion(){
         return "Couldn't get question"; 
     });
 }
-
 async function submitSERAnswer(){
     fetch("/process_ser_answer", { method: "POST" })
         .then(response => {
@@ -115,7 +160,6 @@ async function submitSERAnswer(){
             document.getElementById("status").disabled = false;
         });
 }
-
 function playTickSound() {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -125,7 +169,6 @@ function playTickSound() {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.001); 
 }
-
 function checkActiveStream() {
     return fetch('/get_stream_active', {
         method: 'GET'
@@ -139,7 +182,6 @@ function checkActiveStream() {
         return false; 
     });
 }
-
 function setDevice() {
     const audioDevices = document.getElementById('audioDevices');
     const selectedDeviceIndex = audioDevices.value;
@@ -158,7 +200,6 @@ function setDevice() {
     })
     .catch(error => alert('Error:' + error));
 }
-
 function toggleVis(divID) {
     const element = document.getElementById(divID);
     if (element.style.display === "none") {
@@ -169,7 +210,6 @@ function toggleVis(divID) {
         element.disabled = true;
     }
 }
-
 function shutdownServer(){
     fetch('/shutdown', {
         method: 'POST'
@@ -180,7 +220,6 @@ function shutdownServer(){
     })
     .catch(error => alert('Error:' + error));
 }
-
 function fetchAudioDevices(){
     fetch('/get_audio_devices')
     .then(response => response.json())
@@ -193,7 +232,6 @@ function fetchAudioDevices(){
             option.text = device.name;
             audioDevicesDropdown.appendChild(option);
         });
-
         // Handle for only one device
         if(data.length === 1){
             setDevice();
@@ -201,7 +239,6 @@ function fetchAudioDevices(){
     })
     .catch(error => alert('Error:' + error));
 }
-
 function getNextQuestion() {
     document.getElementById('submitAnswerButton').disabled = true;  
     fetch('/get_question', {
@@ -227,7 +264,6 @@ function getNextQuestion() {
                 <div id="questionsContainer_${data.test_number}">${data.question}</div>
             `;
             document.getElementById(`questionsContainer_${data.test_number}`).innerText = data.question;
-
             startRecording()
                 .then(() => {
                     document.getElementById('submitAnswerButton').disabled = false;  
@@ -239,27 +275,22 @@ function getNextQuestion() {
             document.getElementById('status').innerText = "No more questions.";
             document.getElementById('submitAnswerButton').style.display = 'none';
             document.getElementById('uploadData').style.display = 'block';
-
             stopClock();
         }
     })
     .catch(error => console.error('Error fetching next question:', error));
 }
-
 // NOT SURE WHAT THIS IS BUT LEAVE FOR NOW
 function handleOtherOption() {
     const otherOption = document.getElementById('otherOption');
     const otherText = document.getElementById('otherTextbox');
-
     if (otherOption.checked) {
         otherText.style.display = 'block'; 
     } else {
         otherText.style.display = 'none';  
     }
 }
-
 var restTime = 3;
-
 function compareToBaseline() {
     fetch('/baseline_comparison', {
         method: 'POST',
@@ -276,7 +307,6 @@ function compareToBaseline() {
     .then(data => {
         let baselineElevatedCount = 0;
         let liveElevatedCount = 0;
-
         Object.keys(data).forEach(key => {
             const result = data[key];
             if (result.elevated === "Live data") {
@@ -285,7 +315,6 @@ function compareToBaseline() {
                 baselineElevatedCount++;
             }
         });
-
         if (baselineElevatedCount > liveElevatedCount) {
             restTime = 3;
         } else if (liveElevatedCount > baselineElevatedCount) {
@@ -293,14 +322,12 @@ function compareToBaseline() {
         } else {
             restTime = 3;
         }
-
         console.log('Determined restTime:', restTime);
     })
     .catch(error => {
         console.error('Error comparing to baseline:', error);
     });
 }
-
 async function startEmotibit(){
     try{
         const response = await fetch('/start_emotibit_stream', {
@@ -314,7 +341,6 @@ async function startEmotibit(){
         return 'error';
     }
 }
-
 function startBaseline() {
     fetch('/start_biometric_baseline', {
         method: 'POST'
@@ -332,7 +358,6 @@ function startBaseline() {
         console.error('Error:', error);
     });
 }
-
 function stopBaseline() {
     fetch("/stop_biometric_baseline", {
         method: "POST",
@@ -350,7 +375,6 @@ function stopBaseline() {
         console.error('Error:', error);
     });
 }
-
 function emotibitRecording(button, action){
     /*
     Function to start or stop recording from EmotiBit
@@ -379,13 +403,11 @@ function emotibitRecording(button, action){
         .catch(error => {
             console.error('Error:', error);
         });
-
         if (taskID == 'taskID1'){
             statusId1.style.display = 'block';
         } else if (taskID == 'taskID2'){
             statusId2.style.display = 'block';
         }
-
     } else if (action == 'stop'){
         fetch('/stop_emotibit', {
             method: 'POST',
@@ -405,7 +427,6 @@ function emotibitRecording(button, action){
         .catch(error => {
             console.error('Error:', error);
         });
-
         fetch('/push_emotibit_data', {
             method: 'POST',
             headers: {
@@ -423,7 +444,6 @@ function emotibitRecording(button, action){
         })
         .then(data => {
             console.log('Success:', data);
-
             if (taskID == 'taskID1'){
                 statusId1.style.display = 'block';
                 statusId1.innerHTML = 'EmotiBit data saved.';
@@ -444,12 +464,10 @@ function emotibitRecording(button, action){
         });
     }
 }
-
 async function loadSurveys(){
     try {
         const response = await fetch('/get_surveys');
         const surveys = await response.json();
-
         const container = document.getElementById('surveyButtons');
         container.innerHTML = '';
         console.log(surveys);
@@ -459,7 +477,6 @@ async function loadSurveys(){
                 button.textContent = survey.name.charAt(0).toUpperCase() + survey.name.slice(1);
                 button.onclick = () => window.open(`/survey/${survey.name}`, '_blank');
                 container.appendChild(button);
-
                 const br1 = document.createElement('br');
                 const br2 = document.createElement('br');
                 container.appendChild(br1);
@@ -467,7 +484,6 @@ async function loadSurveys(){
             }
         });
         // document.getElementById("surveyStatus").style.display = "none";
-
     } catch(error){
         console.error('Error fetching surveys:', error);
         // document.getElementById("surveyStatus").style.display = "block";

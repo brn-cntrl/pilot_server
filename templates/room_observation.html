@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Observation Task</title>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Room Observation Task</h1>
+    <h2>Instructions</h2>
+    <ul>
+        <li>Ensure the subject is fitted with their airpods or headphones.</li>
+        <li>When they are ready, press play on the the introduction audio player.</li>
+        <li>Each section is timed and will pause for responses automatically.</li>
+        <li>Recording will also start and stop automatically.</li>
+        <li>When the last notification indicates recording has stopped, the subject has finished the task.</li>
+    </ul>
+
+    <!-- Intro Audio -->
+    <div id="audio1">
+        <p>Intro</p>
+        <audio controls id="audioPlayer1">
+            <source src="{{ url_for('static', filename='room_observation_audio/1-Task1-Intro.mp3') }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="audio1-status"></div>
+    </div>
+
+    <div id="audio2">
+        <p>Instructions</p>
+        <audio controls id="audioPlayer2">
+            <source src="{{ url_for('static', filename='room_observation_audio/2-Task1-PostObservation.mp3') }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="audio2-status"></div>
+    </div>
+
+    <div id="audio3">
+        <p>Question 1</p>
+        <audio controls id="audioPlayer3">
+            <source src="{{ url_for('static', filename='room_observation_audio/3-Task1-Q1.mp3') }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="audio3-status"></div>
+    </div>
+
+    <div id="audio4">
+        <p>Question 2</p>
+        <audio controls id="audioPlayer4">
+            <source src="{{ url_for('static', filename='room_observation_audio/4-Task1-Q2.mp3') }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="audio4-status"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventMarker = localStorage.getItem('currentEventMarker');
+            if(!eventMarker || eventMarker === 'null' || eventMarker === 'undefined') {
+                alert('No condition found for task. Please go back to the main interface and select a condition.');
+                window.location.href = '/';
+            } 
+            
+            const player1 = document.getElementById('audioPlayer1');
+            const player2 = document.getElementById('audioPlayer2');
+            const player3 = document.getElementById('audioPlayer3');
+            const player4 = document.getElementById('audioPlayer4');
+
+            const status1 = document.getElementById('audio1-status');
+            const status2 = document.getElementById('audio2-status');
+            const status3 = document.getElementById('audio3-status');
+            const status4 = document.getElementById('audio4-status');
+            player1.addEventListener('play', function() {
+                status1.innerHTML = 'Introduction is now playing...';
+            });
+
+            player1.addEventListener('ended', function() {
+                status1.innerHTML = '60 second timer has started.';
+                setTimeout(() => {
+                    player2.play();
+                    status1.innerHTML = 'Section finished.';
+                }, 60000);  
+            });
+
+            player2.addEventListener('play', function() {
+                status2.innerHTML = 'Instructions are now playing...';
+            });
+
+            player2.addEventListener('ended', function() {
+                setTimeout(() => {
+                    player3.play();
+                    status2.innerHTML = 'Section finished.';
+                }, 2000);  // 2 seconds delay
+
+            });
+
+            player3.addEventListener('play', function() {
+                status3.innerHTML = 'Question 1 is now playing...';
+            });
+
+            let secondsBeforeEnd = 2; 
+            player3.addEventListener('timeupdate', function() {
+                if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
+                    player3.dataset.recordingStarted = "true"; 
+                    recordTask(eventMarker, 'start', 1); 
+                    status3.innerHTML = 'Recording started...';
+                }
+            });
+
+            player3.addEventListener('ended', function() {
+                status3.innerHTML = 'Recording started... 3 minute timer started.';
+                setTimeout(() => {
+                    player4.play();
+                    status3.innerHTML = 'Recording stopped... Section Finished.';
+                    recordTask(eventMarker, 'stop', 1);
+                }, 180000);  // 3 minute timer
+            });
+
+            player4.addEventListener('play', function() {
+                status4.innerHTML = 'Question 2 is now playing...';
+            });
+            
+            player4.addEventListener('timeupdate', function() {
+                if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
+                    player4.dataset.recordingStarted = "true"; 
+                    recordTask(eventMarker, 'start', 2); 
+                    status4.innerHTML = 'Recording started...';
+                }
+            });
+
+            player4.addEventListener('ended', function() {
+                status4.innerHTML = 'Recording started... 3 minute timer started.';
+                setTimeout(() => {
+                    status4.innerHTML = 'Recording stopped... Task finished.';
+                    recordTask(eventMarker, 'stop', 2);
+                }, 180000);  
+            });
+        });
+    </script>
+    
+</body>
+</html>

@@ -31,8 +31,6 @@ app = Flask(__name__)
 device_index = 0
 emotibit_thread = None
 
-RECORDING_FILE = 'tmp/recording.wav'
-AUDIO_SAVE_FOLDER = 'audio_files'
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
@@ -41,10 +39,10 @@ ID_TABLE = DYNAMODB.Table('available_ids')
 
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject_manager = SubjectManager() 
-recording_manager = RecordingManager(RECORDING_FILE, AUDIO_SAVE_FOLDER) 
+recording_manager = RecordingManager('tmp/recording.wav', 'audio_files') 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
-audio_file_manager = AudioFileManager(RECORDING_FILE, AUDIO_SAVE_FOLDER)
+audio_file_manager = AudioFileManager('tmp/recording.wav', 'audio_files')
 ser_manager = SERManager()
 form_manager = FormManager()
 timestamp_manager = TimestampManager()
@@ -116,6 +114,37 @@ def stop_biometric_baseline() -> Response:
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
+@app.route('/record_task_audio', methods=['POST'])
+def task_audio_recording():
+    global recording_manager, timestamp_manager, subject_manager
+    data = request.get_json()
+    action = data.get('action')
+    question = data.get('question')
+    event_marker = data.get('event_marker')
+    
+
+    if action == 'start':
+        recording_manager.start_recording()
+        emotibit_streamer.event_marker = event_marker
+
+        return jsonify({'message': 'Recording started.'}), 200
+    
+    elif action == 'stop':
+        recording_manager.stop_recording()
+        ts = recording_manager.timestamp
+        id = subject_manager.subject_id
+
+        file_name = f"ID_{id}_{event_marker}_room_observation_{question}.wav"
+
+        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        
+        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
+
+        return jsonify({'message': 'Recording stopped.'}), 200
+    else:
+        return jsonify({'message': 'Invalid action.'}), 400
+    
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
     global test_manager, recording_manager
@@ -157,7 +186,7 @@ def process_ser_answer() -> Response:
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global RECORDING_FILE, subject_manager, ser_manager
+    global subject_manager, ser_manager
     global recording_manager, audio_file_manager, test_manager
 
     data = request.get_json()
@@ -166,7 +195,7 @@ def process_ser_answer() -> Response:
     try:
         event_marker = data.get('event_marker')
 
-        sig, orig_sr = librosa.load(RECORDING_FILE, sr=None)
+        sig, orig_sr = librosa.load(audio_file_manager.recording_file, sr=None)
         sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
         
         emotion, confidence = ser_manager.predict_emotion(sig_resampled)
@@ -174,14 +203,14 @@ def process_ser_answer() -> Response:
         print(f"Predicted emotion: {emotion}, Confidence: {confidence}")
         ts = recording_manager.timestamp
         
+        file_name = f"ID_{id}_{event_marker}_SER_question_{test_manager.current_ser_question_index}.wav"
+
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
         
         # AUDIO STORAGE
         id = subject_manager.subject_id
-        file_name = f"ID_{id}_SER_question_{test_manager.current_ser_question_index}.wav"
-        file_name = audio_file_manager.rename_audio_file(id, "SER_question_", test_manager.current_ser_question_index)
-        audio_file_manager.save_audio_file(RECORDING_FILE, file_name, 'audio_files')
+        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
 
         return jsonify({'status': 'Answer submitted.'})
     
@@ -263,11 +292,11 @@ def get_stream_active() -> Response:
 
 @app.route('/test_audio', methods=['POST'])
 def test_audio() -> Response:
-    global RECORDING_FILE, recording_manager
+    global recording_manager
     try:
         # stop_recording()
         recording_manager.stop_recording()
-        transcription = transcribe_audio(RECORDING_FILE)
+        transcription = transcribe_audio(recording_manager.recording_file)
         
         if transcription.startswith("Google Speech Recognition could not understand"):
             return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
@@ -308,7 +337,6 @@ def submit_answer() -> Response:
     """
 
     global recording_manager, subject_manager, audio_file_manager, ser_manager
-    global RECORDING_FILE
 
     data = request.get_json()
     event_marker = data.get('event_marker')
@@ -319,14 +347,14 @@ def submit_answer() -> Response:
 
     try:
         recording_manager.stop_recording()
-        transcription = transcribe_audio(RECORDING_FILE)
+        transcription = transcribe_audio(audio_file_manager.recording_file)
         ts = recording_manager.timestamp
         try:
-            sig, sr = librosa.load(RECORDING_FILE, sr=None)
+            sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
             resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
 
             ser = ser_manager.predict_emotion(resampled_sig)
-            audio_file_manager.save_audio_file(RECORDING_FILE, file_name, "audio_files")
+            audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, "audio_files")
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -340,7 +368,7 @@ def submit_answer() -> Response:
 
         else:
             # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Transcription': transcription, 'SER_Emotion': ser[0], 'SER_Confidence': ser[1]})
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser[0], 'SER_Confidence': ser[1]})
 
         correct_answer = questions[test_manager.current_question_index]['answer']
         result = 'incorrect'
@@ -500,7 +528,7 @@ def record_task() -> Response:
     """
 
     global recording_manager, ser_manager, subject_manager, audio_file_manager
-    global RECORDING_FILE, timestamp_manager, emotibit_streamer
+    global timestamp_manager, emotibit_streamer
 
     try:
         data = request.get_json()
@@ -517,7 +545,8 @@ def record_task() -> Response:
         elif action == 'stop':
             recording_manager.stop_recording()
             
-            audio_segments = audio_file_manager.split_wav_to_segments(event_marker, RECORDING_FILE, 20, "tmp/")
+            id = subject_manager.subject_id
+            audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 20, "tmp/")
 
             # Extract the index number from the filename to enforce sorting order
             audio_segments = sorted(audio_segments, key=lambda x: 
@@ -540,8 +569,8 @@ def record_task() -> Response:
                 ser_predictions.append(emotion)
                 confidence_scores.append(confidence)
 
-            vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Transcription': tr, 'SER_Emotion': ser, 'SER_Confidence': conf} 
-                    for ts, tr, ser, conf in zip(timestamps, transcriptions, ser_predictions, confidence_scores)]
+            vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': tr, 'SER_Emotion': ser, 'SER_Confidence': conf} 
+                    for ts, fn, tr, ser, conf in zip(timestamps, audio_segments, transcriptions, ser_predictions, confidence_scores)]
             
             for data in vr_data:
                 subject_manager.append_data(data)
@@ -576,8 +605,9 @@ def start_recording() -> Response:
 def prs():
     import random
     AUDIO_DIR = 'static/prs_audio'
-    prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3')]
-
+    intro = "1-PRS-Intro.mp3"
+    prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro]
+   
     random.shuffle(prs_audio_files)
 
     html_template = """
@@ -599,14 +629,25 @@ def prs():
         <p>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</p>
         <p>Please provide a brief explanation for your answer after each question.</p>
 
+        <div id="intro">
+            <h3>Introduction</h3>
+            <audio id="intro-audio-player" controls>
+                <source src="{{ url_for('static', filename='prs_audio/' + intro) }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <div id="intro-recording-status"></div>
+            <button id="intro-record-button" class="record-button">Record</button><br><br>
+        </div><br>
+
         {% for audio in audio_files %}
         <div>
             <p>{{ audio }}</p>
-            <audio controls>
+            <audio controls id="audio{{ loop.index }}-player">
                 <source src="{{ url_for('static', filename='prs_audio/' + audio) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
-            <button class="record-button">Record</button><br><br>
+            <div id="audio{{ loop.index }}-recording-status"></div>
+            <button id="audio{{ loop.index }}-record-button" class="record-button">Record</button><br><br>
         </div>
         {% endfor %}
     </body>
@@ -615,6 +656,10 @@ def prs():
 
     # Render the HTML with the randomized audio files
     return render_template_string(html_template, audio_files=prs_audio_files)
+
+@app.route('/room_observation')
+def room_observation() -> Response:
+    return render_template('room_observation.html')
 
 @app.route('/')
 def home() -> Response:
