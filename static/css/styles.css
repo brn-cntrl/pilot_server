@@ -17,3 +17,12 @@ body h1, body h2, h3, h4 {
     padding: 20px;
     margin-bottom: 20px;
 }  
+
+.bigButton {
+    padding: 10px 20px;
+    font-size: 1.5em;
+}
+
+.bigStatus {
+    font-size: 1.5em;
+}
