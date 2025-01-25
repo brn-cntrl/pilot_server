@@ -14,7 +14,10 @@ class SubjectManager:
         self.class_name = None
         self.headers = ['Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence']
         self._balance = 0
-        
+        self.data_root = "subject_data"
+        self.experiment_name = None
+        self.trial_name = None
+
     @property 
     def balance(self):
         return self._balance
@@ -48,22 +51,28 @@ class SubjectManager:
             Returns:
                 None
         """
+        self.experiment_name = subject_info["experiment_name"]
+        self.trial_name = subject_info["trial_name"]
         self.subject_name = subject_info["name"]
         self.subject_id = subject_info["id"]
         self.subject_email = subject_info["email"]
         self.PID = subject_info["PID"]
         self.class_name = subject_info["class_name"]
         
+        # Create a folder named for the subject ID if it doesn't exist
+        self.subject_folder = os.path.join(self.data_root, self.experiment_name, self.trial_name, self.subject_id)
+        if not os.path.exists(self.subject_folder):
+            os.makedirs(self.subject_folder)
+
         current_date = datetime.now().strftime("%Y-%m-%d")
-        self.csv_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}.csv"
-        # self.txt_file_path = f"subject_files/{current_date}_{self.subject_name}_{self.subject_id}_final_balance.txt"
+        self.csv_file_path = f"{self.subject_folder}/{current_date}_{self.subject_name}_{self.subject_id}.csv"
 
         if not os.path.exists(self.csv_file_path):
             with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
                 writer = csv.writer(csv_file)
                 
-                # writer.writerow([f"Experiment Name: {self.experiment_name}"])
-                # writer.writerow([f"Trial Name: {self.trial_name}"])
+                writer.writerow([f"Experiment Name: {self.experiment_name}"])
+                writer.writerow([f"Trial Name: {self.trial_name}"])
                 writer.writerow([f"Subject Name: {self.subject_name}"])
                 writer.writerow([f"Subject ID: {self.subject_id}"])
                 writer.writerow([f"Email: {self.subject_email}"])
@@ -85,6 +94,8 @@ class SubjectManager:
                 reader = csv.reader(csvfile)
 
                 # Skip the metadata rows (subject info)
+                next(reader)  # Experiment Name
+                next(reader)  # Trial Name
                 next(reader)  # Subject Name
                 next(reader)  # Subject ID
                 next(reader)  # Email

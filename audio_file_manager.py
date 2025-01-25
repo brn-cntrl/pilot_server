@@ -27,6 +27,11 @@ class AudioFileManager:
     def audio_folder(self, audio_save_folder) -> None:
         self._audio_folder = audio_save_folder
 
+    def set_audio_folder(self, experiment_name, trial_name, subject_folder):
+        self.audio_folder = os.path.join("subject_data", experiment_name, trial_name, subject_folder, "audio_files")
+        if not os.path.exists(self.audio_folder):
+            os.makedirs(self.audio_folder)
+
     def save_audio_file(self, old_path_filename, new_filename, save_folder) -> None:
         try:
             os.makedirs(save_folder, exist_ok=True)

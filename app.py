@@ -36,13 +36,15 @@ EMOTIBIT_PORT_NUMBER = 9005
 DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
 TABLE = DYNAMODB.Table('Users')
 ID_TABLE = DYNAMODB.Table('available_ids')
+EXPERIMENT_NAME = None
+TRIAL_NAME = None
 
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject_manager = SubjectManager() 
-recording_manager = RecordingManager('tmp/recording.wav', 'audio_files') 
+recording_manager = RecordingManager('tmp/recording.wav') 
 test_manager = TestManager()
 emotibit_streamer = EmotiBitStreamer(EMOTIBIT_PORT_NUMBER)
-audio_file_manager = AudioFileManager('tmp/recording.wav', 'audio_files')
+audio_file_manager = AudioFileManager('tmp/recording.wav', 'tmp') # tmp folder is a backup in case the root isn't set
 ser_manager = SERManager()
 form_manager = FormManager()
 timestamp_manager = TimestampManager()
@@ -395,6 +397,16 @@ def submit_student_data() -> Response:
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
+@app.route('/submit_experiment', methods=['POST'])
+def experiment_name_form():
+    global subject_manager
+
+    EXPERIMENT_NAME = request.form.get('experiment_name')
+    TRIAL_NAME = request.form.get('trial_name')
+
+    EXPERIMENT_NAME = EXPERIMENT_NAME.replace(" ", "_")
+    TRIAL_NAME = TRIAL_NAME.replace(" ", "_")
+
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
     """
@@ -405,16 +417,38 @@ def submit() -> Response:
     When the subject_manager's set_subject() function is triggered, the subject_manager creates a 
     new .csv file with name, id, PID, and class name as metadata at the head of the document.
     """
-    global subject_manager, form_manager
+    global subject_manager, form_manager, audio_file_manager, emotibit_streamer, recording_manager
+    global EXPERIMENT_NAME, TRIAL_NAME
     try:
+        if EXPERIMENT_NAME is None or TRIAL_NAME is None:
+            return jsonify({'message': 'Experiment and trial names must be set.'}), 400
+        
+        else:
+            subject_manager.experiment_name = EXPERIMENT_NAME
+            subject_manager.trial_name = TRIAL_NAME
+
         # NOTE: get_available_id() is a temporary test method to generate unique IDs
         # The aws_handler will assign the ID when subject instance is created
         # at the end of the test session
-        
-        subject_info = {"name": request.form['name'], "email": request.form['email'], 
-                        "PID": request.form.get('PID'), "class_name": request.form.get('class')}
+        subject_id = get_available_id()
+        subject_name = request.form.get('name')
+        subject_name = subject_name.replace(" ", "_")
+        subject_email = request.form.get('email')
+        subject_email = subject_email.replace(" ", "_")
+        subject_PID = request.form.get('PID')
+        subject_PID = subject_PID.replace(" ", "_")
+        subject_class = request.form.get('class')
+        subject_class = subject_class.replace(" ", "_")
+
+        subject_info = {"experiment_name": EXPERIMENT_NAME, "trial_name": TRIAL_NAME, "name": subject_name, 
+                        "id": subject_id, "email": subject_email, "PID": subject_PID, "class_name": subject_class}
 
         subject_manager.set_subject(subject_info)
+
+        audio_file_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+        recording_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+        emotibit_streamer.set_data_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+        emotibit_streamer.initialize_hdf5_file(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
 
         # Prep all forms with username and unique id
         form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)

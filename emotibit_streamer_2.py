@@ -1,5 +1,6 @@
 import csv
 import h5py
+import os
 from pythonosc import dispatcher, osc_server
 from threading import Thread, Event
 import numpy as np
@@ -36,6 +37,7 @@ class EmotiBitStreamer:
         self.server_thread = None
         self.shutdown_event = Event()
         self.default_value = 0
+        self._data_folder = "temp"
         self.csv_filename = None
         self.csv_writer = None
 
@@ -46,13 +48,18 @@ class EmotiBitStreamer:
             
         atexit.register(self.stop)
 
-    def initialize_hdf5_file(self, test_name, experiment_name, subject_name, subject_id):
+    def set_data_folder(self, experiment_name, trial_name, subject_folder):
+        self.data_folder = os.path.join("subject_files", experiment_name, trial_name, subject_folder, "emotibit_data")
+        if not os.path.exists(self.data_folder):
+            os.makedirs(self.data_folder)
+
+    def initialize_hdf5_file(self, experiment_name, trial_name, subject_name, subject_id):
         """
         Initializes the HDF5 file and dataset if not already created.
         Called once the test and subject information are both posted from the front end.
         """
-        self.hdf5_filename = f"{test_name}_{experiment_name}_{subject_name}_{subject_id}.h5"
-        self.csv_filename = f"{test_name}_{experiment_name}_{subject_name}_{subject_id}.csv"
+        self.hdf5_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_name}_{subject_id}.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_name}_{subject_id}.csv")
 
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
@@ -75,6 +82,14 @@ class EmotiBitStreamer:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
+    @property
+    def data_folder(self) -> str:
+        return self._data_folder
+    
+    @data_folder.setter
+    def data_folder(self, data_folder: str) -> None:
+        self.data_folder = data_folder
+    
     @property 
     def event_marker(self) -> str:
         return self._event_marker

@@ -5,6 +5,7 @@ import wave
 import speech_recognition as sr
 from timestamp_manager import TimestampManager
 import time
+import os
 
 class RecordingManager():
     """
@@ -13,14 +14,14 @@ class RecordingManager():
     is handled in the app.py file. Audio processing is handled in the 
     audio_processor.py file.
     """
-    def __init__(self, recording_file, audio_save_folder) -> None: 
+    def __init__(self, recording_file) -> None: 
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
         self.stream_ready_event = threading.Event()
         self.recording_thread = None
         self.stream_is_active = False
         self._recording_file = recording_file
-        self._audio_folder = audio_save_folder
+        # self._audio_folder = audio_save_folder
         self.device_index = 0
         self.audio_devices = self.fetch_audio_devices()
         self._timestamp = None
@@ -45,13 +46,18 @@ class RecordingManager():
     def recording_file(self, recording_file) -> None:
         self._recording_file = recording_file
     
-    @property
-    def audio_folder(self) -> str:
-        return self._audio_folder
+    # @property
+    # def audio_folder(self) -> str:
+    #     return self._audio_folder
     
-    @audio_folder.setter
-    def audio_folder(self, audio_save_folder) -> None:
-        self._audio_folder = audio_save_folder
+    # @audio_folder.setter
+    # def audio_folder(self, audio_save_folder) -> None:
+    #     self._audio_folder = audio_save_folder
+
+    # def set_audio_folder(self, experiment_name, trial_name, subject_folder):
+    #     self.audio_folder = os.path.join("subject_data", experiment_name, trial_name, subject_folder, "audio_files")
+    #     if not os.path.exists(self.audio_folder):
+    #         os.makedirs(self.audio_folder)
 
     def start_recording(self) -> None:
         self.stop_event.clear()
