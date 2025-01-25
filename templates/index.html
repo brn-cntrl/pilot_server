@@ -121,7 +121,9 @@
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
-            </ul>
+                <li>Click "Task Completed" when the subject has finished the task.</li>
+            </ul><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <!-- Task for continuous recording -->
@@ -129,32 +131,34 @@
         <div class="innerModule" id="taskGenDiv1" style="display:none">
             <h4>Task Instructions</h4>
             <ul>
+                <li>Select condition from the drop menu below before beginning task.</li>
                 <li>NOTE: Recording for this task is continuous for the length of the task</li>
                 <li>Press "Start Recording" to begin the task.</li>
                 <li>Press "Stop Recording" when the task is completed.</li>
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
-                <li>Select condition before beginning task.</li>
             </ul><br>
-            <select>
+            <select onchange="updateCondition('taskGenDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select><br>
+            </select><br><br>
 
             <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-            <button class="compareToBaseline">Calculate Rest Time</button>
+
+            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="taskButton1">Task 1</button><br>
         <div class="innerModule" id="taskDiv1" style="display:none">
             <h4>Task Instructions</h4>
             <ul>
-                <li>Have the subject read the instructions on their screen before starting the task.</li>
-                <li>Select condition before beginning the task</li>
+                <li>Select condition from the drop menu below before beginning the task.</li>
+                <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
             </ul><br>
             <select onchange="updateCondition('taskDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
@@ -162,18 +166,21 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select><br>
-            <button class="openRoomObservationTask">Go to Task</button>
+            </select><br><br>
+            <button class="openRoomObservationTask">Go to Task</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="prsButton1">PRS Task</button><br>
         <div class="innerModule" id="prsDiv1" style="display:none">
             <h4>PRS Instructions</h4>
             <ul>
+                <li>Select condition from the drop menu below before beginning the task.</li>
                 <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
                 <li>Press "Start Task" to open the PRS task window</li>
-                <li>Continue with the instructions there.</li>
-                <li>After the task is completed, return here and press "Calculate Rest Time."</li>
+                <li>Continue with the instructions at the top of the PRS page.</li>
+                <li>After the task is completed, return here and click "Calculate Rest Time."</li>
+                <li>Click "Task Complete" when finished.</li>
             </ul>
             <select onchange="updateCondition('prsDiv1', 'prs_1')">
                 <option value="no_condition" selected>Select an option</option>
@@ -181,9 +188,10 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
+            </select><br><br>
             <button class="startPRSTask">Start Task</button><br><br>
-            <button class="compareToBaseline">Calculate Rest Time</button>
+            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="breakButton1">Take Break</button><br>
@@ -193,8 +201,10 @@
                 <li>Have the subject click the "Take Break" button.</li>
                 <li>Once they are on the break page, have them select the "Break 1" button.</li>
                 <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
+                <li>Click "Task Completed" when finished.</li>
             </ul>
-            <button id="startBreak1">Start Break</button><br>
+            <button id="startBreak1">Start Break</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
                     <!-------------------------------------------------------------------->
 
@@ -204,7 +214,9 @@
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
-            </ul>
+                <li>Click "Task Completed" when the subject has finished the task.</li>
+            </ul><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="taskButtonGeneral2">Task 2 (General Recording)</button><br>
@@ -216,25 +228,29 @@
                 <li>Press "Stop Recording" when the task is completed.</li>
                 <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
+                <li>Click "Task Completed" when finished.</li>
             </ul>
-            <select>
+            <select onchange="updateCondition('taskGenDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select><br>
+            </select><br><br>
 
             <button id="task_2_recording">Start Recording</button><br><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
-            <button class="compareToBaseline">Calculate Rest Time</button>
+            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="taskButton2">Task 2</button><br>
         <div id="taskDiv2" style="display:none">
             <h4>Task Instructions</h4>
             <ul>
-                <li>Have the subject read the instructions on their screen before starting the task.</li>
+                <li>Select condition from the drop menu below before beginning the task.</li>
+                <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
+                <li>Click "Task Completed" when the subject has finished the task.</li>
             </ul>
             <select onchange="updateCondition('taskDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
@@ -242,8 +258,10 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select><br>
-            <button class="openRoomObservationTask">Go to Task</button>
+            </select><br><br>
+
+            <button class="openRoomObservationTask">Go to Task</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
         
         <button id="prsButton2">PRS Task</button><br>
@@ -263,7 +281,8 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select>
             <button class="startPRSTask">Start Task</button><br><br>
-            <button class="compareToBaseline">Calculate Rest Time</button>
+            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button id="breakButton2">Take a Break</button><br>
@@ -275,7 +294,8 @@
                 <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
                 <li>Press the "Start Break" button below.</li>
             </ul>
-            <button id="startBreak2">Start Break</button><br>
+            <button id="startBreak2">Start Break</button><br><br>
+            <button class="endTask">Task Completed</button>
         </div><br>
     </div><br>
 
@@ -288,6 +308,7 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
+        const completedTaskButtons = document.querySelectorAll('.endTask');
         const experimentTrialNameButton = document.getElementById('experimentTrialNameButton');
         const addSurveyButton = document.getElementById('addSurveyButton')
         const beginExperimentButton = document.getElementById('beginExperimentButton');
@@ -411,8 +432,8 @@
                 toggleVis('prsDiv1');
             });
 
-            prsButton1.addEventListener('click', function() {
-                toggleVis('prsDiv1');
+            prsButton2.addEventListener('click', function() {
+                toggleVis('prsDiv2');
             });
 
             breakButton1.addEventListener('click', function() {
@@ -464,16 +485,18 @@
                 });
             });
 
+            completedTaskButtons.forEach(button => {
+                setEventMarker('subject_idle');
+            });
+
             roomObservationButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    // setEventMarker(currentEventMarker);
                     window.open('/room_observation', '_blank', 'width=800, height=600');
                 });
             });
 
             startPRSTaskButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    // setEventMarker(currentEventMarker);
                     window.open('/prs', '_blank', 'width=800, height=600');
                 });
             })
@@ -537,29 +560,46 @@
 
                 statusId1 = document.getElementById("recordingStatus1");
                 statusId2 = document.getElementById("recordingStatus2");
+
+                fetch('/record_task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        event_marker: eventMarker,
+                        action: action
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Success:', data);
+                    if(eventMarker == 'task_1'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = data.message;
+                    } else if (eventMarker == 'task_2'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = data.message;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
                 if(action == 'start'){
-                    startRecording();
-                    let checkInterval = setInterval(() => {
-                        if (checkActiveStream()) {
-                            console.log("Stream is active.");
-                            if (buttonId == 'task_1_recording'){
-                                statusId1.style.display = 'block';
-                                statusId1.innerHTML = 'Recording stream active.';
-                            } else if (buttonId == 'task_2_recording'){
-                                statusId2.style.display = 'block';
-                                statusId2.innerHTML = 'Recording stream active.';
-                            }
-                            clearInterval(checkInterval); // Stop checking once stream is active
-                        } else {
-                            if(buttonId == 'task_1_recording'){
-                                statusId1.style.display = 'block';
-                                statusId1.innerHTML = 'Recording stream is not active yet, Please wait...';
-                            } else if (buttonId == 'task_2_recording'){
-                                statusId2.style.display = 'block';
-                                statusId2.innerHTML = 'Recording stream is not active yet, Please wait...';
-                            }
-                        }
-                    }, 2000); 
+                    console.log("Stream is active.");
+                    if (buttonId == 'task_1_recording'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = 'Recording started....';
+                    } else if (buttonId == 'task_2_recording'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = 'Recording started...';
+                    }
 
                 } else if (action == 'stop'){
                     if(buttonId == 'task_1_recording'){
@@ -569,38 +609,9 @@
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
                     }
-
-                    fetch('/record_task', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            event_marker: eventMarker,
-                            action: action
-                        })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok ' + response.statusText);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Success:', data);
-                        if(eventMarker == 'task_1'){
-                            statusId1.style.display = 'block';
-                            statusId1.innerHTML = data.message;
-                        } else if (eventMarker == 'task_2'){
-                            statusId2.style.display = 'block';
-                            statusId2.innerHTML = data.message;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
                 }
             }
+            
 
             uploadSubjectData.addEventListener('click', function() {
                 fetch('/upload_subject_data', {

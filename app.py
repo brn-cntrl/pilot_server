@@ -191,21 +191,23 @@ def get_question() -> Response:
         - Response: A JSON response containing the current question and the
             test number, or `{"question": None}` if no questions are available.
     """
-    # TODO: THIS FUNCTIONALITY SOULD BE IMPLEMENTED IN THE TEST MANAGER CLASS
+
     global test_manager
     questions = test_manager.get_task_questions(test_manager.current_test_index)
 
     if questions is None:
         return jsonify({"question": None})
     
-    if test_manager.current_question_index >= len(questions):
+    if test_manager.current_question_index >= len(questions): # Move to next test
         test_manager.current_test_index += 1
+        test_manager.current_question_index = 0
+
         if test_manager.current_test_index > 1: # All tests complete
             test_manager.current_test_index = 0
             test_manager.current_question_index = 0
             return jsonify({"question": "All tests completed."})
         
-        test_manager.current_question_index = 0
+        
         questions = test_manager.get_task_questions(test_manager.current_test_index)
         if questions is None:
             return jsonify({"question": None})
@@ -233,14 +235,6 @@ def get_next_test() -> Response:
         # questions = test_manager.get_task_questions(test_manager.current_test_index)
     
         return jsonify({"message": "Next test initiated.", "test_number": test_manager.current_test_index})
-
-# @app.route('/subject_final_balance', methods=['POST'])
-# def subject_final_balance() -> Response:
-#     data = request.get_json()
-#     subject_manager.balance = data.get('balance')
-#     subject_manager.write_balance()
-
-#     return jsonify({'message': 'Balance written to file.'})
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:

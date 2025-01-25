@@ -1,7 +1,7 @@
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;
-    currentEventMarker = `${event}_${selectedCondition}`
+    let currentEventMarker = `${event}_${selectedCondition}`
     localStorage.setItem('currentEventMarker', currentEventMarker);
     console.log(currentEventMarker);
 }
@@ -22,44 +22,6 @@ function setEventMarker(eventMarker){
     })
     .catch(error => console.error('status:', error));
 }
-// function monitorAudio(audioElement, secondsBeforeEnd = 2) {
-//     audioElement.addEventListener('timeupdate', () => {
-//         // Check if the audio is within the last `secondsBeforeEnd` seconds
-//         if (audioElement.duration - audioElement.currentTime <= secondsBeforeEnd && !audioElement.dataset.recordingStarted) {
-//             audioElement.dataset.recordingStarted = "true"; // Prevent multiple triggers
-//             startRecordingTask(); // Trigger the recording
-//             updateRecordingUI(audioElement.id, "started"); // Update UI to show recording started
-//         }
-//     });
-//     // Add event listener to handle when audio finishes playing
-//     audioElement.addEventListener('ended', () => {
-//         // When audio finishes, update the status div
-//         updateRecordingUI(audioElement.id, 'finished');
-//     });
-// }
-// function updateRecordingUI(audioId, status) {
-//     const recordingDiv = document.getElementById(`${audioId}-status`);
-//     if (status === "started") {
-//         recordingDiv.innerHTML = `
-//             <p>Recording has started... </p>
-//             <button onclick="stopRecordingTask(recordingDiv)">Stop Recording</button>
-//         `;
-//     } else if (status === "finished") {
-//         recordingDiv.innerHTML = `
-//             <p>Recording has started... Audio has finished playing for the subject</p>
-//             <button onclick="stopRecordingTask(recordingDiv)">Stop Recording</button>
-//         `;
-//     } else if (status === "stopped") {
-//         recordingDiv.innerHTML = `
-//             <p>Recording has stopped...</p>
-//             <button onclick="stopRecordingTask(recordingDiv)" disabled>Stop Recording</button>
-//         `;
-//     }
-// }
-// const audios = document.querySelectorAll('audio');
-// audios.forEach(audio => {
-//     monitorAudio(audio);
-// });
 
 function recordTask(eventMarker, action, question){
     fetch('/record_task_audio', { method: 'POST',
@@ -160,15 +122,17 @@ async function submitSERAnswer(){
             document.getElementById("status").disabled = false;
         });
 }
-function playTickSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine'; 
-    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime); 
-    oscillator.connect(audioContext.destination);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.001); 
-}
+
+// function playTickSound() {
+//     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+//     const oscillator = audioContext.createOscillator();
+//     oscillator.type = 'sine'; 
+//     oscillator.frequency.setValueAtTime(1000, audioContext.currentTime); 
+//     oscillator.connect(audioContext.destination);
+//     oscillator.start();
+//     oscillator.stop(audioContext.currentTime + 0.001); 
+// }
+
 function checkActiveStream() {
     return fetch('/get_stream_active', {
         method: 'GET'
@@ -239,47 +203,7 @@ function fetchAudioDevices(){
     })
     .catch(error => alert('Error:' + error));
 }
-function getNextQuestion() {
-    document.getElementById('submitAnswerButton').disabled = true;  
-    fetch('/get_question', {
-        method: 'POST',  
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.question) {
-            let testContainerId = `test_${data.test_number}_container`;
-            let testContainer = document.getElementById(testContainerId);
-            
-            testContainer.style.display = 'block';
-            testContainer.innerHTML = `
-                <h2>Test ${data.test_number}</h2>
-                <div id="questionsContainer_${data.test_number}">${data.question}</div>
-            `;
-            document.getElementById(`questionsContainer_${data.test_number}`).innerText = data.question;
-            startRecording()
-                .then(() => {
-                    document.getElementById('submitAnswerButton').disabled = false;  
-                })
-                .catch(error => {
-                    console.error('Error starting recording:', error);
-                });
-        } else {
-            document.getElementById('status').innerText = "No more questions.";
-            document.getElementById('submitAnswerButton').style.display = 'none';
-            document.getElementById('uploadData').style.display = 'block';
-            stopClock();
-        }
-    })
-    .catch(error => console.error('Error fetching next question:', error));
-}
+
 // NOT SURE WHAT THIS IS BUT LEAVE FOR NOW
 function handleOtherOption() {
     const otherOption = document.getElementById('otherOption');

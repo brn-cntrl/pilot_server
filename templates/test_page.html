@@ -24,18 +24,13 @@
             <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
         </ul>
     </div><br>
-    <button id="startTestButton" style="display:none;">Start Test</button> <br>
+    <button id="startTestButton" style="display:none;">Start Test</button><br>
     <div class="testModule">
-        <p id="loadingMessage"></p>
-        <!-- <div id="clock">05:00</div><br><br> -->
-        <!-- <div id="accountBalance">$0</div><br><br> -->
-        <div id="test_container"></div> <br>
-    
-        <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
-        <!-- <button id="uploadBalance" disabled>Upload Balance</button><br><br> -->
+        <p id="loadingMessage">Test Loading...</p>
+        <button class="bigButton" id="submitAnswerButton" disabled>Submit Answer</button><br><br>
+        <p class="bigStatus" id="status"></p><br>
         <button id="taskComplete">Task Complete</button>
-        <p id="result"></p> <br>
-        <p id="status"></p><br><br>
+        
     </div>
     
     <script>
@@ -45,20 +40,129 @@
         let initialTime = 300;  // 5 minutes
         let timeLeft = initialTime;
         let timerInterval;
-        // let account = .00;
         let eventMarker;
 
-        // const timeDisplay = document.getElementById('clock');
         const startTestButton = document.getElementById('startTestButton');
         const submitAnswerButton = document.getElementById('submitAnswerButton');
-        const testContainer = document.getElementById('test_container');
         const loadingMessage = document.getElementById('loadingMessage');
         const statusContainer = document.getElementById('status');
-        // const accountBalance = document.getElementById('accountBalance');
-        // const clock = document.getElementById('clock');
         const result = document.getElementById('result');
-        // const uploadBalance = document.getElementById('uploadBalance');
         const taskComplete = document.getElementById('taskComplete');
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Initialize test
+            fetch('/get_current_test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
+                eventMarker = "stressor_test_" + testNumber;
+                
+                //DEBUG STATEMENT
+                console.log("Event Marker: ", eventMarker);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+            startTestButton.style.display = 'block';
+            submitAnswerButton.disabled = true;
+            loadingMessage.style.display = 'none';
+            
+            // Start Test
+            startTestButton.addEventListener('click', function() {
+                if (eventMarker === undefined) {
+                    alert('Failed to start test. Please refresh the page and try again.');
+                    return;
+                }
+
+                setEventMarker(eventMarker);
+
+                submitAnswerButton.disabled = true;
+                loadingMessage.style.display = 'block';
+                statusContainer.innerText = '';
+
+                startRecording()
+                    .then(() => {
+                        return fetch('/get_question', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loadingMessage.style.display = 'none';
+                        startTestButton.disabled = true;
+                
+                        submitAnswer.disabled = false;
+                        startClock();  
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to start test.');
+                    });
+            });
+
+            taskComplete.addEventListener('click', function() {
+                getNextTest();
+            });
+
+            submitAnswerButton.addEventListener('click', function() {
+                submitAnswer();
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            
+        });
+
+        function getNextQuestion() {
+            document.getElementById('submitAnswerButton').disabled = true;  
+            fetch('/get_question', {
+                method: 'POST',  
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.question) {
+                    startRecording()
+                        .then(() => {
+                            submitAnswerButton.disabled = false;  
+                        })
+                        .catch(error => {
+                            console.error('Error starting recording:', error);
+                        });
+                } else {
+                    statusContainer.innerText = "No more questions.";
+                    submitAnswerButton.style.display = 'none';
+                    stopClock();
+                }
+            })
+            .catch(error => console.error('Error fetching next question:', error));
+        }
 
         function getNextTest(){
             fetch('/get_next_test', {
@@ -95,19 +199,14 @@
         function resetClock(){
             stopClock();
             timeLeft = initialTime;
-            // timerDisplay.textContent = '05:00';
         }
 
         function updateClock() {
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            seconds = seconds < 10 ? '0' + seconds : seconds;
-            timeDisplay.textContent = `${minutes}:${seconds}`;
-            playTickSound();
             timeLeft--;
             if(timeLeft < 0) {
                 clearInterval(timerInterval);
                 statusContainer.innerText = 'Time is up! Please stop.';
+                submitAnswerButton.style.display = 'none';
                 endTest();
                 getNextTest();
             }
@@ -119,16 +218,14 @@
             submitAnswerButton.style.display = 'none';
             submitAnswerButton.disabled = true;
 
-            if (testNumber === 0){
+            if (testNumber === 1){
                 statusContainer.innerText = 'Test completed! Please perform the next activity before starting the next test.';
                 startTestButton.style.display = 'block';
                 startTestButton.disabled = false;
-                // clock.innerText = '05:00';
-            } else if (testNumber === 0){
+            } else if (testNumber === 2){
                 statusContainer.innerText = 'All tests completed! Thank you for participating in the experiment.';
                 startTestButton.style.display = 'none';
                 startTestButton.disabled = true;
-                // clock.innerText = '00:00';
             }
         }
 
@@ -144,20 +241,22 @@
                     body: JSON.stringify({ "event_marker": eventMarker })
                  });
                 const data = await response.json();
-                statusContainer.innerText = data.result;
 
                 if (data.result === 'correct') {
-                    // account += 0.10;
-                    // accountBalance.innerText = `$${account.toFixed(2)}`;
-                } else if (data.result === 'incorrect') {
-                    // account -= 0.15;
-                    // accountBalance.innerText = `$${account.toFixed(2)}`;
-                }
-
-                // TODO: REFACTOR FOR NEW LOGIC
-                if (data.result === 'correct' || data.result === 'incorrect') {
+                    statusContainer.innerText = "Correct.";
                     await getNextQuestion(); 
                     submitAnswerButton.disabled = false;
+
+                } else if (data.result === 'incorrect') {
+                    if(testNumber === 1){
+                        statusContainer.innerText = "Incorrect. Please start again from 1,022.";
+                        await getNextQuestion();
+                        submitAnswerButton.disabled = false;
+                    } else {
+                        statusContainer.innerText = "Incorrect. Please start again from 1,059.";
+                        await getNextQuestion();
+                        submitAnswerButton.disabled = false;
+                    }
 
                 } else if (data.result === 'error') {
                     statusContainer.innerText = "Sorry, I could not understand the response.";
@@ -179,122 +278,6 @@
                     console.error('Error:', error);
             }       
         }
-    
-        document.addEventListener('DOMContentLoaded', (event) => {
-            fetch('/get_current_test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
-                eventMarker = "stressor_test_" + testNumber;
-                
-                //DEBUG STATEMENT
-                console.log("Event Marker: ", eventMarker);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-
-            startTestButton.style.display = 'block';
-            submitAnswerButton.disabled = true;
-            loadingMessage.style.display = 'none';
-            // accountBalance.innerText = `$00.0${account}`;
-        });
-    
-        document.addEventListener('DOMContentLoaded', (event) => {
-            startTestButton.addEventListener('click', function() {
-                if (eventMarker === undefined) {
-                    alert('Failed to start test. Please refresh the page and try again.');
-                    return;
-                }
-
-                setEventMarker(eventMarker);
-
-                submitAnswerButton.disabled = true;
-                loadingMessage.style.display = 'block';
-                // uploadBalance.disabled = true;
-                statusContainer.innerText = '';
-
-                startRecording()
-                    .then(() => {
-                        return fetch('/get_question', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        testNumber = data.test_number;
-
-                        loadingMessage.style.display = 'none';
-                        startTestButton.disabled = true;
-                        // testContainer.innerHTML = `
-                        //     <h2>Test</h2>
-                        //     <div id="questionsContainer">${data.question}</div>
-                        // `;
-
-                        let checkInterval = setInterval(() => {
-                            if (checkActiveStream()) {
-                                console.log("Stream is active.");
-                                // testContainer.style.display = 'block';
-                                submitAnswer.disabled = false;
-                                startClock();
-                                clearInterval(checkInterval); 
-                            } else {
-                                console.log("Stream is not active yet, checking again...");
-                                testContainer.style.display = 'none';
-                                submitAnswer.disabled = true;
-                            }
-                        }, 2000); 
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Failed to start test.');
-                    });
-            });
-
-            taskComplete.addEventListener('click', function() {
-                getNextTest();
-            });
-
-            submitAnswerButton.addEventListener('click', function() {
-                submitAnswer();
-            });
-
-            // uploadBalance.addEventListener('click', function() {
-            //     fetch('/submit_final_balance', {
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json'
-            //         },
-            //         body: JSON.stringify({ balance: account.toFixed(2) })
-            //     })
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         console.log(data);
-            //         result.innerText = data.message;
-            //     })
-            //     .catch(error => console.error('Error:', error));
-            // });
-        });
-    
-        
     </script>
 </body>
 </html> 
