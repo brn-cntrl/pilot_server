@@ -4,6 +4,7 @@ import pyaudio
 import wave
 import speech_recognition as sr
 from timestamp_manager import TimestampManager
+import time
 
 class RecordingManager():
     """
@@ -15,6 +16,7 @@ class RecordingManager():
     def __init__(self, recording_file, audio_save_folder) -> None: 
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
+        self.stream_ready_event = threading.Event()
         self.recording_thread = None
         self.stream_is_active = False
         self._recording_file = recording_file
@@ -60,6 +62,8 @@ class RecordingManager():
 
         self.recording_thread = threading.Thread(target=self.record_thread)
         self.recording_thread.start()
+        self.stream_ready_event.wait()
+        self.stream_is_active = True
         self.recording_started_event.wait()
 
         print("Recording thread started")   
@@ -68,6 +72,7 @@ class RecordingManager():
         self.stop_event.set()
         self.recording_thread.join()
         self.recording_started_event.clear()
+        self.stream_ready_event.clear()
         self.stream_is_active = False
         print("Recording thread stopped")
 
@@ -80,10 +85,12 @@ class RecordingManager():
                             input_device_index=self.device_index,
                             frames_per_buffer=1024)
         
+        self.stream_ready_event.set()
+
         frames = []
 
         self.recording_started_event.set()
-        self.stream_is_active = stream.is_active()
+
         while not self.stop_event.is_set():
             data = stream.read(1024)
             frames.append(data)

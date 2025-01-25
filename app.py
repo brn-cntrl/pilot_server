@@ -101,36 +101,6 @@ def stop_biometric_baseline() -> Response:
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
-
-@app.route('/record_task_audio', methods=['POST'])
-def task_audio_recording():
-    global recording_manager, timestamp_manager, subject_manager
-    data = request.get_json()
-    action = data.get('action')
-    question = data.get('question')
-    event_marker = data.get('event_marker')
-    
-    if action == 'start':
-        recording_manager.start_recording()
-        emotibit_streamer.event_marker = event_marker
-
-        return jsonify({'message': 'Recording started.'}), 200
-    
-    elif action == 'stop':
-        recording_manager.stop_recording()
-        ts = recording_manager.timestamp
-        id = subject_manager.subject_id
-
-        file_name = f"ID_{id}_{ts}_{event_marker}_question_{question}.wav"
-
-        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
-        
-        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
-
-        return jsonify({'message': 'Recording stopped.'}), 200
-    else:
-        return jsonify({'message': 'Invalid action.'}), 400
     
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
@@ -264,13 +234,13 @@ def get_next_test() -> Response:
     
         return jsonify({"message": "Next test initiated.", "test_number": test_manager.current_test_index})
 
-@app.route('/subject_final_balance', methods=['POST'])
-def subject_final_balance() -> Response:
-    data = request.get_json()
-    subject_manager.balance = data.get('balance')
-    subject_manager.write_balance()
+# @app.route('/subject_final_balance', methods=['POST'])
+# def subject_final_balance() -> Response:
+#     data = request.get_json()
+#     subject_manager.balance = data.get('balance')
+#     subject_manager.write_balance()
 
-    return jsonify({'message': 'Balance written to file.'})
+#     return jsonify({'message': 'Balance written to file.'})
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:
@@ -367,6 +337,9 @@ def submit_answer() -> Response:
 
         if test_manager.check_answer(transcription, correct_answer):
             result = 'correct'
+        else:
+            result = 'incorrect'
+            test_manager.current_question_index = 0
 
         test_manager.current_question_index += 1
 
@@ -500,14 +473,69 @@ def set_device() -> Response:
     else:
         p.terminate()
         return jsonify({'message': 'Device index not provided.'}), 400
+
+@app.route('/record_task_audio', methods=['POST'])
+def task_audio_recording():
+    """
+    Handle audio recording tasks based on the provided action.
+    This function processes JSON data from a request to either start or stop an audio recording.
+    It manages the recording state, updates event markers, and saves audio files with appropriate metadata.
+    Request JSON structure:
+    {
+        "action": "start" or "stop",
+        "question": <question_number>,
+        "event_marker": <event_marker_text>
+    }
+    Returns:
+        Response: A JSON response with a message indicating the result of the action and an HTTP status code.
+        - If action is 'start':
+            {
+                "message": "Recording started."
+            }, 200
+        - If action is 'stop':
+            {
+                "message": "Recording stopped."
+            }, 200
+        - If action is invalid:
+            {
+                "message": "Invalid action."
+            }, 400
+    """
+
+    global recording_manager, timestamp_manager, subject_manager
+    data = request.get_json()
+    action = data.get('action')
+    question = data.get('question')
+    event_marker = data.get('event_marker')
     
+    if action == 'start':
+        recording_manager.start_recording()
+        emotibit_streamer.event_marker = event_marker
+
+        return jsonify({'message': 'Recording started.'}), 200
+    
+    elif action == 'stop':
+        recording_manager.stop_recording()
+        ts = recording_manager.timestamp
+        id = subject_manager.subject_id
+
+        file_name = f"ID_{id}_{ts}_{event_marker}_question_{question}.wav"
+
+        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        
+        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
+
+        return jsonify({'message': 'Recording stopped.'}), 200
+    else:
+        return jsonify({'message': 'Invalid action.'}), 400
+      
 @app.route('/record_task', methods=['POST'])
 def record_task() -> Response:
     """
-    Endpoint to handle VR task recording actions.
-    This function processes incoming JSON requests to start or stop a VR task recording.
-    Depending on the action specified in the request, it either starts the recording or stops it
-    and processes the recorded audio.
+    Endpoint to handle general task audio recording.
+    This function processes incoming JSON requests to start or stop audio recording.
+
     The function performs the following actions:
         - If the action is 'start', it returns a success message. The actual "start_recording" route is called from the client.
         - If the action is 'stop', it stops the recording, splits the audio into segments, generates
@@ -532,6 +560,7 @@ def record_task() -> Response:
         current_time_unix = timestamp_manager.get_raw_timestamp()
         
         if action == 'start':
+            recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
             return jsonify({'message': 'Recording started.', 'event_marker': event_marker}), 200
         
@@ -619,12 +648,15 @@ def prs():
     <body>
         <h1>PRS Task</h1>
         <h2> Instruction Text</h2>
-        <p>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</p> 
-        <p>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</p> 
-        <p>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</p> 
-        <p>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</p>
-        <p>Please provide a brief explanation for your answer after each question.</p>
-
+        <ul>
+            <li>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</li> 
+            <li>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</li> 
+            <li>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</li> 
+            <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</li>
+            <li>Please provide a brief explanation for your answer after each question.</li>
+            <li>IMPORTANT: Click "Record Answer" and wait until you see the message, "Recording started" before you begin speaking your answer.</li>
+            <li> Click "Stop Recording" when you are finished with your answer and explanation.</li>
+        </ul><br><br>
         <div id="intro">
             <h3>Introduction</h3>
             <audio id="intro-audio-player" controls>
@@ -632,7 +664,6 @@ def prs():
                 Your browser does not support the audio element.
             </audio>
         </div><br>
-
         {% for audio in audio_files %}
         <div>
             <audio controls id="audio{{ loop.index }}-player">
@@ -640,9 +671,43 @@ def prs():
                 Your browser does not support the audio element.
             </audio>
             <div id="audio{{ loop.index }}-recording-status"></div>
-            <button id="audio{{ loop.index }}-record-button" class="record-button">Record</button><br><br>
+            <button id="audio{{ loop.index }}-record-button" class="record-button">Record Answer</button><br><br>
         </div>
         {% endfor %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const eventMarker = localStorage.getItem('currentEventMarker');
+                // Debugging statement
+                console.log("Current Event Marker:", eventMarker);
+                const recordButtons = document.querySelectorAll(".record-button");
+                recordButtons.forEach((button, index) => {
+                    button.addEventListener("click", function () {
+                        const audioElement = button.previousElementSibling.querySelector("source");
+                        const statusElement = button.nextElementSibling;
+                        if (audioElement) {
+                            const audioSrc = audioElement.getAttribute("src"); 
+                            const fileName = audioSrc.split('/').pop();
+                            const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+                        if(button.innerText === 'Record Answer') {
+                            recordTask(eventMarker, 'start', baseName);
+                            let checkInterval = setInterval(() => {
+                                if (checkActiveStream()){
+                                    statusElement.innerText = 'Recording started...';
+                                    button.innerText = 'Stop Recording';
+                                    clearInterval(checkInterval);
+                                } else {
+                                    statusElement.innerHTML ="Waiting for recording to start...";
+                                }
+                            }, 2000);
+                        } else {
+                            recordTask(eventMarker, 'stop', baseName);
+                            statusElement.innerText = 'Processing...';
+                            button.innerText = 'Record Answer';
+                        } 
+                    });
+                });
+            });
+        </script>
     </body>
     </html>
     """
@@ -713,26 +778,6 @@ def background() -> Response:
 @app.route('/exit_survey', methods=['GET'])
 def exit_survey() -> Response:
     return render_template('exit_survey.html')
-
-##################################################################
-## Helper Functions 
-##################################################################
-def calculate_biometric_mean(data, key) -> float:
-    global subject_manager
-    try:
-        values = [
-            metrics[key] for timestamp, metrics in data.items()
-            if timestamp != 'label' and metrics.get(key) is not None
-        ]
-        
-        if not values:
-            return None
-        
-        return sum(values) / len(values)
-    
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return None
 
 # Emotibit #######################################################
 def start_emotibit() -> None:
@@ -820,9 +865,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
 ## Speech Recognition 
 ##################################################################
 def transcribe_audio(file) -> str:
-    #TODO: Remove global reference and uncomment below when recording_manager is implemented
-    global recording_manager
-    # RECORDING_FILE = recording_manager.get_recording_file() 
+    global recording_manager 
 
     recognizer = sr.Recognizer()
     with sr.AudioFile(file) as source:
@@ -835,10 +878,6 @@ def transcribe_audio(file) -> str:
         
         except sr.RequestError as e:
             return f"Could not request results from Google Speech Recognition service; {e}"
-    
-##################################################################
-## SER 
-##################################################################
 
 def run_flask():
     app.run(debug=False, use_reloader=False)
