@@ -21,11 +21,11 @@
             <li>Click "Submit" to save the experiment and trial names.</li>
             <li>IMPORTANT: This information must be entered before starting the experiment</li>
         </ul>
-        <form id="experimentNameForm" action="submit" method="POST">
-            <label for="experimentTrialNames">Experiment Name:</label>
-            <input type="text" id="experimentName" name="experimentName" required><br><br>
-            <label for="trialName">Trial Name:</label>
-            <input type="text" id="trialName" name="trialName" required><br><br>
+        <form id="experimentNameForm" action="/submit_experiment" method="POST">
+            <label for="experiment_name">Experiment Name:</label>
+            <input type="text" id="experiment_name" name="experiment_name" required><br><br>
+            <label for="trial_name">Trial Name:</label>
+            <input type="text" id="trial_name" name="trial_name" required><br><br>
             <button type="submit">Submit</button>
         </form>
         <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
@@ -347,25 +347,29 @@
             const errorNotification = document.getElementById("errorNotification1");
 
             form.addEventListener("submit", async (event) => {
-                event.preventDefault(); 
+                event.preventDefault();
                 const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
 
                 try {
-                    const response = await fetch("/experiment_trial_names", {
-                    method: "POST",
-                    body: formData,
+                    const response = await fetch(form.action, {
+                        method: form.method,
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(data)
                     });
 
                     if (response.ok) {
-                        notification.style.display = "block"; 
-                        errorNotification.style.display = "none"; 
-                        form.reset(); 
+                        notificationSuccess.style.display = "block";
+                        notificationError.style.display = "none";
                     } else {
-                        throw new Error("Failed to submit");
+                        notificationSuccess.style.display = "none";
+                        notificationError.style.display = "block";
                     }
                 } catch (error) {
-                    notification.style.display = "none"; 
-                    errorNotification.style.display = "block"; 
+                    notificationSuccess.style.display = "none";
+                    notificationError.style.display = "block";
                 }
             });
         });
