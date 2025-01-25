@@ -81,18 +81,6 @@ def reset_ser_question_index() -> Response:
 
     return jsonify({'status': 'SER questions reset'})
 
-# @app.route('/start_emotibit_stream', methods=['POST'])
-# def start_emotibit_stream() -> Response:
-#     global emotibit_streamer
-
-#     start_emotibit()
-
-#     try:
-#         return jsonify({'status': 'Starting EmotiBit stream'})
-    
-#     except Exception as e:
-#         return jsonify({'status': 'Error starting Emotibit stream', 'message': str(e)}), 400
-
 @app.route('/start_biometric_baseline', methods=['POST'])
 def start_biometric_baseline() -> Response:
     global emotibit_streamer
@@ -122,7 +110,6 @@ def task_audio_recording():
     question = data.get('question')
     event_marker = data.get('event_marker')
     
-
     if action == 'start':
         recording_manager.start_recording()
         emotibit_streamer.event_marker = event_marker
@@ -134,7 +121,7 @@ def task_audio_recording():
         ts = recording_manager.timestamp
         id = subject_manager.subject_id
 
-        file_name = f"ID_{id}_{event_marker}_room_observation_{question}.wav"
+        file_name = f"ID_{id}_{ts}_{event_marker}_question_{question}.wav"
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
@@ -173,10 +160,10 @@ def process_ser_answer() -> Response:
     This function performs the following steps:
     Set the event markers
     1. Stops the current audio recording.
-    2. Loads the audio file with librosa.
-    3. Resamples the audio signal.
-    4. Predicts the emotion from the normalized audio signal with call to the ser_manager.
-    5. Appends the predicted emotion to the subject's SER baseline data.
+    2. Loads the audio file with librosa. NOTE: REMOVED FOR NOW
+    3. Resamples the audio signal. NOTE: REMOVED FOR NOW
+    4. Predicts the emotion from the normalized audio signal with call to the ser_manager. NOTE: REMOVED FOR NOW
+    5. Appends the predicted emotion to the subject's SER baseline data. NOTE: REMOVED FOR NOW
     6. Renames the audio file based on the subject's ID and the current question index.
     7. Saves the renamed audio file to the 'audio_files' directory.
     8. Returns a JSON response indicating the status of the submission.
@@ -186,8 +173,9 @@ def process_ser_answer() -> Response:
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global subject_manager, ser_manager
+    global subject_manager
     global recording_manager, audio_file_manager, test_manager
+    # global ser_manager
 
     data = request.get_json()
     recording_manager.stop_recording()
@@ -195,19 +183,19 @@ def process_ser_answer() -> Response:
     try:
         event_marker = data.get('event_marker')
 
-        sig, orig_sr = librosa.load(audio_file_manager.recording_file, sr=None)
-        sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
+        # sig, orig_sr = librosa.load(audio_file_manager.recording_file, sr=None)
+        # sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
         
-        emotion, confidence = ser_manager.predict_emotion(sig_resampled)
+        # emotion, confidence = ser_manager.predict_emotion(sig_resampled)
 
-        print(f"Predicted emotion: {emotion}, Confidence: {confidence}")
         ts = recording_manager.timestamp
         
-        file_name = f"ID_{id}_{event_marker}_SER_question_{test_manager.current_ser_question_index}.wav"
+        file_name = f"ID_{id}_{ts}_{event_marker}_SER_question_{test_manager.current_ser_question_index}.wav"
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
-        
+        # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+
         # AUDIO STORAGE
         id = subject_manager.subject_id
         audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
@@ -320,13 +308,13 @@ def test_audio() -> Response:
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer() -> Response:
     """
-    Route to submit an answer for the current question in the test.
+    Route to submit an answer for the current stress task question.
     This function handles the submission of an answer by performing the following steps:
         1. Stops the current audio recording.
         2. Transcribes the recorded audio.
-        3. Predicts the emotion label.
-        4. Saves the audio file with a specific naming convention.
-        5. Appends the transcription and emotion prediction to the test data.
+        3. Predicts the emotion label. NOTE: REMOVED FOR NOW
+        4. Saves the audio file.
+        5. Appends the transcription and emotion prediction to the test data. NOTE: REMOVED FOR NOW
         6. Checks the transcription against the correct answer and determines if it is correct or incorrect.
         7. Increments the question index for the next question.
     Returns:
@@ -336,24 +324,27 @@ def submit_answer() -> Response:
         - 500: If there was any other error during the process.
     """
 
-    global recording_manager, subject_manager, audio_file_manager, ser_manager
+    global recording_manager, subject_manager, audio_file_manager
+    # global ser_manager
 
     data = request.get_json()
     event_marker = data.get('event_marker')
 
     questions = test_manager.get_task_questions(test_manager.current_test_index)
-    id = subject_manager.subject_id
-    file_name = f"ID_{id}_test_{event_marker}_question_{test_manager.current_question_index}.wav"
-
+    
     try:
         recording_manager.stop_recording()
         transcription = transcribe_audio(audio_file_manager.recording_file)
         ts = recording_manager.timestamp
-        try:
-            sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
-            resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
+        id = subject_manager.subject_id
 
-            ser = ser_manager.predict_emotion(resampled_sig)
+        # TODO: Fix event marker on test page
+        file_name = f"ID_{id}_{ts}_{event_marker}_question_{test_manager.current_question_index}.wav"
+        try:
+            # sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
+            # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
+            # ser, confidence = ser_manager.predict_emotion(resampled_sig)
+
             audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, "audio_files")
 
         except Exception as e:
@@ -367,8 +358,9 @@ def submit_answer() -> Response:
             return jsonify({'status': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
 
         else:
-            # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser[0], 'SER_Confidence': ser[1]})
+            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+            # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser, 'SER_Confidence': confidence})
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
         correct_answer = questions[test_manager.current_question_index]['answer']
         result = 'incorrect'
@@ -527,8 +519,9 @@ def record_task() -> Response:
                    with a 400 HTTP status code.
     """
 
-    global recording_manager, ser_manager, subject_manager, audio_file_manager
+    global recording_manager, subject_manager, audio_file_manager
     global timestamp_manager, emotibit_streamer
+    # global ser_manager
 
     try:
         data = request.get_json()
@@ -554,23 +547,26 @@ def record_task() -> Response:
 
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
             
-            transcriptions = []
-            ser_predictions = []
-            confidence_scores = []
+            # transcriptions = []
+            # ser_predictions = []
+            # confidence_scores = []
 
-            for segment_file in audio_segments:
-                transcription = transcribe_audio(segment_file)
-                transcriptions.append(transcription)
+            # for segment_file in audio_segments:
+                # transcription = transcribe_audio(segment_file)
+                # transcriptions.append(transcription)
 
                 # SER
-                sig, sr = librosa.load(segment_file, sr=None)
-                resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-                emotion, confidence = ser_manager.predict_emotion(resampled_sig)
-                ser_predictions.append(emotion)
-                confidence_scores.append(confidence)
+                # sig, sr = librosa.load(segment_file, sr=None)
+                # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
+                # emotion, confidence = ser_manager.predict_emotion(resampled_sig)
+                # ser_predictions.append(emotion)
+                # confidence_scores.append(confidence)
 
-            vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': tr, 'SER_Emotion': ser, 'SER_Confidence': conf} 
-                    for ts, fn, tr, ser, conf in zip(timestamps, audio_segments, transcriptions, ser_predictions, confidence_scores)]
+            # vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': tr, 'SER_Emotion': ser, 'SER_Confidence': conf} 
+            #         for ts, fn, tr, ser, conf in zip(timestamps, audio_segments, transcriptions, ser_predictions, confidence_scores)]
+
+            vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None} 
+                    for ts, fn, in zip(timestamps, audio_segments)]
             
             for data in vr_data:
                 subject_manager.append_data(data)
@@ -578,7 +574,7 @@ def record_task() -> Response:
             audio_file_manager.backup_tmp_audio_files()
 
             # NOTE: This is because the emotitbit is continuous.
-            emotibit_streamer.event_marker = "subject_idle"
+            # emotibit_streamer.event_marker = "subject_idle" NOTE: handling this with explicit input on the front end for now.
 
             return jsonify({'message': 'Audio successfully processed.', 'event_marker': event_marker}), 200
         else:
@@ -601,7 +597,7 @@ def start_recording() -> Response:
 ##################################################################
 ## Views 
 ##################################################################
-@app.route('/prs.html')
+@app.route('/prs')
 def prs():
     import random
     AUDIO_DIR = 'static/prs_audio'
@@ -635,13 +631,10 @@ def prs():
                 <source src="{{ url_for('static', filename='prs_audio/' + intro) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
-            <div id="intro-recording-status"></div>
-            <button id="intro-record-button" class="record-button">Record</button><br><br>
         </div><br>
 
         {% for audio in audio_files %}
         <div>
-            <p>{{ audio }}</p>
             <audio controls id="audio{{ loop.index }}-player">
                 <source src="{{ url_for('static', filename='prs_audio/' + audio) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
@@ -655,7 +648,7 @@ def prs():
     """
 
     # Render the HTML with the randomized audio files
-    return render_template_string(html_template, audio_files=prs_audio_files)
+    return render_template_string(html_template, intro=intro, audio_files=prs_audio_files)
 
 @app.route('/room_observation')
 def room_observation() -> Response:
