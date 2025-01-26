@@ -149,12 +149,9 @@ def process_ser_answer() -> Response:
     global recording_manager, audio_file_manager, test_manager
     # global ser_manager
 
-    data = request.get_json()
     recording_manager.stop_recording()
 
     try:
-        event_marker = data.get('event_marker')
-
         # sig, orig_sr = librosa.load(audio_file_manager.recording_file, sr=None)
         # sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
         
@@ -162,15 +159,15 @@ def process_ser_answer() -> Response:
 
         ts = recording_manager.timestamp
         
-        file_name = f"ID_{id}_{ts}_{event_marker}_SER_question_{test_manager.current_ser_question_index}.wav"
+        file_name = f"ID_{id}_{ts}_ser_baseline_question_{test_manager.current_ser_question_index}.wav"
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
 
         # AUDIO STORAGE
         id = subject_manager.subject_id
-        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
+        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name)
 
         return jsonify({'status': 'Answer submitted.'})
     
@@ -293,10 +290,8 @@ def submit_answer() -> Response:
     global recording_manager, subject_manager, audio_file_manager
     # global ser_manager
 
-    data = request.get_json()
-    event_marker = data.get('event_marker')
-
-    questions = test_manager.get_task_questions(test_manager.current_test_index)
+    current_test = test_manager.current_test_index
+    questions = test_manager.get_task_questions(current_test)
     
     try:
         recording_manager.stop_recording()
@@ -305,13 +300,13 @@ def submit_answer() -> Response:
         id = subject_manager.subject_id
 
         # TODO: Fix event marker on test page
-        file_name = f"ID_{id}_{ts}_{event_marker}_question_{test_manager.current_question_index}.wav"
+        file_name = f"ID_{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
         try:
             # sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
             # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
             # ser, confidence = ser_manager.predict_emotion(resampled_sig)
 
-            audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, "audio_files")
+            audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name)
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -325,8 +320,8 @@ def submit_answer() -> Response:
 
         else:
             # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser, 'SER_Confidence': confidence})
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+            # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser, 'SER_Confidence': confidence})
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
         correct_answer = questions[test_manager.current_question_index]['answer']
         result = 'incorrect'

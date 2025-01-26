@@ -32,11 +32,10 @@ class AudioFileManager:
         if not os.path.exists(self.audio_folder):
             os.makedirs(self.audio_folder)
 
-    def save_audio_file(self, old_path_filename, new_filename, save_folder) -> None:
+    def save_audio_file(self, old_path_filename, new_filename) -> None:
         try:
-            os.makedirs(save_folder, exist_ok=True)
-            new_filename = os.path.join(save_folder, new_filename)
-            #TODO: change function so that source folder and filename are separate. Get rid of global filename.
+            os.makedirs(self.audio_folder, exist_ok=True)
+            new_filename = os.path.join(self.audio_folder, new_filename)
             shutil.copy(old_path_filename, new_filename)
 
             print(f"File '{old_path_filename}' saved successfully.")

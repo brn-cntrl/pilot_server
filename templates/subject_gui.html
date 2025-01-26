@@ -36,7 +36,7 @@
             </div>
 
             <div id="surveyList" style="display:none;">
-                <p id="surveysNote" style="display:None;">Note: These require both a subject and witness signature </p>
+                <p id="surveysNote" style="display:block;">Note: These require both a subject and witness signature </p>
                 <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
                 <button id="surveysCompletedButton">Task Complete</button>
             </div>
@@ -49,14 +49,17 @@
                 <li>Press "Go to Survey" and complete the survey.</li>
                 <p> Please press "Task Complete" when you finish and return.</p>
             </ul>
-            <button id="pss4Button">Go to Survey</button>
+            
             <button id="biometricTaskComplete">Task Complete</button>
         </div><br>
 
         <button id="stressBaselineButton" style="display:none;">Stress Baseline</button>
         <div class="testModule" id="stressBaselineDiv" style="display:none;">
             <p>Please fill out this form.</p>
-            <button id="pss4_button">Stress Baseline Survey</button><br><br>
+            <button id="pss4Button">Stress Baseline Survey</button><br><br>
+            <div id="pss4Div" style="display:none;">
+                <!--TODO: GET URL FROM DANIELA-->
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfNs4fUHzXGSlztdj_XHV68YQMOkIHYXNogNzxIdtX_T6KQqw/viewform?usp=pp_url&entry.1447491962=Sample+Name&entry.961474298=Sample+ID" width="80%" height="500px" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe><br><br>
             <button id="stressBaselineTaskComplete">Task Complete</button>
         </div><br>
 
@@ -131,10 +134,8 @@
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function(){
-            const pss4Button = document.getElementById('pss4Button');
             const nameForm = document.getElementById('nameForm');
             const subjectInfoComplete = document.getElementById('subjectInfoComplete');
-            const studentInfoComplete = document.getElementById('studentInfoComplete');
             const stressTask1Complete = document.getElementById('stressTask1Complete');
             const stressTask2Complete = document.getElementById('stressTask2Complete');
             const stressTask1Div = document.getElementById('stressTask1Div');
@@ -150,7 +151,6 @@
             const beginSurveysButton = document.getElementById('beginSurveysButton');
             const surveysDiv = document.getElementById('surveysDiv');
             const participantInfoButton = document.getElementById('participantInfoButton');
-            const studentSubmitButton = document.getElementById('studentSubmitButton');
             const surveyList = document.getElementById('surveyList');
             const surveysCompletedButton = document.getElementById('surveysCompletedButton');
             const participantInfoDiv = document.getElementById('participantInfoDiv');
@@ -168,7 +168,7 @@
             const biometricBaselineDiv = document.getElementById('biometricBaselineDiv');
             const stressBaselineButton = document.getElementById('stressBaselineButton');
             const stressBaselineDiv = document.getElementById('stressBaselineDiv');
-            const pss4_button = document.getElementById('pss4_button');
+            const pss4Button = document.getElementById('pss4Button');
             const testAudioButton = document.getElementById('testAudioButton');
             const testAudioDiv = document.getElementById('testAudioDiv');
             const testAudio = document.getElementById('testAudio');
@@ -207,16 +207,6 @@
             secondStressTask.addEventListener('click', function() {
                 window.open('/test_page', '_blank', 'width=800, height=600');
                 toggleVis('stressTask2Div');
-            });
-
-            firstVRTask.addEventListener('click', function() {
-                vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
-                toggleVis('vrTask1Div');
-            });
-
-            secondVRTask.addEventListener('click', function() {
-                vrWin = window.open('/vr_task', '_blank', 'width=800, height=600');
-                toggleVis('vrTask2Div');
             });
         });
     
@@ -353,38 +343,32 @@
             })
         });
 
-        beginSERButton.addEventListener('click', function(){
-            beginSERButton.disabled = true;
-            questionContainer.style.display = 'block';
-            questionContainer.disabled = false;
-            status.style.display = 'block';
-            status.disabled = false;
-            submitAnswer.style.display = 'block';
-            submitAnswer.disabled = false;
+        document.addEventListener('DOMContentLoaded', function(){
+            pss4Button.addEventListener('click', function(){
 
-            setEventMarker('ser_baseline');
-            // Start recording audio stream
-            startRecording()
-                .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if (streamActive) {
-                            clearInterval(checkInterval); 
-                            console.log('Stream is active');
-                            submitAnswer.disabled = false;
-                            status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
-                        
-                        } else {
-                            console.log('Stream is not active');
-                            status.innerText = "Please wait...";
-                            submitAnswer.disabled = true;
-                        }
-                    }, 2000);
-                })
-                .catch(error => {
-                    console.error('Error starting audio stream:', error);
-                    alert('Error starting audio stream: ' + error);
-                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function(){
+            beginSERButton.addEventListener('click', function(){
+                beginSERButton.disabled = true;
+                questionContainer.style.display = 'block';
+                questionContainer.disabled = false;
+                status.style.display = 'block';
+                status.disabled = false;
+                submitAnswer.style.display = 'block';
+
+                setEventMarker('ser_baseline');
+                // Start recording audio stream
+                startRecording()
+                    .then(() => {
+                        submitAnswer.disabled = false;
+                        status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";     
+                    })
+                    .catch(error => {
+                        console.error('Error starting audio stream:', error);
+                        alert('Error starting audio stream: ' + error);
+                    });
 
                 console.log('Fetching SER question...');
                 fetch('/get_ser_question', { method: 'GET' })
@@ -396,13 +380,12 @@
                     })
                     .then(data => {
                         console.log('Received data:', data);
-                        let q = data.question;
-                        questionContainer('questionContainer').innerText = q;
-                        if (q === 'SER task completed.') {
+                        questionContainer.innerText = data.question;
+                        if (data.question === 'SER task completed.') {
                             stopRecording();
                             setEventMarker('subject_idle');
-                            submitAnswer('submitAnswer').disabled = true;
-                            submitAnswer('submitAnswer').style.display = 'none';
+                            submitAnswer.disabled = true;
+                            submitAnswer.style.display = 'none';
                         }
                     })
                     .catch(error => {
@@ -410,38 +393,6 @@
                         alert('Error getting SER question: ' + error);
                     });
             });
-
-        testAudio.addEventListener('click', async function() {
-            if (testAudio.innerText === 'Record') {
-                startRecording()
-                .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if(streamActive) {
-                            console.log('Stream is active');
-                            AudioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
-                            testAudio.innerText = 'Stop';
-                            clearInterval(checkInterval); 
-                        } else {
-                            console.log('Stream is not active');
-                            AudioStatusMessage.innerText = "Please wait...";
-                        }
-                    }, 2000);
-                })
-            }
-            else if (testAudio.innerText === 'Stop') {
-                try {
-                    const response = await fetch('/test_audio', { method: 'POST' });
-                    const data = await response.json();
-                    statusMessage.innerText = `I got: ${data.result}`;
-                } catch (error) {
-                    console.error('Error:', error);
-                    AudioStatusMessage.innerText = "Error occurred during recording or transcription.";
-                } finally {
-                    testAudio.innerText = 'Record';
-                    audioTestComplete = true;
-                }
-            }
         });
 
         submitAnswer.addEventListener('click', function() {
@@ -450,8 +401,7 @@
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 'event_marker': 'ser_baseline' })
+                }
             })
             .then(response => {
                 if (!response.ok) {
@@ -495,11 +445,9 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Received data:', data);
-                let q = data.question;
-                questionContainer.innerText = q;
+                questionContainer.innerText = data.question;
 
-                if (q === 'SER task completed.') {
+                if (data.question === 'SER task completed.') {
                     stopRecording();
                     emotionBaselineComplete = true;
                     submitAnswer.disabled = true;
@@ -512,6 +460,39 @@
                 status.style.display = "block";
                 status.disabled = false;
             });
+        });
+
+        testAudio.addEventListener('click', async function() {
+            if (testAudio.innerText === 'Record') {
+                startRecording()
+                .then(() => {
+                    let checkInterval = setInterval(() => {
+                        let streamActive = checkActiveStream();  
+                        if(streamActive) {
+                            console.log('Stream is active');
+                            AudioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
+                            testAudio.innerText = 'Stop';
+                            clearInterval(checkInterval); 
+                        } else {
+                            console.log('Stream is not active');
+                            AudioStatusMessage.innerText = "Please wait...";
+                        }
+                    }, 2000);
+                })
+            }
+            else if (testAudio.innerText === 'Stop') {
+                try {
+                    const response = await fetch('/test_audio', { method: 'POST' });
+                    const data = await response.json();
+                    statusMessage.innerText = `I got: ${data.result}`;
+                } catch (error) {
+                    console.error('Error:', error);
+                    AudioStatusMessage.innerText = "Error occurred during recording or transcription.";
+                } finally {
+                    testAudio.innerText = 'Record';
+                    audioTestComplete = true;
+                }
+            }
         });
     </script>
 </body>

@@ -146,6 +146,7 @@ function checkActiveStream() {
         return false; 
     });
 }
+
 function setDevice() {
     const audioDevices = document.getElementById('audioDevices');
     const selectedDeviceIndex = audioDevices.value;

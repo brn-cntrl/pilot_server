@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Experiment</h1>
-    <button id="launchSubjectGUI">Launch Subject GUI</button><br><br>
+    <h1>Experiment Dashboard</h1>
+    
     <h2>Pre-Test</h2>
-
-    <button id="experimentTrialNameButton">Experiment/Trial Information</button>
+        
+    <button id="experimentTrialNameButton">Experiment/Trial Information</button><br>
     <div class="testModule" id="experimentTrialNameDiv" style="display:block;">
         <h3>Experiment/Trial Information</h3>
         <p>Instructions</p>
@@ -29,18 +29,23 @@
             <button type="submit">Submit</button>
         </form>
         <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
-        <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div><br>
+        <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div>
     </div><br>
 
-    <button id="beginExperimentButton">Surveys</button><br>
-    <div class="testModule" id="surveysDiv" style="display: none">
+    <button id="subjectInstructionsButton">Subject Instructions</button><br>
+    <div class="testModule" id="subjectInstructionsDiv" style="display:block">
         <h3>Subject Instructions</h3>
+        <p>Please relay the following instructions to the subject.</p>
         <ul>
             <li>Subject must complete the tasks on their page in the order they appear.</li>
             <li>Subject must click "Task Completed" after each task is performed</li>
             <li>After "Task Completed" is clicked, the next task will appear.</li>
         </ul><br>
-      
+        <button id="launchSubjectGUI">Launch Subject GUI</button>
+    </div><br>
+
+    <button id="beginExperimentButton">Surveys</button><br>
+    <div class="testModule" id="surveysDiv" style="display: none">
         <h3>Surveys and Participant Information</h3>
         <h4>Survey Instructions</h4>
         <ul>
@@ -80,10 +85,9 @@
             <h4>Current Surveys in Test Procedure</h4>
             <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
         </div>
-
     </div><br>
 
-    <button id="biometricBaselineButton">Biometrics Baseline</button>
+    <button id="biometricBaselineButton">Biometrics Baseline</button><br>
     <div class="testModule" id="biometricBaselineDiv" style="display:none;">
         <h4>Instructions for EmotiBit</h4>
         <p>Important: Subject must complete the "Subject Information" survey task before the EmotiBit can be started.</p>
@@ -95,22 +99,22 @@
         </ul>
         <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
-    </div><br><br>
+    </div><br>
 
-    <button id="testAudioButton">Test Audio</button>
+    <button id="testAudioButton">Test Audio</button><br>
     <div class="testModule" id="testAudioDiv" style="display:none;">
         <h4>Instructions</h4>
         <ul>
             <li>Please select your audio input or microphone.</li>
             <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
-        </ul>
-        <label for="audioDevices">Select Audio Input Device:</label><br>
-        <select id="audioDevices" onchange="setDevice()"></select>
+        </ul><br>
+        <label for="audioDevices">Select Audio Input Device:</label><br><br>
+        <select id="audioDevices" onchange="setDevice()"></select><br>
     </div> <br>
 
     <h2>Experimental Tasks</h2>
 
-    <button id="tasksButton">Begin Tasks</button>
+    <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
 
         <h3>Experimental Tasks</h3>
@@ -245,7 +249,7 @@
         </div><br>
 
         <button id="taskButton2">Task 2</button><br>
-        <div id="taskDiv2" style="display:none">
+        <div class="innerModule" id="taskDiv2" style="display:none">
             <h4>Task Instructions</h4>
             <ul>
                 <li>Select condition from the drop menu below before beginning the task.</li>
@@ -308,6 +312,7 @@
     <button id="shutdownButton">Shutdown Server</button>
     <script src="/static/js/scripts.js"></script>
     <script>
+        const subjectInstructionsButton = document.getElementById('subjectInstructionsButton');
         const completedTaskButtons = document.querySelectorAll('.endTask');
         const experimentTrialNameButton = document.getElementById('experimentTrialNameButton');
         const addSurveyButton = document.getElementById('addSurveyButton')
@@ -358,7 +363,7 @@
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify(data)
-                    });
+                    })
 
                     if (response.ok) {
                         notificationSuccess.style.display = "block";
@@ -375,6 +380,10 @@
         });
 
         document.addEventListener('DOMContentLoaded', function(){
+            subjectInstructionsButton.addEventListener('click', function(){
+                toggleVis('subjectInstructionsDiv');
+            })
+
             experimentTrialNameButton.addEventListener('click', function() {
                 toggleVis('experimentTrialNameDiv');
             });
