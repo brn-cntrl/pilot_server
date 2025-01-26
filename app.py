@@ -380,22 +380,22 @@ def add_survey() -> Response:
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
-@app.route('/submit_student_data', methods=['POST'])
-def submit_student_data() -> Response:
-    """
-    Route for submitting data for students with PID numbers and class information.
-    This form will be kept local to server for simplicity.
-    """
-    global subject_manager
+# @app.route('/submit_student_data', methods=['POST'])
+# def submit_student_data() -> Response:
+#     """
+#     Route for submitting data for students with PID numbers and class information.
+#     This form will be kept local to server for simplicity.
+#     """
+#     global subject_manager
 
-    try:
-        subject_manager.PID = request.form.get('PID')
-        subject_manager.class_name = request.form.get('class')
+#     try:
+#         subject_manager.PID = request.form.get('PID')
+#         subject_manager.class_name = request.form.get('class')
 
-        return jsonify({'message': 'Student data submitted successfully.'}), 200
+#         return jsonify({'message': 'Student data submitted successfully.'}), 200
     
-    except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
+#     except Exception as e:
+#         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
 
 @app.route('/submit_experiment', methods=['POST'])
 def experiment_name_form():
@@ -404,8 +404,8 @@ def experiment_name_form():
     EXPERIMENT_NAME = request.form.get('experiment_name')
     TRIAL_NAME = request.form.get('trial_name')
 
-    EXPERIMENT_NAME = EXPERIMENT_NAME.replace(" ", "_")
-    TRIAL_NAME = TRIAL_NAME.replace(" ", "_")
+    EXPERIMENT_NAME = clean_string(EXPERIMENT_NAME)
+    TRIAL_NAME = clean_string(TRIAL_NAME)
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -427,33 +427,33 @@ def submit() -> Response:
             subject_manager.experiment_name = EXPERIMENT_NAME
             subject_manager.trial_name = TRIAL_NAME
 
-        # NOTE: get_available_id() is a temporary test method to generate unique IDs
-        # The aws_handler will assign the ID when subject instance is created
-        # at the end of the test session
-        subject_id = get_available_id()
-        subject_name = request.form.get('name')
-        subject_name = subject_name.replace(" ", "_")
-        subject_email = request.form.get('email')
-        subject_email = subject_email.replace(" ", "_")
-        subject_PID = request.form.get('PID')
-        subject_PID = subject_PID.replace(" ", "_")
-        subject_class = request.form.get('class')
-        subject_class = subject_class.replace(" ", "_")
+            # NOTE: get_available_id() is a temporary test method to generate unique IDs
+            # The aws_handler will assign the ID when subject instance is created
+            # at the end of the test session
+            subject_id = get_available_id()
+            subject_name = request.form.get('name')
+            subject_name = clean_string(subject_name)
+            subject_email = request.form.get('email')
+            subject_email = clean_string(subject_email)
+            subject_PID = request.form.get('PID')
+            subject_PID = clean_string(subject_PID)
+            subject_class = request.form.get('class')
+            subject_class = clean_string(subject_class)
 
-        subject_info = {"experiment_name": EXPERIMENT_NAME, "trial_name": TRIAL_NAME, "name": subject_name, 
-                        "id": subject_id, "email": subject_email, "PID": subject_PID, "class_name": subject_class}
+            subject_info = {"experiment_name": EXPERIMENT_NAME, "trial_name": TRIAL_NAME, "name": subject_name, 
+                            "id": subject_id, "email": subject_email, "PID": subject_PID, "class_name": subject_class}
 
-        subject_manager.set_subject(subject_info)
+            subject_manager.set_subject(subject_info)
 
-        audio_file_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-        recording_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-        emotibit_streamer.set_data_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-        emotibit_streamer.initialize_hdf5_file(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+            audio_file_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+            recording_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+            emotibit_streamer.set_data_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+            emotibit_streamer.initialize_hdf5_file(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
 
-        # Prep all forms with username and unique id
-        form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
-        print(form_manager.surveys)
-        return jsonify({'message': 'User information submitted.'}), 200
+            # Prep all forms with username and unique id
+            form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
+            print(form_manager.surveys)
+            return jsonify({'message': 'User information submitted.'}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
@@ -828,6 +828,22 @@ def stop_emotibit() -> None:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
 
 ##################################################################
+def clean_string(input_string):
+    """
+    Cleans a string by replacing spaces with underscores and removing unsafe characters.
+    
+    Args:
+        input_string (str): The string to be cleaned.
+    
+    Returns:
+        str: The cleaned string.
+    """
+    
+    cleaned_string = input_string.replace(" ", "_")
+   
+    cleaned_string = re.sub(r"[^a-zA-Z0-9_\-]", "", cleaned_string)
+    return cleaned_string
+
 def preprocess_text(text) -> str:
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)

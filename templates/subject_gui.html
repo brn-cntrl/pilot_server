@@ -132,7 +132,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function(){
             const pss4Button = document.getElementById('pss4Button');
-            const studentForm = document.getElementById('studentForm');
             const nameForm = document.getElementById('nameForm');
             const subjectInfoComplete = document.getElementById('subjectInfoComplete');
             const studentInfoComplete = document.getElementById('studentInfoComplete');
@@ -319,26 +318,6 @@
                 break2Button.style.display = 'block';
                 break2Div.style.display = 'block';
             });
-
-            studentForm.addEventListener('submit', function(event) {
-                event.preventDefault(); 
-                const formData = new FormData(studentForm); 
-
-                fetch('/submit_student_data', { 
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    notification2.style.display = 'block';
-                    errorNotification2.style.display = 'none';
-                })
-                .catch(error => {
-                    notification2.style.display = 'none';
-                    errorNotification2.style.display = 'block';
-                    console.error('Error:', error);
-                });
-            });
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -354,10 +333,17 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    notification1.style.display = 'block';
-                    errorNotification1.style.display = 'none';
-                    console.log('Success:', data);
-                    loadSurveys();
+                    if (data.message === 'Experiment and trial names must be set.'){
+                        notification2.style.display = "none";
+                        errorNotification2.style.display = "block";
+                        errorNotification2.innerHTML = data.message;
+                        alert(data.message);
+                    } else {
+                        notification1.style.display = 'block';
+                        errorNotification1.style.display = 'none';
+                        console.log(data);
+                        loadSurveys();
+                    }
                 })
                 .catch((error) => {
                     notification1.style.display = 'none';
