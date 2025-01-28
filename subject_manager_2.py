@@ -5,8 +5,6 @@ from datetime import datetime
 
 class SubjectManager:
     def __init__(self) -> None:
-        # Attributes to hold subject's name and ID
-        self._subject_name = None
         self._subject_id = None
         self.csv_file_path = None
         self.txt_file_path = None
@@ -15,25 +13,63 @@ class SubjectManager:
         self.headers = ['Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence']
         self._balance = 0
         self.data_root = "subject_data"
-        self.experiment_name = None
-        self.trial_name = None
+        self._experiment_name = None
+        self._trial_name = None
+        self._subject_folder = None
 
-    @property 
-    def balance(self):
-        return self._balance
-    
-    @balance.setter
-    def balance(self, value):
-        self._balance = value
+        # Only held in RAM and not stored.
+        self._subject_first_name = None 
+        self._subject_last_name = None
+        self._subject_email = None
 
     @property
-    def subject_name(self) -> str:
-        return self._subject_name
+    def subject_first_name(self) -> str:
+        return self._subject_first_name
+    
+    @subject_first_name.setter
+    def subject_first_name(self, value: str) -> None:
+        self._subject_first_name = value
 
-    @subject_name.setter
-    def subject_name(self, value: str) -> None:
-        self._subject_name = value
+    @property
+    def subject_last_name(self) -> str:
+        return self._subject_last_name
+    
+    @subject_last_name.setter
+    def subject_last_name(self, value: str) -> None:
+        self._subject_last_name = value
 
+    @property
+    def subject_email(self) -> str:
+        return self._subject_email
+    
+    @subject_email.setter
+    def subject_email(self, value: str) -> None:
+        self._subject_email = value
+
+    @property
+    def experiment_name(self) -> str:
+        return self._experiment_name
+    
+    @experiment_name.setter
+    def experiment_name(self, value: str) -> None:
+        self._experiment_name = value
+
+    @property
+    def trial_name(self) -> str:
+        return self._trial_name
+    
+    @trial_name.setter
+    def trial_name(self, value: str) -> None:
+        self._trial_name = value
+    
+    @property
+    def subject_folder(self) -> str:
+        return self._subject_folder
+    
+    @subject_folder.setter
+    def subject_folder(self, value: str) -> None:
+        self._subject_folder = value
+    
     @property
     def subject_id(self) -> str:
         return self._subject_id
@@ -51,31 +87,38 @@ class SubjectManager:
             Returns:
                 None
         """
-        self.experiment_name = subject_info["experiment_name"]
-        self.trial_name = subject_info["trial_name"]
-        self.subject_name = subject_info["name"]
         self.subject_id = subject_info["id"]
-        self.subject_email = subject_info["email"]
         self.PID = subject_info["PID"]
         self.class_name = subject_info["class_name"]
         
-        # Create a folder named for the subject ID if it doesn't exist
-        self.subject_folder = os.path.join(self.data_root, self.experiment_name, self.trial_name, self.subject_id)
-        if not os.path.exists(self.subject_folder):
-            os.makedirs(self.subject_folder)
+        if not self.experiment_name or not self.trial_name:
+            raise ValueError("Experiment name and trial name must be set before setting the subject.")
+        
+        else:
+            # Create a folder named for the subject name and ID if it doesn't exist
+            folder_name = self.subject_id
+            self.subject_folder = os.path.join(self.data_root, self.experiment_name, self.trial_name, folder_name)
 
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        self.csv_file_path = f"{self.subject_folder}/{current_date}_{self.subject_name}_{self.subject_id}.csv"
+            if not os.path.exists(self.subject_folder):
+                os.makedirs(self.subject_folder)
 
-        if not os.path.exists(self.csv_file_path):
-            with open(self.csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            self.csv_file_path = f"{self.subject_folder}/{current_date}_{self.subject_id}.csv"
+
+            # DEBUG
+            print("Subject folder set: ", self.subject_folder)
+            print("Subject data csv set: ", self.csv_file_path)
+            
+            self.create_csv(self.csv_file_path)
+    
+    def create_csv(self, csv_file_path: str) -> None:
+        if not os.path.exists(csv_file_path):
+            with open(csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
                 writer = csv.writer(csv_file)
                 
                 writer.writerow([f"Experiment Name: {self.experiment_name}"])
                 writer.writerow([f"Trial Name: {self.trial_name}"])
-                writer.writerow([f"Subject Name: {self.subject_name}"])
                 writer.writerow([f"Subject ID: {self.subject_id}"])
-                writer.writerow([f"Email: {self.subject_email}"])
                 writer.writerow([f"PID: {self.PID}"])
                 writer.writerow([f"Class Name: {self.class_name}"])  
                 writer.writerow(self.headers)  
@@ -96,9 +139,7 @@ class SubjectManager:
                 # Skip the metadata rows (subject info)
                 next(reader)  # Experiment Name
                 next(reader)  # Trial Name
-                next(reader)  # Subject Name
                 next(reader)  # Subject ID
-                next(reader)  # Email
                 next(reader)  # PID
                 next(reader)  # Class Name
 
@@ -141,14 +182,5 @@ class SubjectManager:
 
     def reset_subject(self) -> None:
         """Reset the subject details and clear the CSV file reference."""
-        self.subject_name = None
         self.subject_id = None
         self.csv_file_path = None
-
-    # def write_balance(self, balance: str) -> None:
-    #     with open(self.txt_file_path, mode='w', encoding='utf-8') as file:
-    #         file.write(self.subject_name)
-    #         file.write("\n")
-    #         file.write(self.subject_id)
-    #         file.write("\n")
-    #         file.write(balance)

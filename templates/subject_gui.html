@@ -16,12 +16,15 @@
         <div class="testModule" id="surveysDiv" style="display:block;">
             <h2>Surveys and Participant Information</h2>
             <p>Before performing the tasks, please fill out the following forms and surveys.</p><br>
+            <p>Names will be encrypted to ensure privacy of subject data</p>
 
             <button id="participantInfoButton">Participant Information</button>
             <div class="innerModule" id="participantInfoDiv" style="display:none;">
                 <form action="/submit" method="POST" id="nameForm">
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" required><br><br>
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" required><br><br>
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" required><br><br>
                     <label for="email">Email:</label>
                     <input type="email" id="email" name="email" required><br><br>
                     <p>Please fill out the following information. If not applicable, please write "N/A" in each field:</p>
@@ -31,7 +34,7 @@
                     <button type="submit" id="submitButton">Submit Information</button>
                 </form><br>
                 <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
-                <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
+                <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div><br>
                 <button id="subjectInfoComplete">Task Complete</button><br>
             </div>
 
@@ -56,10 +59,7 @@
         <button id="stressBaselineButton" style="display:none;">Stress Baseline</button>
         <div class="testModule" id="stressBaselineDiv" style="display:none;">
             <p>Please fill out this form.</p>
-            <button id="pss4Button">Stress Baseline Survey</button><br><br>
-            <div id="pss4Div" style="display:none;">
-                <!--TODO: GET URL FROM DANIELA-->
-                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfNs4fUHzXGSlztdj_XHV68YQMOkIHYXNogNzxIdtX_T6KQqw/viewform?usp=pp_url&entry.1447491962=Sample+Name&entry.961474298=Sample+ID" width="80%" height="500px" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe><br><br>
+            <div id="pss4Div1" style="display:none;"></div><br>
             <button id="stressBaselineTaskComplete">Task Complete</button>
         </div><br>
 
@@ -67,7 +67,7 @@
         <div class="testModule" id="testAudioDiv" style="display:none;">
             <p>The experimenter will now attach a microphone to record audio for the session.</p>
             <p>Please press "Record" and read the following out loud to test the audio connection:</p>
-            <button id="testAudio">Record</button>
+            <button id="testAudio">Record</button><br>
             <p id="audioStatusMessage"></p>
             <button id="testAudioTaskComplete">Task Complete</button>
         </div><br>
@@ -80,7 +80,7 @@
                 <li>Speak your answer aloud</li>
                 <li>Press "Submit" to register your answer and receive the next question</li>
             </ul> <br>
-            <button id="beginSERButton">Begin</button>
+            <button id="beginSERButton">Begin</button><br>
             <p id="status" style="display:none;" disabled></p>
             <p id="questionContainer" style="display:none;" disabled></p>
             <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button><br><br>
@@ -96,40 +96,64 @@
             <button id="firstStressTask">First Stressor Task</button>
             <div class="innerModule" id="stressTask1Div" style="display:none;">
                 <p>Stressor task window is now open.</p>
-                <button id="stressTask1Complete">Task Complete</button>
+                <button id="stressTask1Complete">Task Complete</button><br>
             </div><br>
             
             <button id="firstVRTask" style="display:none;">First VR Task</button>
             <div class="innerModule" id="vrTask1Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p> 
-                <button id="VR1Complete">Task Complete</button>
+                <button id="VR1Complete">Task Complete</button><br>
             </div><br>
             
+            <button id="pss4Button2" style="display:none;">PSS4 Survey</button>
+            <div class="innerModule" id="surveyDiv1" style="display:none;">
+                <p>Please fill out this form.</p>
+                <div id="pss4Div2" style="display:none;"></div><br>
+                <button id="pss4Complete2">Task Complete</button><br>
+            </div><br>  
+
             <button class="breakButton" id="break1Button" style="display:none;">Take Break</button>
             <div id="break1Div" style="display:none;">
                 <p>The break window is now open.</p>
-                <button id="break1Complete">Break Complete</button>
+                <button id="break1Complete">Break Complete</button><br>
             </div><br>
             
             <button id="secondStressTask" style="display:none;">Second Stressor Task</button>
             <div class="innerModule" id="stressTask2Div" style="display:none;">
                 <p>Stressor task window is open.</p>
-                <button id="stressTask2Complete">Task Complete</button>
+                <button id="stressTask2Complete">Task Complete</button><br>
             </div><br>
 
             <button id="secondVRTask" style="display:none;">Second VR Task / Control</button>
             <div class="innerModule" id="vrTask2Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p>
-                <button id="VR2Complete">Task Complete</button>
+                <button id="VR2Complete">Task Complete</button><br>
+            </div><br>
+
+            <button id="pss4Button3" style="display:none;">PSS4 Survey</button>
+            <div class="innerModule" id="surveyDiv2" style="display:none;">
+                <p>Please fill out this form.</p>
+                <div id="pss4Div3" style="display:none;"></div><br>
+                <button id="pss4Complete3">Task Complete</button><br>
             </div><br>
 
             <button class="breakButton" id="break2Button" style="display:none">Take a Break</button>
             <div class="innerModule" id="break2Div" style="display:none;">
                 <p>The break window is now open.</p>
-                <button id="break2Complete">Break Complete</button>
-                <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
+                <button id="break2Complete">Break Complete</button><br>
             </div>
         </div>
+    </div>
+    <div id="postTestDiv" style="display:none;">
+        <h2>Post Test</h2>
+        <p>Please fill out the surveys or tasks below.</p>
+        <div class="testModule" style="display:block;">
+            <button id="exitSurveyButton">Exit Survey</button>
+            <div class="innerModule" id="exitSurveyDiv" style="display:none;"></div><br>
+            <button id="postTestComplete">Task Complete</button><br>
+            <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
+        </div>
+        
     </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
@@ -160,8 +184,6 @@
             const errorNotification1 = document.getElementById('errorNotification1');
             const studentDiv = document.getElementById('studentDiv');
             const stressBaselineTaskComplete = document.getElementById('stressBaselineTaskComplete');
-            const notification2 = document.getElementById('notification2');
-            const errorNotification2 = document.getElementById('errorNotification2');
             const surveysNote = document.getElementById('surveysNote');
             const surveyStatus = document.getElementById('surveyStatus');
             const biometricBaselineButton = document.getElementById('biometricBaselineButton');
@@ -190,9 +212,24 @@
             const secondVRTask = document.getElementById('secondVRTask');
             const vrTask2Div = document.getElementById('vrTask2Div');
             const completeMessage = document.getElementById('completeMessage');
+            const pss4Button2 = document.getElementById('pss4Button2');
+            const pss4Button3 = document.getElementById('pss4Button3');
+            const surveyDiv1 = document.getElementById('surveyDiv1');
+            const surveyDiv2 = document.getElementById('surveyDiv2');
+            const pss4Complete2 = document.getElementById('pss4Complete2');
+            const pss4Complete3 = document.getElementById('pss4Complete3');
+            const postTestDiv = document.getElementById('postTestDiv');
+            const exitSurveyButton = document.getElementById('exitSurveyButton');
+            const exitSurveyDiv = document.getElementById('exitSurveyDiv');
+            const postTestComplete = document.getElementById('postTestComplete');
 
+            let pss4;
             let breakWin;
             let breakButtons = document.getElementsByClassName('breakButton');
+            let pss4Div1 = document.getElementById('pss4Div1');
+            let pss4Div2 = document.getElementById('pss4Div2');
+            let pss4Div3 = document.getElementById('pss4Div3');
+
             for (let i = 0; i < breakButtons.length; i++) {
                 breakButtons[i].addEventListener('click', function() {
                     breakWin = window.open('/break_page', '_blank', 'width=800, height=600');
@@ -209,7 +246,8 @@
                 toggleVis('stressTask2Div');
             });
         });
-    
+        
+        // Resets emotion baseline question index to 0 when page is loaded
         window.onload = function(){
             fetch("/reset_ser_question_index", {
                 method: "POST",
@@ -249,6 +287,18 @@
             break2Button.addEventListener('click', function() {
                 toggleVis('break2Div');
             });
+
+            pss4Button2.addEventListener('click', function() {
+                toggleVis('surveyDiv1');
+            });
+
+            pss4Button3.addEventListener('click', function() {
+                toggleVis('surveyDiv2');
+            }); 
+
+            exitSurveyButton.addEventListener('click', function(){
+                toggleVis('exitSurveyDiv');
+            })
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -296,7 +346,7 @@
             });
 
             break2Complete.addEventListener('click', function(){
-                completeMessage.style.display = 'block';
+                postTestDiv.style.display = 'block';
             });
 
             stressTask2Complete.addEventListener('click', function(){
@@ -307,6 +357,9 @@
             VR2Complete.addEventListener('click', function(){
                 break2Button.style.display = 'block';
                 break2Div.style.display = 'block';
+            });
+            postTestComplete.addEventListener('click', function(){
+                completeMessage.style.display = 'block';
             });
         });
 
@@ -323,16 +376,27 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.message === 'Experiment and trial names must be set.'){
-                        notification2.style.display = "none";
-                        errorNotification2.style.display = "block";
-                        errorNotification2.innerHTML = data.message;
+                    if (data.message === 'Experiment and trial names must be set.' || data.message === "Invalid email address."){
+                        notification1.style.display = "none";
+                        errorNotification1.style.display = "block";
+                        errorNotification1.innerHTML = data.message;
                         alert(data.message);
+                    
                     } else {
                         notification1.style.display = 'block';
                         errorNotification1.style.display = 'none';
                         console.log(data);
-                        loadSurveys();
+                        // loadSurveys();
+                        pss4 = data.pss4;
+                        exitSurvey = data.exit_survey;
+                        pss4Div1.innerHTML = `<iframe src="${pss4}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        pss4Div1.style.display = 'block';
+                        pss4Div2.innerHTML = `<iframe src="${pss4}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        pss4Div2.style.display = 'block';
+                        pss4Div3.innerHTML = `<iframe src="${pss4}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        pss4Div3.style.display = 'block';
+                        exitSurveyDiv.innerHTML = `<iframe src="${exitSurvey}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        exitSurveyDiv.style.display = 'block';
                     }
                 })
                 .catch((error) => {
@@ -341,12 +405,6 @@
                     console.error('Error:', error);
                 });
             })
-        });
-
-        document.addEventListener('DOMContentLoaded', function(){
-            pss4Button.addEventListener('click', function(){
-
-            });
         });
 
         document.addEventListener('DOMContentLoaded', function(){

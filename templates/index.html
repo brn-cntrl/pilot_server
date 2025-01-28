@@ -27,7 +27,7 @@
             <label for="trial_name">Trial Name:</label>
             <input type="text" id="trial_name" name="trial_name" required><br><br>
             <button type="submit">Submit</button>
-        </form>
+        </form><br>
         <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
         <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div>
     </div><br>
@@ -53,38 +53,12 @@
             <li>Subject must fill out any additional surveys as they appear.</li>
             <li>Additional surveys may be added below.</li>
         </ul><br>
-
-        <!-- TODO: Add survey list here -->
-
-        <p><span class="required">*</span>Add any additional surveys and be sure to submit participant information before filling out surveys</p>
-        <button id="addSurveyButton">Add Survey</button><br>
-        <div class="innerModule" id="addSurveyDiv" style="display:none;" disabled>
-            <h4>Instructions for adding surveys</h4>
-            <ul>
-                <li>Enter the survey name (no spaces) in the first field.</li>
-                <li>In Google Forms, be sure to create "Name" and "ID" fields at the top of the survey.</li>
-                <li>Prefill each of these with the dummy values: "Sample Name", and "Sample ID".</li>
-                <li>In "Edit" mode, select "more" in the upper right corner (three pip menu).</li>
-                <li>Select "Get prefilled link" and copy the generated link.</li>
-                <li>Paste the link in the URL field of this form.</li>
-                <li>Click "Submit Survey" to add the survey to the list of surveys.</li>
-            </ul>
-
-            <form action="/add_survey" id="addSurveyForm" method="POST">
-                <label for="surveyName">Survey Name:</label>
-                <input type="text" id="surveyName" name="surveyName" required><br><br>
-                <label for="surveyLink">Survey URL:</label>
-                <input type="text" id="surveyLink" name="URL" required><br><br>
-                <button type="submit">Submit Survey</button>
-            </form><br>
-            <div id="notification3" style="display:none; color: green;">Survey added successfully!</div>
-            <div id="errorNotification3" style="display:none; color: red;">Error adding survey.</div>
-        </div><br>
-
-        <div id="surveyList">
+        <!-- <p><span class="required">*</span>Add any additional surveys and be sure to submit participant information before filling out surveys</p> -->
+        <!-- <div id="surveyList">
             <h4>Current Surveys in Test Procedure</h4>
             <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
-        </div>
+        </div> -->
+
     </div><br>
 
     <button id="biometricBaselineButton">Biometrics Baseline</button><br>
@@ -304,21 +278,104 @@
     </div><br>
 
     <h2>Post-Test</h2>
-    <button id="stopEmotibit">Stop Emotibit</button><br><br>
-    <button id="exitSurveyButton">Exit Survey</button><br><br>
-    <button id="uploadSubjectData">Upload Experiment Data</button><br><br>
+    <div class="testModule">
+        <button id="stopEmotibit">Stop Emotibit</button><br><br>
+        <button id="addSurveyButton">External Surveys</button><br>
+        <div class="innerModule" id="addSurveyDiv" style="display:none;" disabled>
+            <h4>Upload External Surveys</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>First dowload the survey csv from Google Forms. Be sure to choose a download destination</li>
+                <li>Click "Upload File", navigate to the destination folder and select the csv.</li>
+            </ul><br>
+            <button onclick="openFileDialog()">Upload File</button><br><br>
+            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)" />
+            <p id="uploadCSVstatus"></p>
+        </div><br>
+
+        <button id="postProcessingButton">Post Processing</button>
+        <div class="innerModule" id="postProcessingDiv" style="display:none;">
+            <h4>EmotiBit Post Processing</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Click "Process EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
+            </ul><br>
+            <button id="uploadSubjectData">Process EmotiBit Data</button><br><br>
+            <p id="postProcessingStatus"></p>
+        </div><br>
+    </div>
+
+    <h2>More Tools</h2>
+    <div class="testModule">
+        <button id="encryptionButton">Subject Encryption</button>
+        <div class="innerModule" id="encryptionDiv">
+            <h4>Encrypt Subject Name and Email</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Use this to derive the encrypted ID of subject if you need to search the subject data files for a match.</li>
+                <li>Otherwise, this algorithm runs automatically when subjects enter their information on the subject dashboard.</li>
+                <li>Enter the subject's first name, last name, and email address below.</li>
+                <li>Click "Encrypt Subject" to generate a unique subject ID.</li>
+            </ul>
+            <form id="encryptSubject" action="/encrypt_subject" method="POST">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required><br><br>
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required><br><br>
+                <label for="email">Email:</label>
+                <input type="text" id="email" name="email" required><br><br>
+                <button type="submit">Encrypt Subject</button>
+            </form>
+            <p id="notification3" style="display:none; color: green;">Subject ID generated successfully!</p>
+            <p id="errorNotification3" style="display:none; color: red;">Error generating subject ID.</p>
+            <p id="encryptionStatus" style="display:none;"></p><br>
+            
+        </div><br>
+
+        <button id="decryptionButton">Subject Decryption</button>
+        <div class="innerModule" id="decryptionDiv">
+            <h4>Encrypt Subject Name and Email</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Use this to get the first name, last name, and email of subject if you need to search the subject data files for a match.</li>
+                <li>Enter the encryption string.</li>
+                <li>Click "Decrypt Subject" to generate a unique subject ID.</li>
+            </ul>
+            <form id="decryptSubject" action="/decrypt_subject" method="POST">
+                <label for="id_string">Encrypted ID String:</label>
+                <input type="text" id="id_string" name="id_string" required><br><br>
+                <button type="submit">Decrypt Subject</button>
+            </form>
+            <p id="notification4" style="display:none; color: green;">Subject name and email retrieved successfully!</p>
+            <p id="errorNotification4" style="display:none; color: red;">Error getting name and email.</p>
+            <p id="decryptionStatusName" style="display:none;"></p>
+            <p id="decryptionStatusEmail" style="display:none;"></p>
+        </div>
+    </div><br>
 
     <h2>Shutdown</h2>
     <button id="shutdownButton">Shutdown Server</button>
+
     <script src="/static/js/scripts.js"></script>
     <script>
+        const encryptSubject = document.getElementById('encryptSubject');
+        const decryptSubject = document.getElementById('decryptSubject');
+        const decryptionButton = document.getElementById('decryptionButton');
+        const decryptionDiv = document.getElementById('decryptionDiv');
+        const decryptionStatusName = document.getElementById('decryptionStatusName');
+        const decryptionStatusEmail = document.getElementById('decryptionStatusEmail');
+        const encryptionButton = document.getElementById('encryptionButton');
+        const encryptionDiv = document.getElementById('encryptionDiv');
+        const encryptionStatus = document.getElementById('encryptionStatus');
+        const postProcessingButton = document.getElementById('postProcessingButton');
+        const postProcessingDiv = document.getElementById('postProcessingDiv');
+        const postProcessingStatus = document.getElementById('postProcessingStatus');   
         const subjectInstructionsButton = document.getElementById('subjectInstructionsButton');
         const completedTaskButtons = document.querySelectorAll('.endTask');
         const experimentTrialNameButton = document.getElementById('experimentTrialNameButton');
         const addSurveyButton = document.getElementById('addSurveyButton')
         const beginExperimentButton = document.getElementById('beginExperimentButton');
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
-        const exitSurveyButton = document.getElementById('exitSurveyButton');
         const testAudioButton = document.getElementById('testAudioButton');
         const firstStressTask = document.getElementById('firstStressTask');
         const secondStressTask = document.getElementById('secondStressTask');
@@ -343,43 +400,88 @@
         const shutdownButton = document.getElementById('shutdownButton');
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
+        const notification4 = document.getElementById('notification4');
+        const errorNotification4 = document.getElementById('errorNotification4');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = encryptSubject;
+            form.addEventListener("submit", function(event){
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch("/encrypt_subject", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    encryptionStatus.innerText = `Encrypted ID: ${data.subject_id}`;
+                    encryptionStatus.style.display = "block";
+                    notification3.style.display = "block";
+                    errorNotification3.style.display = "none";
+                })
+                .catch(error => {
+                    notification3.style.display = "none";
+                    errorNotification3.style.display = "block";
+                });
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = decryptSubject;
+            form.addEventListener("submit", function(event){
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch("/decrypt_subject", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    decryptionStatusName.innerText = `Full Name: ${data.full_name}`;
+                    decryptionStatusName.style.display = "block";
+                    decryptionStatusEmail.innerText = `Email: ${data.email}`;
+                    decryptionStatusEmail.style.display = "block";
+                    notification4.style.display = "block";
+                    errorNotification4.style.display = "none";
+                })
+                .catch(error => {
+                    notification4.style.display = "none";
+                    errorNotification4.style.display = "block";
+                });
+            });
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
             const form = document.getElementById('experimentNameForm');
             const notification = document.getElementById("notification1");
             const errorNotification = document.getElementById("errorNotification1");
 
-            form.addEventListener("submit", async (event) => {
+            form.addEventListener("submit", function(event){
                 event.preventDefault();
                 const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-
-                try {
-                    const response = await fetch(form.action, {
-                        method: form.method,
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(data)
-                    })
-
-                    if (response.ok) {
-                        notificationSuccess.style.display = "block";
-                        notificationError.style.display = "none";
-                    } else {
-                        notificationSuccess.style.display = "none";
-                        notificationError.style.display = "block";
-                    }
-                } catch (error) {
-                    notificationSuccess.style.display = "none";
-                    notificationError.style.display = "block";
-                }
+                fetch("/submit_experiment", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    notification.style.display = "block";
+                    errorNotification.style.display = "none";
+                })
+                .catch(error => {
+                    notification.style.display = "none";
+                    errorNotification.style.display = "block";
+                });
             });
         });
-
+            
         document.addEventListener('DOMContentLoaded', function(){
+            postProcessingButton.addEventListener('click', function(){
+                toggleVis('postProcessingDiv');
+            });
+
             subjectInstructionsButton.addEventListener('click', function(){
                 toggleVis('subjectInstructionsDiv');
             })
@@ -398,11 +500,6 @@
 
             launchSubjectGUI.addEventListener('click', function() {
                 window.open('/subject_gui', '_blank', 'width=1200, height=720');
-            });
-            
-            // TODO: add G Form surveys
-            exitSurveyButton.addEventListener('click', function() {
-                window.open('/exit_survey', '_blank');
             });
 
             testAudioButton.addEventListener('click', function() {
@@ -459,27 +556,6 @@
         });
         
         document.addEventListener('DOMContentLoaded', function(){
-            const form = document.getElementById('addSurveyForm');
-            form.addEventListener('submit', function(event){
-                event.preventDefault();
-                const formData = new FormData(form);
-                fetch('/add_survey', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    notification3.style.display = 'block';
-                    errorNotification3.style.display = 'none';
-                    loadSurveys();
-                })
-                .catch(error => {
-                    notification3.style.display = 'none';
-                    errorNotification3.style.display = 'block';
-                    console.error('Error:', error);
-                });
-            });
-
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     setEventMarker('biometric_baseline');
@@ -625,16 +701,43 @@
                 }
             }
             
+            function openFileDialog(){
+                document.getElementById('fileInput').click();
+            }
 
+            const uploadCSVstatus = document.getElementById('uploadCSVstatus');
+            function handleFileSelect(event){
+                const file = event.target.files[0];
+                if(file){
+                    console.log("Selected File: ", file.name);
+                    const formData = new FormData();
+                    formData.append('csv_file', file);
+                    fetch('/upload_survey_file', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        uploadCSVstatus.innerText = data.message;
+                    })
+                    .catch(error => uploadCSVstatus.innerText = 'Error uploading file.');
+                } else {
+                    uploadCSVstatus.innerText = 'No file selected.';
+                }
+            }
             uploadSubjectData.addEventListener('click', function() {
                 fetch('/upload_subject_data', {
                     method: 'POST'
                 })
                 .then(response => response.json())
                 .then(data => {
+                    postProcessingStatus.innerText = data.message;
                     console.log(data.message);
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    postProcessingStatus.innerText = 'Error processing data.';
+                    console.error('Error:', error);
+                });
             });
         });
 

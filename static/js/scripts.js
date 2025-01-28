@@ -389,28 +389,28 @@ function emotibitRecording(button, action){
         });
     }
 }
-async function loadSurveys(){
-    try {
-        const response = await fetch('/get_surveys');
-        const surveys = await response.json();
-        const container = document.getElementById('surveyButtons');
-        container.innerHTML = '';
-        console.log(surveys);
-        surveys.forEach(survey => {
-            if (survey.url.trim()) {
-                const button = document.createElement('button');
-                button.textContent = survey.name.charAt(0).toUpperCase() + survey.name.slice(1);
-                button.onclick = () => window.open(`/survey/${survey.name}`, '_blank');
-                container.appendChild(button);
-                const br1 = document.createElement('br');
-                const br2 = document.createElement('br');
-                container.appendChild(br1);
-                container.appendChild(br2);
-            }
-        });
-        // document.getElementById("surveyStatus").style.display = "none";
-    } catch(error){
-        console.error('Error fetching surveys:', error);
-        // document.getElementById("surveyStatus").style.display = "block";
-    } 
-}
+// async function loadSurveys(){
+//     try {
+//         const response = await fetch('/get_surveys');
+//         const surveys = await response.json();
+//         const container = document.getElementById('surveyButtons');
+//         container.innerHTML = '';
+//         console.log(surveys);
+//         surveys.forEach(survey => {
+//             if (survey.url.trim()) {
+//                 const button = document.createElement('button');
+//                 button.textContent = survey.name.charAt(0).toUpperCase() + survey.name.slice(1);
+//                 button.onclick = () => window.open(`/survey/${survey.name}`, '_blank');
+//                 container.appendChild(button);
+//                 const br1 = document.createElement('br');
+//                 const br2 = document.createElement('br');
+//                 container.appendChild(br1);
+//                 container.appendChild(br2);
+//             }
+//         });
+//         // document.getElementById("surveyStatus").style.display = "none";
+//     } catch(error){
+//         console.error('Error fetching surveys:', error);
+//         // document.getElementById("surveyStatus").style.display = "block";
+//     } 
+// }

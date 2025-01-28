@@ -12,7 +12,6 @@ import librosa
 import signal 
 import re
 import speech_recognition as sr
-
 from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
@@ -33,11 +32,9 @@ emotibit_thread = None
 
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
-DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
-TABLE = DYNAMODB.Table('Users')
-ID_TABLE = DYNAMODB.Table('available_ids')
-EXPERIMENT_NAME = None
-TRIAL_NAME = None
+# DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
+# TABLE = DYNAMODB.Table('Users')
+# ID_TABLE = DYNAMODB.Table('available_ids')
 
 # Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
 subject_manager = SubjectManager() 
@@ -354,53 +351,46 @@ def shutdown() -> Response:
 
     return response
 
-@app.route('/add_survey', methods=['POST'])
-def add_survey() -> Response:
-    """
-    Route for adding surveys to the form manager.
-    Args:
-        survey_name (str): The name of the survey.
-        url (str): The URL of the survey.
-    Returns:
-        Response: A JSON response indicating the status of the survey
-    """
-    global subject_manager, form_manager
-    try:
-        survey_name = request.form.get('surveyName')
-        url = request.form.get('URL')
-        form_manager.add_survey(survey_name, url)
-
-        return jsonify({'message': 'Survey added successfully.'}), 200
-  
-    except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
-# @app.route('/submit_student_data', methods=['POST'])
-# def submit_student_data() -> Response:
-#     """
-#     Route for submitting data for students with PID numbers and class information.
-#     This form will be kept local to server for simplicity.
-#     """
-#     global subject_manager
-
-#     try:
-#         subject_manager.PID = request.form.get('PID')
-#         subject_manager.class_name = request.form.get('class')
-
-#         return jsonify({'message': 'Student data submitted successfully.'}), 200
-    
-#     except Exception as e:
-#         return jsonify({'error': f'An error occurred: {str(e)}'}), 400
-
 @app.route('/submit_experiment', methods=['POST'])
-def experiment_name_form():
+def submit_experiment() -> Response:
     global subject_manager
 
-    EXPERIMENT_NAME = request.form.get('experiment_name')
-    TRIAL_NAME = request.form.get('trial_name')
+    experiment_name = request.form.get('experiment_name')
+    trial_name = request.form.get('trial_name')
 
-    EXPERIMENT_NAME = clean_string(EXPERIMENT_NAME)
-    TRIAL_NAME = clean_string(TRIAL_NAME)
+    if not experiment_name or not trial_name:
+        return jsonify({"error": "Missing experiment_name or trial_name"}), 400
+    
+    subject_manager.experiment_name = form_manager.clean_string(experiment_name)
+    subject_manager.trial_name = form_manager.clean_string(trial_name)
+    
+    # DEBUG
+    print("Subject Experiment: ", subject_manager.experiment_name)
+    print("Subject Trial: ", subject_manager.trial_name)
+
+    return jsonify({'message': 'Experiment and trial names submitted.'}), 200
+
+@app.route('/upload_survey_file', methods=['POST'])
+def upload_survey_csv() -> Response:
+    global subject_manager, form_manager
+
+    if subject_manager.subject_folder is None:
+        return jsonify({'message': 'Subject informatin is not set.'}), 400
+    else:
+        try:
+            if 'file' not in request.files:
+                return jsonify({'message': 'No file part.'}), 400
+            
+            file = request.files['file']
+            filename = file.filename
+            filename = os.path.splitext(filename)[0]
+
+            form_manager.clean_survey_info(file, filename, subject_manager)
+
+            return jsonify({'message': 'File uploaded successfully.'}), 200
+        
+        except Exception as e:
+            return jsonify({'message': 'Error uploading file.'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -412,47 +402,97 @@ def submit() -> Response:
     When the subject_manager's set_subject() function is triggered, the subject_manager creates a 
     new .csv file with name, id, PID, and class name as metadata at the head of the document.
     """
-    global subject_manager, form_manager, audio_file_manager, emotibit_streamer, recording_manager
-    global EXPERIMENT_NAME, TRIAL_NAME
+    global subject_manager, form_manager, audio_file_manager, emotibit_streamer
+
+    experiment_name = subject_manager.experiment_name
+    trial_name = subject_manager.trial_name
     try:
-        if EXPERIMENT_NAME is None or TRIAL_NAME is None:
+        if experiment_name is None or trial_name is None:
             return jsonify({'message': 'Experiment and trial names must be set.'}), 400
         
         else:
-            subject_manager.experiment_name = EXPERIMENT_NAME
-            subject_manager.trial_name = TRIAL_NAME
-
             # NOTE: get_available_id() is a temporary test method to generate unique IDs
             # The aws_handler will assign the ID when subject instance is created
             # at the end of the test session
-            subject_id = get_available_id()
-            subject_name = request.form.get('name')
-            subject_name = clean_string(subject_name)
-            subject_email = request.form.get('email')
-            subject_email = clean_string(subject_email)
-            subject_PID = request.form.get('PID')
-            subject_PID = clean_string(subject_PID)
-            subject_class = request.form.get('class')
-            subject_class = clean_string(subject_class)
+            subject_first_name = request.form.get('first_name')
+            subject_first_name = form_manager.clean_string(subject_first_name)
+            subject_manager.subject_first_name = subject_first_name
 
-            subject_info = {"experiment_name": EXPERIMENT_NAME, "trial_name": TRIAL_NAME, "name": subject_name, 
-                            "id": subject_id, "email": subject_email, "PID": subject_PID, "class_name": subject_class}
+            subject_last_name = request.form.get('last_name')
+            subject_last_name = form_manager.clean_string(subject_last_name)
+            subject_manager.subject_last_name = subject_last_name
+
+            subject_email = request.form.get('email')
+            is_email = is_valid_email(subject_email)
+            if not is_email:
+                return jsonify({'message': 'Invalid email address.'}), 400
+            
+            subject_manager.subject_email = subject_email
+            subject_id = encrypt_name(subject_first_name, subject_last_name, subject_email)
+
+            subject_PID = request.form.get('PID')
+            subject_PID = form_manager.clean_string(subject_PID)
+            subject_class = request.form.get('class')
+            subject_class = form_manager.clean_string(subject_class)
+
+            subject_info = {"id": subject_id, "PID": subject_PID, "class_name": subject_class}
 
             subject_manager.set_subject(subject_info)
+            audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
+            
+            try:
+                subject_manager.set_subject(subject_info)
+                audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
 
-            audio_file_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-            recording_manager.set_audio_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-            emotibit_streamer.set_data_folder(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
-            emotibit_streamer.initialize_hdf5_file(EXPERIMENT_NAME, TRIAL_NAME, subject_id)
+                # DEBUG
+                print("Audio Manager Folder: ", audio_file_manager.audio_folder)
+                emotibit_streamer.set_data_folder(experiment_name, trial_name, subject_id)
+                emotibit_streamer.initialize_hdf5_file(experiment_name, trial_name, subject_id)
 
-            # Prep all forms with username and unique id
-            form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
-            print(form_manager.surveys)
-            return jsonify({'message': 'User information submitted.'}), 200
+                # DEBUG
+                print("EmotiBit Data Folder: ", emotibit_streamer.data_folder)
+                print("EmotiBit H5 File: ", emotibit_streamer.hdf5_filename)
+
+            except Exception as e:
+                print(f"Error setting EmotiBit data folder: {str(e)}")
+
+            # form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
+            pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
+            exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
+
+            if pss4 is None:  # Check if survey was found
+                print(f"Survey with name 'pss4' not found.")
+            
+            return jsonify({'message': 'User information submitted.', 'pss4': pss4, 'exit_survey': exit_survey}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
+
+@app.route('/encrypt_subject', methods=['POST'])
+def encrypt_subject() -> Response:
+    global form_manager
     
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    first_name = form_manager.clean_string(first_name)
+    last_name = form_manager.clean_string(last_name)
+
+    email = request.form.get('email')
+    if not is_valid_email(email):
+        return jsonify({'message': 'Invalid email address.'}), 400
+    
+    subject_id = encrypt_name(first_name, last_name, email)
+
+    return jsonify({'subject_id': subject_id})
+
+@app.route('/decrypt_subject', methods=['POST'])
+def decrypt_subject() -> Response:
+    subject_id = request.form.get('id_string')
+    firstname, lastname, email = decrypt_name(subject_id)
+    fullname = f"{firstname} {lastname}"
+
+    return jsonify({'full_name': fullname, 'email': email})
+
 ##################################################################
 ## Audio Routes
 ##################################################################
@@ -822,22 +862,36 @@ def stop_emotibit() -> None:
     except Exception as e:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
 
-##################################################################
-def clean_string(input_string):
-    """
-    Cleans a string by replacing spaces with underscores and removing unsafe characters.
+# File and System Ops ############################################
+def is_valid_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    if re.match(pattern, email):
+        return True
+    else:
+        return False
+
+def encrypt_name(firstname: str, lastname: str, email: str) -> str:
+    """Encrypts the subject's name and email into a reversible string."""
     
-    Args:
-        input_string (str): The string to be cleaned.
+    # Just double checking here
+    firstname = firstname.lower().replace(" ", "_")
+    lastname = lastname.lower().replace(" ", "_")
+    email = email.lower()
+
+    fullname = f"{firstname}_{lastname}"
+    combined = f"{fullname}|{email}"
+    obfuscated = "".join(chr(ord(c) + 3) for c in combined[::-1])
+
+    return obfuscated
+
+def decrypt_name(obfuscated: str) -> tuple:
+    """Decrypts the obfuscated string back into the original name and email."""
     
-    Returns:
-        str: The cleaned string.
-    """
-    
-    cleaned_string = input_string.replace(" ", "_")
-   
-    cleaned_string = re.sub(r"[^a-zA-Z0-9_\-]", "", cleaned_string)
-    return cleaned_string
+    combined = "".join(chr(ord(c) - 3) for c in obfuscated)[::-1]
+    name, email = combined.split("|", 1)
+    firstname, lastname = name.split("_", 1)
+    return firstname, lastname, email
 
 def preprocess_text(text) -> str:
     text = text.lower()
@@ -854,26 +908,37 @@ def is_folder_empty(app, folder_name) -> bool:
     folder_path = os.path.join(app.root_path, folder_name)
     return not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0
 
-def initialize_ids(filename="available_ids.txt") -> None:
-    if not os.path.exists(filename):
-        with open(filename, 'w') as f:
-            for i in range (1, 501):
-                f.write(f"1_1_{i}\n")
+def generate_unique_id(file_path='ID_list.txt') -> str:
+    import random
+    import string
+    """
+    Generates a unique, pseudorandom ID string of fixed length 8, checks if it's logged in a text file,
+    logs it if not found, and returns the string.
 
-def get_available_id(filename='available_ids.txt') -> str:
-    # TODO: The list of available ids should be determined by a call to the AWS server
-    # and not by a txt file. This is a temporary solution until the server is set up.
+    Args:
+        file_path (str): Path to the text file where IDs are logged.
 
-    with open(filename, 'r') as f:
-        ids = f.read().splitlines()
-        if ids:
-            assigned_id = ids[0]
-            with open(filename, 'w') as f:
-                f.write('\n'.join(ids[1:]))
-            return assigned_id
-        else:
-            raise Exception('No more IDs available')
-    
+    Returns:
+        str: The unique ID string.
+    """
+    id_length = 12
+
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            pass
+
+    # Generate and check for uniqueness
+    while True:
+        random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=id_length - 2))
+        unique_id = random_part[:3] + '-' + random_part[3:7] + '-' + random_part[7:]
+        
+        with open(file_path, 'r+') as f:
+            logged_ids = f.read().splitlines()
+
+            if unique_id not in logged_ids:
+                f.write(unique_id + '\n')
+                return unique_id
+
 def shutdown_server() -> None:
     time.sleep(1)
     pid = os.getpid()
@@ -927,9 +992,6 @@ def run_flask():
 if __name__ == '__main__':
     # Suppress warnings 
     warnings.filterwarnings("ignore")
-
-    # TODO: replace this with a call to the AWS server to retrieve the list of available IDs
-    initialize_ids()
 
     # TODO: For now, debug must be set to false when Emotibit streaming code is active.
     # This is because the port used by the EmotiBit will report as in use when in debug mode.
