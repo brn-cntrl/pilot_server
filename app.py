@@ -156,7 +156,7 @@ def process_ser_answer() -> Response:
 
         ts = recording_manager.timestamp
         
-        file_name = f"ID_{id}_{ts}_ser_baseline_question_{test_manager.current_ser_question_index}.wav"
+        file_name = f"{id}_{ts}_ser_baseline_question_{test_manager.current_ser_question_index}.wav"
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
@@ -164,7 +164,7 @@ def process_ser_answer() -> Response:
 
         # AUDIO STORAGE
         id = subject_manager.subject_id
-        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name)
+        audio_file_manager.save_audio_file(file_name)
 
         return jsonify({'status': 'Answer submitted.'})
     
@@ -297,13 +297,13 @@ def submit_answer() -> Response:
         id = subject_manager.subject_id
 
         # TODO: Fix event marker on test page
-        file_name = f"ID_{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+        file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
         try:
             # sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
             # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
             # ser, confidence = ser_manager.predict_emotion(resampled_sig)
 
-            audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name)
+            audio_file_manager.save_audio_file(file_name)
 
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -471,7 +471,7 @@ def submit() -> Response:
 @app.route('/encrypt_subject', methods=['POST'])
 def encrypt_subject() -> Response:
     global form_manager
-    
+
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
     first_name = form_manager.clean_string(first_name)
@@ -570,7 +570,8 @@ def task_audio_recording():
     action = data.get('action')
     question = data.get('question')
     event_marker = data.get('event_marker')
-    
+    event_marker = f"{event_marker}_question_{question}"
+
     if action == 'start':
         recording_manager.start_recording()
         emotibit_streamer.event_marker = event_marker
@@ -582,12 +583,12 @@ def task_audio_recording():
         ts = recording_manager.timestamp
         id = subject_manager.subject_id
 
-        file_name = f"ID_{id}_{ts}_{event_marker}_question_{question}.wav"
+        file_name = f"{id}_{ts}_{event_marker}.wav"
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
         
-        audio_file_manager.save_audio_file(audio_file_manager.recording_file, file_name, 'audio_files')
+        audio_file_manager.save_audio_file(file_name)
 
         return jsonify({'message': 'Recording stopped.'}), 200
     else:

@@ -32,19 +32,22 @@ class AudioFileManager:
         if not os.path.exists(self.audio_folder):
             os.makedirs(self.audio_folder)
 
-    def save_audio_file(self, old_path_filename, new_filename) -> None:
+        # DEBUG
+        print("Audio folder set for audio manager: ", self.audio_folder)
+
+    def save_audio_file(self, new_filename) -> None:
         try:
             os.makedirs(self.audio_folder, exist_ok=True)
             new_filename = os.path.join(self.audio_folder, new_filename)
-            shutil.copy(old_path_filename, new_filename)
+            shutil.copy(self.recording_file, new_filename)
 
-            print(f"File '{old_path_filename}' saved successfully.")
+            print(f"File '{self.recording_file}' saved as {new_filename} in {self.audio_folder}.")
         except PermissionError:
-            print(f"Permission denied: Unable to save file '{old_path_filename}'. Check file permissions.")
+            print(f"Permission denied: Unable to save file '{self.recording_file}'. Check file permissions.")
         except FileNotFoundError:
-            print(f"File not found: '{old_path_filename}' might have already been deleted.")
+            print(f"File not found: '{self.recording_file}' might have already been deleted.")
         except Exception as e:
-            print(f"An error occurred while trying to save the file '{old_path_filename}': {str(e)}")
+            print(f"An error occurred while trying to save the file '{self.recording_file}': {str(e)}")
 
     def delete_recording_file(self, file_path) -> None:
         try:

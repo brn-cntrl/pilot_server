@@ -91,8 +91,7 @@
                 setTimeout(() => {
                     player3.play();
                     status2.innerHTML = 'Section finished.';
-                }, 2000);  // 2 seconds delay
-
+                }, 2000);  
             });
 
             player3.addEventListener('play', function() {
@@ -110,11 +109,22 @@
 
             player3.addEventListener('ended', function() {
                 status3.innerHTML = 'Recording started... 3 minute timer started.';
+                setTimeout(function() {
+                    let beepCount = 0;
+                    const interval = setInterval(function() {
+                        playBeep();
+                        beepCount++;
+                        if (beepCount === 2) {
+                            clearInterval(interval);
+                        }
+                    }, 500); 
+                }, 165000); 
+
                 setTimeout(() => {
-                    player4.play();
                     status3.innerHTML = 'Recording stopped... Section Finished.';
                     recordTask(eventMarker, 'stop', 1);
-                }, 180000);  // 3 minute timer
+                    player4.play();  
+                }, 180000);  
             });
 
             player4.addEventListener('play', function() {
@@ -131,11 +141,34 @@
 
             player4.addEventListener('ended', function() {
                 status4.innerHTML = 'Recording started... 3 minute timer started.';
+                setTimeout(function() {
+                    let beepCount = 0;
+                    const interval = setInterval(function() {
+                        playBeep();
+                        beepCount++;
+                        if (beepCount === 5) {
+                            clearInterval(interval);
+                        }
+                    }, 1000); 
+                }, 175000); 
+
                 setTimeout(() => {
                     status4.innerHTML = 'Recording stopped... Task finished.';
                     recordTask(eventMarker, 'stop', 2);
                 }, 180000);  
             });
+
+            function playBeep() {
+                function beep() {
+                    const beepContext = new AudioContext();
+                    const oscillator = beepContext.createOscillator();
+                    oscillator.type = 'sine'; 
+                    oscillator.frequency.setValueAtTime(1000, beepContext.currentTime);
+                    oscillator.connect(beepContext.destination);
+                    oscillator.start();
+                    oscillator.stop(beepContext.currentTime + 0.1); 
+                }
+            }
         });
     </script>
     
