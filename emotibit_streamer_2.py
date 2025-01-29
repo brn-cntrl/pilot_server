@@ -21,7 +21,7 @@ https://github.com/EmotiBit/EmotiBit_Docs/blob/master/Working_with_emotibit_data
 """
 
 class EmotiBitStreamer:
-    def __init__(self, port: int, h5_filename: str = "tmp.csv") -> None:
+    def __init__(self, port: int) -> None:
         self._ip = "127.0.0.1"
         self._port = port
         self.timestamp_manager = TimestampManager()
@@ -37,7 +37,7 @@ class EmotiBitStreamer:
         self.server_thread = None
         self.shutdown_event = Event()
         self.default_value = 0
-        self._data_folder = "temp"
+        self._data_folder = None
         self.csv_filename = None
         self.csv_writer = None
 
@@ -47,19 +47,38 @@ class EmotiBitStreamer:
         self.dataset = None
             
         atexit.register(self.stop)
+        print("Emotibit Initialized")
+
+    @property
+    def data_folder(self) -> str:
+        return self._data_folder
+    
+    @data_folder.setter
+    def data_folder(self, data_folder: str) -> None:
+        self._data_folder = data_folder
+    
+    @property 
+    def event_marker(self) -> str:
+        return self._event_marker
+
+    @event_marker.setter
+    def event_marker(self, value: str) -> None:
+        self._event_marker = value
 
     def set_data_folder(self, experiment_name, trial_name, subject_folder):
         self.data_folder = os.path.join("subject_files", experiment_name, trial_name, subject_folder, "emotibit_data")
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
-    def initialize_hdf5_file(self, experiment_name, trial_name, subject_name, subject_id):
+        # DEBUG
+        print("Data folder set for emotibit streamer: ", self.data_folder)
+    def initialize_hdf5_file(self, experiment_name, trial_name, subject_id):
         """
         Initializes the HDF5 file and dataset if not already created.
         Called once the test and subject information are both posted from the front end.
         """
-        self.hdf5_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_name}_{subject_id}.h5")
-        self.csv_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_name}_{subject_id}.csv")
+        self.hdf5_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_id}.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_id}.csv")
 
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
@@ -79,24 +98,13 @@ class EmotiBitStreamer:
                 )
             else:
                 self.dataset = self.hdf5_file['data']  
+
+            # DEBUG
+            print("HDF5 file created for emotibit data: ", self.hdf5_filename)
+            print("CSV file created for emotibit data: ", self.csv_filename)
+
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
-
-    @property
-    def data_folder(self) -> str:
-        return self._data_folder
-    
-    @data_folder.setter
-    def data_folder(self, data_folder: str) -> None:
-        self.data_folder = data_folder
-    
-    @property 
-    def event_marker(self) -> str:
-        return self._event_marker
-
-    @event_marker.setter
-    def event_marker(self, value: str) -> None:
-        self._event_marker = value
 
     def start_baseline_collection(self) -> None:
         if self.collecting_baseline:
@@ -154,9 +162,8 @@ class EmotiBitStreamer:
         # Debug statement
         print(f"Received data at {address}: {args}")
 
-        if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_iso_timestamp():
-            self.timestamp_manager.update_timestamp()
-            self.current_timestamp = self.timestamp_manager.get_iso_timestamp()
+        if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
+            self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
             self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
@@ -307,7 +314,7 @@ class EmotiBitStreamer:
                     
                     if event_marker != 'baseline' and timestamp:
                         row_time = datetime.fromisoformat(timestamp)  
-                        if row_time >= time_threshold:
+                        if row_time >= time_threshold and row_time <= current_time:
                             entry = {
                                         field: dataset[field][idx] if dataset[field].dtype.kind != 'S' 
                                         else dataset[field][idx].decode('utf-8') 

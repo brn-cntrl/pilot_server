@@ -49,8 +49,7 @@ class RecordingManager():
         self.stop_event.clear()
         self.recording_started_event.set()
 
-        self.timestamp_manager.update_timestamp()
-        self.timestamp = self.timestamp_manager.get_iso_timestamp()
+        self.timestamp = self.timestamp_manager.get_timestamp("iso")
 
         self.recording_thread = threading.Thread(target=self.record_thread)
         self.recording_thread.start()

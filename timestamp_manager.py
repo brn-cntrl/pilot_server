@@ -16,6 +16,7 @@ class TimestampManager:
         if not hasattr(self, 'current_timestamp'):
             self.current_timestamp = None
             self.lock = threading.Lock()
+            self.timestamp_event = threading.Event()
 
     def update_timestamp(self):
         with self.lock:
@@ -30,3 +31,21 @@ class TimestampManager:
         """Returns the current timestamp."""
         with self.lock:
             return self.current_timestamp.isoformat()
+        
+    def get_timestamp(self, type: str = "iso") -> str:
+        """Updates the timestamp if possible, otherwise waits for the latest timestamp."""
+        if self.lock.acquire(blocking=False):  # Try to acquire lock without waiting
+            try:
+                self.current_timestamp = datetime.now()
+                self.timestamp_event.set()  # Signal that an update occurred
+                self.timestamp_event.clear()  # Reset event for future updates
+            finally:
+                self.lock.release()
+        else:
+            self.timestamp_event.wait()  # Wait for the current update to finish
+
+        with self.lock:
+            if type == "iso":
+                return self.current_timestamp.isoformat()
+            
+            return self.current_timestamp  # Default to raw

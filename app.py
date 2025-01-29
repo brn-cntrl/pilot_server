@@ -620,8 +620,7 @@ def record_task() -> Response:
         event_marker = data.get('event_marker')
         action = data.get('action')
 
-        timestamp_manager.update_timestamp()  
-        current_time_unix = timestamp_manager.get_raw_timestamp()
+        current_time_unix = timestamp_manager.get_timestamp()
         
         if action == 'start':
             recording_manager.start_recording()
@@ -859,6 +858,7 @@ def stop_emotibit() -> None:
 
     try:
         emotibit_streamer.stop()
+        return jsonify({'message': 'EmotiBit stream stopped.'}), 200
     
     except Exception as e:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
