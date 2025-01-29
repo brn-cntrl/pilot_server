@@ -725,7 +725,9 @@ def prs():
             <audio id="intro-audio-player" controls>
                 <source src="{{ url_for('static', filename='prs_audio/' + intro) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
-            </audio>
+            </audio><br><br>
+            <button onclick="startMonitoring()">Start Monitoring</button><br><br>
+            <div class="meter"><div class="level"></div></div>
         </div><br>
         {% for audio in audio_files %}
         <div>

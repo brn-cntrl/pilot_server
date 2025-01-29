@@ -80,16 +80,19 @@
         <h4>Instructions</h4>
         <ul>
             <li>Please select your audio input or microphone.</li>
+            <li>Fit subject with microphone and headphones</li>
             <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
-            <li>Click "Start Monitoring" to monitor audio.</li>
+            <li>Test headphones: When subject is fitted with headphones, click "Test Audio Output" below.</li>
+            <li>Test microphont: When subject is fitted with microphone, click "Start Monitoring" to monitor audio.</li>
             <li>Monitor the signal below and adjust microphone as needed.</li>
         </ul><br>
+        <button id="testAudioOutput">Test Audio Output</button><br><br>
 
         <label for="audioDevices">Select Audio Input Device:</label><br><br>
         <select id="audioDevices" onchange="setDevice()"></select><br><br>
 
         <button onclick="startMonitoring()">Start Monitoring</button><br><br>
-        <div id="meter"><div id="level"></div></div>
+        <div class="meter"><div class="level"></div></div>
     </div> <br>
 </div>
     <h2>Experimental Tasks</h2>
@@ -130,8 +133,8 @@
             </select><br><br>
 
             <button id="task_1_recording">Start Recording</button><br><br>
+            <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-
             <button class="compareToBaseline">Calculate Rest Time</button><br><br>
             <button class="endTask">Task Completed</button>
         </div><br>
@@ -221,6 +224,7 @@
             </select><br><br>
 
             <button id="task_2_recording">Start Recording</button><br><br>
+            <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
             <button class="compareToBaseline">Calculate Rest Time</button><br><br>
             <button class="endTask">Task Completed</button>
@@ -339,7 +343,6 @@
             <p id="notification3" style="display:none; color: green;">Subject ID generated successfully!</p>
             <p id="errorNotification3" style="display:none; color: red;">Error generating subject ID.</p>
             <p id="encryptionStatus" style="display:none;"></p><br>
-            
         </div><br>
 
         <button id="decryptionButton">Subject Decryption</button><br>
@@ -366,8 +369,9 @@
     <h2>Shutdown</h2>
     <button id="shutdownButton">Shutdown Server</button>
 
-    <script src="/static/js/scripts.js"></script>
+    <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
+        const testAudioOutput = document.getElementById('testAudioOutput');
         const stopEmotibitButton = document.getElementById('stopEmotibit');
         const emotibitDiv = document.getElementById('emotibitDiv');
         const moreToolsButton = document.getElementById('moreToolsButton');
@@ -627,6 +631,35 @@
             fetchAudioDevices();
             audioDevicesDropdown.addEventListener('change', setDevice);
             shutdownButton.addEventListener('click', shutdownServer);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            testAudioOutput.addEventListener('click', function() {
+                let beepCount = 0;
+                const interval = setInterval(function() {
+                    playTestTone();
+                    beepCount++;
+                    if (beepCount === 3) {
+                        clearInterval(interval);
+                    }
+                }, 1000); 
+            });
+
+            function playTestTone() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                    // audioContext.close();
+                }, 500); 
+            }
         });
 
         document.addEventListener('DOMContentLoaded', function(){

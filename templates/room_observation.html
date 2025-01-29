@@ -11,20 +11,22 @@
     <h1>Room Observation Task</h1>
     <h2>Instructions</h2>
     <ul>
-        <li>Ensure the subject is fitted with their airpods or headphones.</li>
+        <li>Ensure the subject is fitted with their microphone, airpods or headphones.</li>
+        <li>Click "Start Monitoring" to monitor subject audio.</li>
         <li>When they are ready, press play on the the introduction audio player.</li>
         <li>Each section is timed and will pause for responses automatically.</li>
         <li>Recording will also start and stop automatically.</li>
         <li>When the last notification indicates recording has stopped, the subject has finished the task.</li>
-    </ul>
-
+    </ul><br>
+    <button onclick="startMonitoring()">Start Monitoring</button><br><br>
     <!-- Intro Audio -->
     <div id="audio1">
         <p>Intro</p>
         <audio controls id="audioPlayer1">
             <source src="{{ url_for('static', filename='room_observation_audio/1-Task1-Intro.mp3') }}" type="audio/mpeg">
             Your browser does not support the audio element.
-        </audio>
+        </audio><br>
+        <div id="meter"><div id="level"></div></div><br>
         <div id="audio1-status"></div>
     </div>
 
@@ -33,7 +35,8 @@
         <audio controls id="audioPlayer2">
             <source src="{{ url_for('static', filename='room_observation_audio/2-Task1-PostObservation.mp3') }}" type="audio/mpeg">
             Your browser does not support the audio element.
-        </audio>
+        </audio><br>
+        <div class="meter"><div class="level"></div></div><br>
         <div id="audio2-status"></div>
     </div>
 
@@ -42,7 +45,8 @@
         <audio controls id="audioPlayer3">
             <source src="{{ url_for('static', filename='room_observation_audio/3-Task1-Q1.mp3') }}" type="audio/mpeg">
             Your browser does not support the audio element.
-        </audio>
+        </audio><br>
+        <div class="meter"><div class="level"></div></div><br>
         <div id="audio3-status"></div>
     </div>
 
@@ -51,7 +55,8 @@
         <audio controls id="audioPlayer4">
             <source src="{{ url_for('static', filename='room_observation_audio/4-Task1-Q2.mp3') }}" type="audio/mpeg">
             Your browser does not support the audio element.
-        </audio>
+        </audio><br>
+        <div class="meter"><div class="level"></div></div><br>
         <div id="audio4-status"></div>
     </div>
     <script>
@@ -146,7 +151,7 @@
                     const interval = setInterval(function() {
                         playBeep();
                         beepCount++;
-                        if (beepCount === 5) {
+                        if (beepCount === 2) {
                             clearInterval(interval);
                         }
                     }, 1000); 
@@ -163,7 +168,7 @@
                     const beepContext = new AudioContext();
                     const oscillator = beepContext.createOscillator();
                     oscillator.type = 'sine'; 
-                    oscillator.frequency.setValueAtTime(1000, beepContext.currentTime);
+                    oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
                     oscillator.connect(beepContext.destination);
                     oscillator.start();
                     oscillator.stop(beepContext.currentTime + 0.1); 

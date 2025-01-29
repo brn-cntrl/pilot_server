@@ -401,7 +401,7 @@ async function startMonitoring() {
         source.connect(analyser);
 
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const levelBar = document.getElementById("level");
+        const levelBars = document.querySelectorAll(".level");
 
         function updateMeter() {
             analyser.getByteFrequencyData(dataArray);
@@ -411,9 +411,12 @@ async function startMonitoring() {
                 sum += dataArray[i];
             }
             let volume = sum / dataArray.length;
+            let widthValue = (volume / 256) * 100 + "%";
 
-            levelBar.style.width = (volume / 256) * 100 + "%";
-            
+            levelBars.forEach(levelBar => {
+                levelBar.style.width = widthValue; 
+            });
+
             requestAnimationFrame(updateMeter);
         }
 
@@ -422,29 +425,3 @@ async function startMonitoring() {
         console.error("Error accessing microphone:", err);
     }
 }
-
-// async function loadSurveys(){
-//     try {
-//         const response = await fetch('/get_surveys');
-//         const surveys = await response.json();
-//         const container = document.getElementById('surveyButtons');
-//         container.innerHTML = '';
-//         console.log(surveys);
-//         surveys.forEach(survey => {
-//             if (survey.url.trim()) {
-//                 const button = document.createElement('button');
-//                 button.textContent = survey.name.charAt(0).toUpperCase() + survey.name.slice(1);
-//                 button.onclick = () => window.open(`/survey/${survey.name}`, '_blank');
-//                 container.appendChild(button);
-//                 const br1 = document.createElement('br');
-//                 const br2 = document.createElement('br');
-//                 container.appendChild(br1);
-//                 container.appendChild(br2);
-//             }
-//         });
-//         // document.getElementById("surveyStatus").style.display = "none";
-//     } catch(error){
-//         console.error('Error fetching surveys:', error);
-//         // document.getElementById("surveyStatus").style.display = "block";
-//     } 
-// }
