@@ -389,6 +389,40 @@ function emotibitRecording(button, action){
         });
     }
 }
+
+async function startMonitoring() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(stream);
+        
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256; // Resolution
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const levelBar = document.getElementById("level");
+
+        function updateMeter() {
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            let volume = sum / dataArray.length;
+
+            levelBar.style.width = (volume / 256) * 100 + "%";
+            
+            requestAnimationFrame(updateMeter);
+        }
+
+        updateMeter();
+    } catch (err) {
+        console.error("Error accessing microphone:", err);
+    }
+}
+
 // async function loadSurveys(){
 //     try {
 //         const response = await fetch('/get_surveys');

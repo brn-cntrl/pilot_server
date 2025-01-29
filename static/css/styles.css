@@ -26,3 +26,18 @@ body h1, body h2, h3, h4 {
 .bigStatus {
     font-size: 1.5em;
 }
+
+#meter {
+    width: 110px;
+    height: 30px;
+    background:black;
+    position: relative;
+    
+}
+
+#level {
+    height: 100%;
+    width: 0%;
+    background: green;
+    transition: width 0.05s;
+}

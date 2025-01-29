@@ -11,9 +11,9 @@
     <h1>Experiment Dashboard</h1>
     
     <h2>Pre-Test</h2>
-        
+    <div class="testModule" id="preTestDiv">
     <button id="experimentTrialNameButton">Experiment/Trial Information</button><br>
-    <div class="testModule" id="experimentTrialNameDiv" style="display:block;">
+    <div class="innerModule" id="experimentTrialNameDiv" style="display:block;">
         <h3>Experiment/Trial Information</h3>
         <p>Instructions</p>
         <ul>
@@ -33,7 +33,7 @@
     </div><br>
 
     <button id="subjectInstructionsButton">Subject Instructions</button><br>
-    <div class="testModule" id="subjectInstructionsDiv" style="display:block">
+    <div class="innerModule" id="subjectInstructionsDiv" style="display:block">
         <h3>Subject Instructions</h3>
         <p>Please relay the following instructions to the subject.</p>
         <ul>
@@ -45,7 +45,7 @@
     </div><br>
 
     <button id="beginExperimentButton">Surveys</button><br>
-    <div class="testModule" id="surveysDiv" style="display: none">
+    <div class="innerModule" id="surveysDiv" style="display:none">
         <h3>Surveys and Participant Information</h3>
         <h4>Survey Instructions</h4>
         <ul>
@@ -62,7 +62,7 @@
     </div><br>
 
     <button id="biometricBaselineButton">Biometrics Baseline</button><br>
-    <div class="testModule" id="biometricBaselineDiv" style="display:none;">
+    <div class="innerModule" id="biometricBaselineDiv" style="display:none;">
         <h4>Instructions for EmotiBit</h4>
         <p>Important: Subject must complete the "Subject Information" survey task before the EmotiBit can be started.</p>
         <ul>
@@ -76,23 +76,28 @@
     </div><br>
 
     <button id="testAudioButton">Test Audio</button><br>
-    <div class="testModule" id="testAudioDiv" style="display:none;">
+    <div class="innerModule" id="testAudioDiv" style="display:none;">
         <h4>Instructions</h4>
         <ul>
             <li>Please select your audio input or microphone.</li>
             <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
+            <li>Click "Start Monitoring" to monitor audio.</li>
+            <li>Monitor the signal below and adjust microphone as needed.</li>
         </ul><br>
-        <label for="audioDevices">Select Audio Input Device:</label><br><br>
-        <select id="audioDevices" onchange="setDevice()"></select><br>
-    </div> <br>
 
+        <label for="audioDevices">Select Audio Input Device:</label><br><br>
+        <select id="audioDevices" onchange="setDevice()"></select><br><br>
+
+        <button onclick="startMonitoring()">Start Monitoring</button><br><br>
+        <div id="meter"><div id="level"></div></div>
+    </div> <br>
+</div>
     <h2>Experimental Tasks</h2>
 
     <button id="tasksButton">Begin Tasks</button><br>
     <div class="testModule" id="tasksDiv" style="display:none;">
 
         <h3>Experimental Tasks</h3>
-
         <button id="firstStressTask">Stressor Task 1</button><br>
         <div class="innerModule" id="firstStressDiv" style="display:none;">
             <h4>Task Instructions</h4>
@@ -184,7 +189,6 @@
             <button id="startBreak1">Start Break</button><br><br>
             <button class="endTask">Task Completed</button>
         </div><br>
-                    <!-------------------------------------------------------------------->
 
         <button id="secondStressTask">Stressor Task 2</button><br>
         <div class="innerModule" id="secondStressDiv" style="display:none;">
@@ -275,11 +279,16 @@
             <button id="startBreak2">Start Break</button><br><br>
             <button class="endTask">Task Completed</button>
         </div><br>
-    </div><br>
+    </div>
 
     <h2>Post-Test</h2>
-    <div class="testModule">
-        <button id="stopEmotibit">Stop Emotibit</button><br><br>
+    <button id="postTestButton">Post-test Tasks</button>
+    <div class="testModule" style="display:none;" id="postTestDiv">
+        <button id="stopEmotibit">Stop Emotibit</button><br>
+        <div id="emotibitDiv" style="display:none;">
+            <p id="emotibitStatus"></p>
+        </div><br>
+
         <button id="addSurveyButton">External Surveys</button><br>
         <div class="innerModule" id="addSurveyDiv" style="display:none;" disabled>
             <h4>Upload External Surveys</h4>
@@ -306,9 +315,10 @@
     </div>
 
     <h2>More Tools</h2>
-    <div class="testModule">
-        <button id="encryptionButton">Subject Encryption</button>
-        <div class="innerModule" id="encryptionDiv">
+    <button id="moreToolsButton">Show Tools</button>
+    <div class="testModule" id="moreToolsDiv" style="display:none;">
+        <button id="encryptionButton">Subject Encryption</button><br>
+        <div class="innerModule" id="encryptionDiv" style="display:none;">
             <h4>Encrypt Subject Name and Email</h4>
             <p>Instructions</p>
             <ul>
@@ -332,8 +342,8 @@
             
         </div><br>
 
-        <button id="decryptionButton">Subject Decryption</button>
-        <div class="innerModule" id="decryptionDiv">
+        <button id="decryptionButton">Subject Decryption</button><br>
+        <div class="innerModule" id="decryptionDiv" style="display:none;">
             <h4>Encrypt Subject Name and Email</h4>
             <p>Instructions</p>
             <ul>
@@ -358,6 +368,11 @@
 
     <script src="/static/js/scripts.js"></script>
     <script>
+        const stopEmotibitButton = document.getElementById('stopEmotibit');
+        const emotibitDiv = document.getElementById('emotibitDiv');
+        const moreToolsButton = document.getElementById('moreToolsButton');
+        const moreToolsDiv = document.getElementById('moreToolsDiv');
+        const postTestButton = document.getElementById('postTestButton');
         const encryptSubject = document.getElementById('encryptSubject');
         const decryptSubject = document.getElementById('decryptSubject');
         const decryptionButton = document.getElementById('decryptionButton');
@@ -477,8 +492,16 @@
             });
         });
             
-        document.addEventListener('DOMContentLoaded', function(){
-            postProcessingButton.addEventListener('click', function(){
+        document.addEventListener('DOMContentLoaded', function() {
+            moreToolsButton.addEventListener('click', function() {
+                toggleVis('moreToolsDiv');
+            });
+
+            postTestButton.addEventListener('click', function() {
+                toggleVis('postTestDiv');
+            }); 
+
+            postProcessingButton.addEventListener('click', function() {
                 toggleVis('postProcessingDiv');
             });
 
@@ -506,7 +529,7 @@
                 toggleVis('testAudioDiv');
             });
 
-            tasksButton.addEventListener('click', function(){
+            tasksButton.addEventListener('click', function() {
                 toggleVis('tasksDiv');
             });
 
@@ -530,11 +553,11 @@
                 toggleVis('taskGenDiv2');
             });
 
-            taskButton1.addEventListener('click', function(){
+            taskButton1.addEventListener('click', function() {
                 toggleVis('taskDiv1');
             });
 
-            taskButton2.addEventListener('click', function(){
+            taskButton2.addEventListener('click', function() {
                 toggleVis('taskDiv2');
             });
 
@@ -553,6 +576,14 @@
             breakButton2.addEventListener('click', function() {
                 toggleVis('break2Div');
             }); 
+
+            encryptionButton.addEventListener('click', function() {
+                toggleVis('encryptionDiv');
+            })
+
+            decryptionButton.addEventListener('click', function() {
+                toggleVis('decryptionDiv');
+            });
         });
         
         document.addEventListener('DOMContentLoaded', function(){
@@ -737,6 +768,18 @@
                 .catch(error => {
                     postProcessingStatus.innerText = 'Error processing data.';
                     console.error('Error:', error);
+                });
+            });
+
+            stopEmotibitButton.addEventListener('click', function() {
+                fetch('/stop_emotibit', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    emotibitDiv.style.display = 'block';
+                    emotibitStatus.innerText = data.message;
+                    console.log(data.message);
                 });
             });
         });

@@ -29,6 +29,7 @@
 /templates/demographic_survey.html
 /templates/exit_survey.html
 /templates/pss4.html
+/templates/add_survey.html
 config.txt
 wav_to_emotion_test.py
 survey_routes.py
