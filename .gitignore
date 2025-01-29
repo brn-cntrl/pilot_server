@@ -22,7 +22,7 @@
 !static/js/
 /EmotiBitSoftware-MacOS/
 /tmp/*
-/subject_files/*
+/subject_data/*
 /audio_files/*
 /SER_MODEL/*
 /templates/background.html
