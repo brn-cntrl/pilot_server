@@ -79,8 +79,9 @@ class EmotiBitStreamer:
         Initializes the HDF5 file and dataset if not already created.
         Called once the test and subject information are both posted from the front end.
         """
-        self.hdf5_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_id}.h5")
-        self.csv_filename = os.path.join(self.data_folder, f"{experiment_name}_{trial_name}_{subject_id}.csv")
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{experiment_name}_{trial_name}_{subject_id}_biometrics.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{experiment_name}_{trial_name}_{subject_id}_biometrics.csv")
 
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  

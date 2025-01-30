@@ -450,15 +450,8 @@ def submit() -> Response:
             try:
                 subject_manager.set_subject(subject_info)
                 audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
-
-                # DEBUG
-                print("Audio Manager Folder: ", audio_file_manager.audio_folder)
                 emotibit_streamer.set_data_folder(experiment_name, trial_name, subject_id)
                 emotibit_streamer.initialize_hdf5_file(experiment_name, trial_name, subject_id)
-
-                # DEBUG
-                print("EmotiBit Data Folder: ", emotibit_streamer.data_folder)
-                print("EmotiBit H5 File: ", emotibit_streamer.hdf5_filename)
 
             except Exception as e:
                 print(f"Error setting EmotiBit data folder: {str(e)}")

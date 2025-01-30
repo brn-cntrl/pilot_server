@@ -103,7 +103,8 @@ class SubjectManager:
                 os.makedirs(self.subject_folder)
 
             current_date = datetime.now().strftime("%Y-%m-%d")
-            self.csv_file_path = f"{self.subject_folder}/{current_date}_{self.subject_id}.csv"
+            csv_filename = f"{current_date}_{self.experiment_name}_{self.trial_name}_{self.subject_id}.csv"
+            self.csv_file_path = os.path.join(self.subject_folder, csv_filename)
 
             # DEBUG
             print("Subject folder set: ", self.subject_folder)
