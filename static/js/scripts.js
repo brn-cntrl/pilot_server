@@ -23,7 +23,7 @@ function setEventMarker(eventMarker){
     .catch(error => console.error('status:', error));
 }
 
-function recordTask(eventMarker, action, question){
+function recordTaskAudio(eventMarker, action, question, divID){
     fetch('/record_task_audio', { method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -36,11 +36,17 @@ function recordTask(eventMarker, action, question){
      })
     .then(response => response.json())
     .then(data => {
-        console.log(data.status);
+        console.log(data.message);
+        divID.style.display = 'block';
+        divID.innerHTML = data.message;
     })
-    .catch(error => console.error('status:', error));
+    .catch(error => {
+        console.error('Error:', data.error);
+        divID.style.display = 'block';
+        divID.innerHTML = data.error;
+    });
 }
-
+    
 async function startRecording() {
     try {
         const response = await fetch('/start_recording', {
@@ -299,95 +305,6 @@ function stopBaseline() {
     .catch(error => {
         console.error('Error:', error);
     });
-}
-function emotibitRecording(button, action){
-    /*
-    Function to start or stop recording from EmotiBit
-    Requires taskID to identify label of particular task. 
-    This is used to label the EmotiBit data in the database.
-    */
-    const taskID = button.id;
-    statusId1 = document.getElementById("emotibitStatus1");
-    statusId2 = document.getElementById("emoitbitStatus2");
-    if(action == 'start'){
-        fetch('/start_emotibit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-        if (taskID == 'taskID1'){
-            statusId1.style.display = 'block';
-        } else if (taskID == 'taskID2'){
-            statusId2.style.display = 'block';
-        }
-    } else if (action == 'stop'){
-        fetch('/stop_emotibit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-        fetch('/push_emotibit_data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                label: taskID
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-            if (taskID == 'taskID1'){
-                statusId1.style.display = 'block';
-                statusId1.innerHTML = 'EmotiBit data saved.';
-            } else if (taskID == 'taskID2'){
-                statusId2.style.display = 'block';
-                statusId2.innerHTML = 'EmotiBit data saved.';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (taskID == 'taskID1'){
-                statusId1.style.display = 'block';
-                statusId1.innerHTML = 'An error occurred. EmotiBit data not saved.';
-            } else if (taskID == 'taskID2'){
-                statusId2.style.display = 'block';
-                statusId2.innerHTML = 'An error occurred. EmotiBit data not saved.';
-            }
-        });
-    }
 }
 
 async function startMonitoring() {

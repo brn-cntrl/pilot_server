@@ -17,8 +17,9 @@
         <li>Each section is timed and will pause for responses automatically.</li>
         <li>Recording will also start and stop automatically.</li>
         <li>When the last notification indicates recording has stopped, the subject has finished the task.</li>
-    </ul><br>
+    </ul>
     <button onclick="startMonitoring()">Start Monitoring</button><br><br>
+    
     <!-- Intro Audio -->
     <div id="audio1">
         <p>Intro</p>
@@ -29,7 +30,7 @@
         <div id="meter"><div id="level"></div></div><br>
         <div id="audio1-status"></div>
     </div>
-
+    
     <div id="audio2">
         <p>Instructions</p>
         <audio controls id="audioPlayer2">
@@ -40,6 +41,7 @@
         <div id="audio2-status"></div>
     </div>
 
+    <!-- Task Audio -->
     <div id="audio3">
         <p>Question 1</p>
         <audio controls id="audioPlayer3">
@@ -107,8 +109,7 @@
             player3.addEventListener('timeupdate', function() {
                 if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
                     player3.dataset.recordingStarted = "true"; 
-                    recordTask(eventMarker, 'start', 1); 
-                    status3.innerHTML = 'Recording started...';
+                    recordTaskAudio(eventMarker, 'start', 1, status3); 
                 }
             });
 
@@ -126,8 +127,7 @@
                 }, 165000); 
 
                 setTimeout(() => {
-                    status3.innerHTML = 'Recording stopped... Section Finished.';
-                    recordTask(eventMarker, 'stop', 1);
+                    recordTaskAudio(eventMarker, 'stop', 1, status3);
                     player4.play();  
                 }, 180000);  
             });
@@ -139,8 +139,7 @@
             player4.addEventListener('timeupdate', function() {
                 if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
                     player4.dataset.recordingStarted = "true"; 
-                    recordTask(eventMarker, 'start', 2); 
-                    status4.innerHTML = 'Recording started...';
+                    recordTaskAudio(eventMarker, 'start', 2, status4); 
                 }
             });
 
@@ -158,8 +157,8 @@
                 }, 175000); 
 
                 setTimeout(() => {
-                    status4.innerHTML = 'Recording stopped... Task finished.';
-                    recordTask(eventMarker, 'stop', 2);
+                    recordTaskAudio(eventMarker, 'stop', 2, status4);
+                    status4.innerText = "Recording has stopped. Task is complete.";
                 }, 180000);  
             });
 
@@ -175,7 +174,6 @@
                 }
             }
         });
-    </script>
-    
+    </script> 
 </body>
 </html>

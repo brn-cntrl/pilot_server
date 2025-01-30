@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilot Server Home</title>
+    <title>Experiment Dashboard</title>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
@@ -28,8 +28,8 @@
             <input type="text" id="trial_name" name="trial_name" required><br><br>
             <button type="submit">Submit</button>
         </form><br>
-        <div id="notification1" style="display:none; color: green;">Experiment/Trial name submitted successfully!</div>
-        <div id="errorNotification1" style="display:none; color: red;">Error submitting experiment/trial name.</div>
+        <div id="notification1" style="display:none; color: green;"></div>
+        <div id="errorNotification1" style="display:none; color: red;"></div>
     </div><br>
 
     <button id="subjectInstructionsButton">Subject Instructions</button><br>
@@ -311,9 +311,9 @@
             <h4>EmotiBit Post Processing</h4>
             <p>Instructions</p>
             <ul>
-                <li>Click "Process EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
+                <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
             </ul><br>
-            <button id="uploadSubjectData">Process EmotiBit Data</button><br><br>
+            <button id="uploadSubjectData">Convert EmotiBit Data</button><br><br>
             <p id="postProcessingStatus"></p>
         </div><br>
     </div>
@@ -435,13 +435,15 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    encryptionStatus.innerText = `Encrypted ID: ${data.subject_id}`;
+                    encryptionStatus.innerText = `Encrypted ID: ${data.message}`;
                     encryptionStatus.style.display = "block";
                     notification3.style.display = "block";
                     errorNotification3.style.display = "none";
                 })
                 .catch(error => {
                     notification3.style.display = "none";
+                    encryptionStatus.style.display = "block";
+                    encryptionStatus.innerText = `Error: ${data.error}`;
                     errorNotification3.style.display = "block";
                 });
             });
@@ -468,6 +470,7 @@
                 .catch(error => {
                     notification4.style.display = "none";
                     errorNotification4.style.display = "block";
+                    console.log(data.error);
                 });
             });
         });
@@ -488,10 +491,12 @@
                 .then(data => {
                     notification.style.display = "block";
                     errorNotification.style.display = "none";
+                    notification.innerText = data.message;
                 })
                 .catch(error => {
                     notification.style.display = "none";
                     errorNotification.style.display = "block";
+                    errorNotification.innerText = data.error;
                 });
             });
         });
@@ -742,16 +747,23 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    if(eventMarker == 'task_1'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerHTML = data.message;
+                    } else if (eventMarker == 'task_2'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerHTML = data.message;
+                    }
                 });
 
                 if(action == 'start'){
                     console.log("Stream is active.");
                     if (buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
-                        statusId1.innerHTML = 'Recording started....';
+                        statusId1.innerHTML = "Recording started...";
                     } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
-                        statusId2.innerHTML = 'Recording started...';
+                        statusId2.innerHTML = "Recording started...";
                     }
 
                 } else if (action == 'stop'){
@@ -784,7 +796,7 @@
                     .then(data => {
                         uploadCSVstatus.innerText = data.message;
                     })
-                    .catch(error => uploadCSVstatus.innerText = 'Error uploading file.');
+                    .catch(error => uploadCSVstatus.innerText = data.error);
                 } else {
                     uploadCSVstatus.innerText = 'No file selected.';
                 }
@@ -799,7 +811,7 @@
                     console.log(data.message);
                 })
                 .catch(error => {
-                    postProcessingStatus.innerText = 'Error processing data.';
+                    postProcessingStatus.innerText = data.error;
                     console.error('Error:', error);
                 });
             });
@@ -813,6 +825,10 @@
                     emotibitDiv.style.display = 'block';
                     emotibitStatus.innerText = data.message;
                     console.log(data.message);
+                })
+                .catch(error => {
+                    emotibitStatus.innerText = data.error;
+                    console.error('Error:', error);
                 });
             });
         });
