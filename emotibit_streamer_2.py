@@ -73,7 +73,7 @@ class EmotiBitStreamer:
 
         # DEBUG
         print("Data folder set for emotibit streamer: ", self.data_folder)
-        
+
     def initialize_hdf5_file(self, experiment_name, trial_name, subject_id):
         """
         Initializes the HDF5 file and dataset if not already created.
@@ -114,6 +114,7 @@ class EmotiBitStreamer:
             return
         
         self.collecting_baseline = True
+        print("Collecting EmotiBit Baseline... ")
 
     def stop_baseline_collection(self) -> None:
         if not self.collecting_baseline:
@@ -121,6 +122,7 @@ class EmotiBitStreamer:
             return
         
         self.collecting_baseline = False
+        print("Stopping Baseline Collection... ")
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
