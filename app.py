@@ -54,12 +54,10 @@ def set_event_marker():
     global emotibit_streamer
     data = request.get_json()
 
-    # NOTE: the event marker for the subject manager is for transcription and SER.
-    # It might not be needed in this endpoint, but I am setting it here for future-proofing.
-
     emotibit_streamer.event_marker = data.get('event_marker')
+    print("Event marker set to: ", emotibit_streamer.event_marker)
 
-    return jsonify({'message': 'Event marker set.'})
+    return jsonify({'status': 'Event marker set.'})
 
 @app.route('/baseline_comparison', methods=['POST'])
 def baseline_comparison() -> Response:
@@ -390,7 +388,19 @@ def upload_survey_csv() -> Response:
             return jsonify({'message': 'File uploaded successfully.'}), 200
         
         except Exception as e:
-            return jsonify({'message': 'Error uploading file.'}), 400
+            return jsonify({'error': 'Error uploading file.'}), 400
+
+@app.route('/upload_subject_data', methods=['POST'])
+def upload_subject_data() -> Response:
+    global subject_manager, emotibit_streamer
+    try:
+        pass
+        # TODO: Convert hdf5 data to csv here.
+
+        return jsonify({'message': 'Subject biometric data processed.'}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Error processing subject data.'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -455,7 +465,8 @@ def submit() -> Response:
 
             except Exception as e:
                 print(f"Error setting EmotiBit data folder: {str(e)}")
-
+                return jsonify({'message': 'Error setting subject information.'}), 400
+            
             # form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
@@ -479,19 +490,23 @@ def encrypt_subject() -> Response:
 
     email = request.form.get('email')
     if not is_valid_email(email):
-        return jsonify({'message': 'Invalid email address.'}), 400
+        return jsonify({'error': 'Invalid email address.'}), 400
     
     subject_id = encrypt_name(first_name, last_name, email)
 
-    return jsonify({'subject_id': subject_id})
+    return jsonify({'message': subject_id})
 
 @app.route('/decrypt_subject', methods=['POST'])
 def decrypt_subject() -> Response:
-    subject_id = request.form.get('id_string')
-    firstname, lastname, email = decrypt_name(subject_id)
-    fullname = f"{firstname} {lastname}"
+    try:
+        subject_id = request.form.get('id_string')
+        firstname, lastname, email = decrypt_name(subject_id)
+        fullname = f"{firstname} {lastname}"
 
-    return jsonify({'full_name': fullname, 'email': email})
+        return jsonify({'full_name': fullname, 'email': email})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 ##################################################################
 ## Audio Routes
@@ -572,27 +587,31 @@ def task_audio_recording():
     event_marker = data.get('event_marker')
     event_marker = f"{event_marker}_question_{question}"
 
-    if action == 'start':
-        recording_manager.start_recording()
-        emotibit_streamer.event_marker = event_marker
+    try:
+        if action == 'start':
+            recording_manager.start_recording()
+            emotibit_streamer.event_marker = event_marker
 
-        return jsonify({'message': 'Recording started.'}), 200
-    
-    elif action == 'stop':
-        recording_manager.stop_recording()
-        ts = recording_manager.timestamp
-        id = subject_manager.subject_id
-
-        file_name = f"{id}_{ts}_{event_marker}.wav"
-
-        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+            return jsonify({'message': 'Recording started...'}), 200
         
-        audio_file_manager.save_audio_file(file_name)
+        elif action == 'stop':
+            recording_manager.stop_recording()
+            ts = recording_manager.timestamp
+            id = subject_manager.subject_id
 
-        return jsonify({'message': 'Recording stopped.'}), 200
-    else:
-        return jsonify({'message': 'Invalid action.'}), 400
+            file_name = f"{id}_{ts}_{event_marker}.wav"
+
+            # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+            
+            audio_file_manager.save_audio_file(file_name)
+
+            return jsonify({'message': 'Recording stopped.'}), 200
+        else:
+            return jsonify({'message': 'Invalid action.'}), 400
+        
+    except Exception as e:
+        return jsonify({'error': 'Error processing request.'}), 400
       
 @app.route('/record_task', methods=['POST'])
 def record_task() -> Response:
@@ -847,7 +866,6 @@ def exit_survey() -> Response:
 # Emotibit #######################################################
 def start_emotibit() -> None:
     global emotibit_streamer
-
     try:
         emotibit_streamer.start()
         print("OSC server is streaming data.")
@@ -857,13 +875,13 @@ def start_emotibit() -> None:
 
 def stop_emotibit() -> None:
     global emotibit_streamer
-
     try:
         emotibit_streamer.stop()
         return jsonify({'message': 'EmotiBit stream stopped.'}), 200
     
     except Exception as e:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
+        return jsonify({'error': 'Error stopping EmotiBit stream.'}), 400
 
 # File and System Ops ############################################
 def is_valid_email(email):
