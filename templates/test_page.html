@@ -29,9 +29,8 @@
         <p id="loadingMessage">Test Loading...</p>
         <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
         <p id="status"></p><br>
-        <button id="taskComplete">Test Complete</button>
-    </div>
-    
+    </div><br>
+    <button id="taskComplete">Test Complete</button>
     <script>
         let testNumber = 1; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
         let startTime;
@@ -40,7 +39,8 @@
         let timeLeft = initialTime;
         let timerInterval;
         let eventMarker;
-        let startTestPressed = false;
+        let testStarted = false;
+        let testEnded = false;
 
         const startTestButton = document.getElementById('startTestButton');
         const submitAnswerButton = document.getElementById('submitAnswerButton');
@@ -85,7 +85,7 @@
                     alert('Failed to start test. Please refresh the page and try again.');
                     return;
                 }
-                if (startTestPressed) {
+                if (testStarted) {
                     alert("Test already started. Please refresh the page to start again.");
                     return;
                 } else {
@@ -121,12 +121,17 @@
                             console.error('Error:', error);
                             alert('Failed to start test.');
                         });
-                    startTestPressed = true;
+                    testStarted = true;
                 }
             });
         
             taskComplete.addEventListener('click', function() {
-                getNextTest();
+                if (!testEnded) {
+                    alert("Test has not been completed.");
+                    return;
+                } else {
+                    getNextTest();
+                }
             });
 
             submitAnswerButton.addEventListener('click', function() {
@@ -139,7 +144,7 @@
         });
 
         function getNextQuestion() {
-            document.getElementById('submitAnswerButton').disabled = true;  
+            submitAnswerButton.disabled = true;  
             fetch('/get_question', {
                 method: 'POST',  
                 headers: {
@@ -153,18 +158,20 @@
                 return response.json();
             })
             .then(data => {
-                if (data.question) {
+                if (data.message === "No questions found." || data.message === "All questions answered."){
+                    statusContainer.innerText = data.message;
+                    submitAnswerButton.style.display = 'none';
+                    stopClock();
+                }
+                else {
                     startRecording()
                         .then(() => {
-                            submitAnswerButton.disabled = false;  
+                            submitAnswerButton.disabled = false; 
+                            console.log(data.question) ;
                         })
                         .catch(error => {
                             console.error('Error starting recording:', error);
                         });
-                } else {
-                    statusContainer.innerText = "No more questions.";
-                    submitAnswerButton.style.display = 'none';
-                    stopClock();
                 }
             })
             .catch(error => console.error('Error fetching next question:', error));
@@ -214,20 +221,21 @@
                 statusContainer.innerText = 'Time is up! Please stop.';
                 submitAnswerButton.style.display = 'none';
                 endTest();
-                getNextTest();
+                testStarted = false;
             }
         }
 
         function endTest() {
             eventMarker = 'subject_idle';
             setEventMarker(eventMarker);
+            testEnded = true;
             submitAnswerButton.style.display = 'none';
             submitAnswerButton.disabled = true;
 
             if (testNumber === 1){
-                statusContainer.innerText = 'Test completed! Please perform the next activity before starting the next test.';
-                startTestButton.style.display = 'block';
-                startTestButton.disabled = false;
+                statusContainer.innerText = 'Test completed! Please perform the next activities in your dashboard before starting the next test.';
+                startTestButton.style.display = 'none';
+                startTestButton.disabled = true;
             } else if (testNumber === 2){
                 statusContainer.innerText = 'All tests completed! Thank you for participating in the experiment.';
                 startTestButton.style.display = 'none';

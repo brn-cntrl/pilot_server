@@ -53,11 +53,14 @@ timestamp_manager = TimestampManager()
 def set_event_marker():
     global emotibit_streamer
     data = request.get_json()
+    try:
+        emotibit_streamer.event_marker = data.get('event_marker')
+        print("Event marker set to: ", emotibit_streamer.event_marker)
 
-    emotibit_streamer.event_marker = data.get('event_marker')
-    print("Event marker set to: ", emotibit_streamer.event_marker)
-
-    return jsonify({'status': 'Event marker set.'})
+        return jsonify({'status': 'Event marker set.'})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/baseline_comparison', methods=['POST'])
 def baseline_comparison() -> Response:
@@ -108,13 +111,18 @@ def get_ser_question() -> Response:
         if 0 <= test_manager.current_ser_question_index < len(questions):
             question = questions[test_manager.current_ser_question_index]['text']
             test_manager.current_ser_question_index += 1
-            return jsonify({'question': question})
+
+            # DEBUG
+            print(f"SER Question Index: {test_manager.current_ser_question_index}")
+            print(f"SER Question: {question}")
+
+            return jsonify({'message': 'Question found', 'question': question})
         
         elif test_manager.current_ser_question_index >= len(questions):
             recording_manager.stop_recording()
             test_manager.current_ser_question_index = 0
-            
-            return jsonify({'question': 'SER task completed.'}), 200  
+
+            return jsonify({'message': 'SER task completed.'}), 200  
 
     except Exception as e:
         print(f"Error in get_ser_question: {e}") 
@@ -127,44 +135,33 @@ def process_ser_answer() -> Response:
     This function performs the following steps:
     Set the event markers
     1. Stops the current audio recording.
-    2. Loads the audio file with librosa. NOTE: REMOVED FOR NOW
-    3. Resamples the audio signal. NOTE: REMOVED FOR NOW
-    4. Predicts the emotion from the normalized audio signal with call to the ser_manager. NOTE: REMOVED FOR NOW
-    5. Appends the predicted emotion to the subject's SER baseline data. NOTE: REMOVED FOR NOW
-    6. Renames the audio file based on the subject's ID and the current question index.
-    7. Saves the renamed audio file to the 'audio_files' directory.
-    8. Returns a JSON response indicating the status of the submission.
+    2. Renames the audio file based on the subject's ID and the current question index.
+    3. Saves the renamed audio file to the 'audio_files' directory.
+    4. Returns a JSON response indicating the status of the submission.
     Returns:
         - Response: A JSON response with the status of the answer submission.
             If successful, returns {'status': 'Answer submitted.'}.
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
 
-    global subject_manager
-    global recording_manager, audio_file_manager, test_manager
-    # global ser_manager
+    global subject_manager, recording_manager, audio_file_manager, test_manager
 
     recording_manager.stop_recording()
 
     try:
-        # sig, orig_sr = librosa.load(audio_file_manager.recording_file, sr=None)
-        # sig_resampled = librosa.resample(sig, orig_sr=orig_sr, target_sr=16000)
-        
-        # emotion, confidence = ser_manager.predict_emotion(sig_resampled)
-
         ts = recording_manager.timestamp
-        
+        id = subject_manager.subject_id
+
         file_name = f"{id}_{ts}_ser_baseline_question_{test_manager.current_ser_question_index}.wav"
 
-        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': emotion, 'SER_Confidence': confidence})
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        # DEBUG
+        print(f"Audio File Name: {file_name}")
 
-        # AUDIO STORAGE
-        id = subject_manager.subject_id
+        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
         audio_file_manager.save_audio_file(file_name)
 
-        return jsonify({'status': 'Answer submitted.'})
+        return jsonify({'status': 'Answer submitted successfully.'})
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -185,49 +182,52 @@ def get_question() -> Response:
         - Response: A JSON response containing the current question and the
             test number, or `{"question": None}` if no questions are available.
     """
-
     global test_manager
-    questions = test_manager.get_task_questions(test_manager.current_test_index)
 
-    if questions is None:
-        return jsonify({"question": None})
-    
-    if test_manager.current_question_index >= len(questions): # Move to next test
-        test_manager.current_test_index += 1
+    if test_manager.current_test_index > 1: # All tests complete
+        test_manager.current_test_index = 0
         test_manager.current_question_index = 0
-
-        if test_manager.current_test_index > 1: # All tests complete
-            test_manager.current_test_index = 0
-            test_manager.current_question_index = 0
-            return jsonify({"question": "All tests completed."})
-        
-        
+        return jsonify({"question": "All tests completed."})
+    else:
+        # NOTE: Leaving questions here for debugging purposes. The question is not part of the response.
         questions = test_manager.get_task_questions(test_manager.current_test_index)
+    
         if questions is None:
-            return jsonify({"question": None})
-        
-    question = questions[test_manager.current_question_index]
-    return jsonify({'question': question['question'], "test_number": test_manager.current_test_index})
+            return jsonify({"message": "No questions found."})
+    
+        if test_manager.current_question_index >= len(questions): 
+            test_manager.current_question_index = 0
+            # test_manager.current_test_index += 1
+
+            return jsonify({"message": "All questions answered."})
+        else:
+            question = questions[test_manager.current_question_index]
+            # DEBUG
+            print(f"Test Index: {test_manager.current_test_index}.")
+            print(f"Question Index: {test_manager.current_question_index}, Question: {question}.")
+            
+            return jsonify({'message': 'Question found.', 'question': question['question'], "test_number": test_manager.current_test_index})
 
 @app.route('/get_current_test', methods=['POST'])
 def get_current_test() -> Response:
     global test_manager
-
+    print(f"Test Index: {test_manager.current_test_index}.")
     return jsonify({"test_number": test_manager.current_test_index})
     
 @app.route('/get_next_test', methods=['POST'])
 def get_next_test() -> Response:
-    # TODO: THIS FUNCTIONALITY SOULD BE IMPLEMENTED IN THE TEST MANAGER CLASS
     global test_manager
 
     test_manager.current_test_index += 1
+
     if test_manager.current_test_index > 1:
         test_manager.current_question_index = 0
         return jsonify({"message": "All tests completed."})
     
-    else:  
+    else:
+        # DEBUG
+        print(f"Test Index: {test_manager.current_test_index}.")
         # questions = test_manager.get_task_questions(test_manager.current_test_index)
-    
         return jsonify({"message": "Next test initiated.", "test_number": test_manager.current_test_index})
 
 @app.route('/get_stream_active', methods=['GET'])
@@ -283,7 +283,6 @@ def submit_answer() -> Response:
     """
 
     global recording_manager, subject_manager, audio_file_manager
-    # global ser_manager
 
     current_test = test_manager.current_test_index
     questions = test_manager.get_task_questions(current_test)
@@ -297,10 +296,6 @@ def submit_answer() -> Response:
         # TODO: Fix event marker on test page
         file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
         try:
-            # sig, sr = librosa.load(audio_file_manager.recording_file, sr=None)
-            # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-            # ser, confidence = ser_manager.predict_emotion(resampled_sig)
-
             audio_file_manager.save_audio_file(file_name)
 
         except Exception as e:
@@ -315,19 +310,21 @@ def submit_answer() -> Response:
 
         else:
             # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            # subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': ser, 'SER_Confidence': confidence})
             subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
         correct_answer = questions[test_manager.current_question_index]['answer']
+
+        # DEBUG
+        print(f"Correct Answer: {correct_answer}.")
+
         result = 'incorrect'
 
         if test_manager.check_answer(transcription, correct_answer):
             result = 'correct'
+            test_manager.current_question_index += 1
         else:
             result = 'incorrect'
             test_manager.current_question_index = 0
-
-        test_manager.current_question_index += 1
 
         return jsonify({'status': 'Answer submitted.', 'result': result})
     
@@ -471,9 +468,6 @@ def submit() -> Response:
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
 
-            if pss4 is None:  # Check if survey was found
-                print(f"Survey with name 'pss4' not found.")
-            
             return jsonify({'message': 'User information submitted.', 'pss4': pss4, 'exit_survey': exit_survey}), 200
         
     except Exception as e:
@@ -553,7 +547,7 @@ def set_device() -> Response:
         return jsonify({'message': 'Device index not provided.'}), 400
 
 @app.route('/record_task_audio', methods=['POST'])
-def task_audio_recording():
+def record_task_audio():
     """
     Handle audio recording tasks based on the provided action.
     This function processes JSON data from a request to either start or stop an audio recording.
@@ -644,11 +638,18 @@ def record_task() -> Response:
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
+
+            # DEBUG
+            print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
+
             return jsonify({'message': 'Recording started.', 'event_marker': event_marker}), 200
         
         elif action == 'stop':
             recording_manager.stop_recording()
-            
+
+            # Handling the emotibit event marker in client "Task Completed" function.
+            # emotibit_streamer.event_marker = event_marker 
+
             id = subject_manager.subject_id
             audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 20, "tmp/")
 
@@ -657,24 +658,6 @@ def record_task() -> Response:
                                     int(os.path.splitext(os.path.basename(x))[0].split('_')[-1]))
 
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
-            
-            # transcriptions = []
-            # ser_predictions = []
-            # confidence_scores = []
-
-            # for segment_file in audio_segments:
-                # transcription = transcribe_audio(segment_file)
-                # transcriptions.append(transcription)
-
-                # SER
-                # sig, sr = librosa.load(segment_file, sr=None)
-                # resampled_sig = librosa.resample(sig, orig_sr=sr, target_sr=16000)
-                # emotion, confidence = ser_manager.predict_emotion(resampled_sig)
-                # ser_predictions.append(emotion)
-                # confidence_scores.append(confidence)
-
-            # vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': tr, 'SER_Emotion': ser, 'SER_Confidence': conf} 
-            #         for ts, fn, tr, ser, conf in zip(timestamps, audio_segments, transcriptions, ser_predictions, confidence_scores)]
 
             vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None} 
                     for ts, fn, in zip(timestamps, audio_segments)]
@@ -683,9 +666,6 @@ def record_task() -> Response:
                 subject_manager.append_data(data)
             
             audio_file_manager.backup_tmp_audio_files()
-
-            # NOTE: This is because the emotitbit is continuous.
-            # emotibit_streamer.event_marker = "subject_idle" NOTE: handling this with explicit input on the front end for now.
 
             return jsonify({'message': 'Audio successfully processed.', 'event_marker': event_marker}), 200
         else:

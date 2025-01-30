@@ -49,8 +49,7 @@
         <div class="testModule" id="biometricBaselineDiv" style="display:none;">
             <ul>
                 <li>The experimenter will now help you put on two devices needed to collect data for the session.</li>
-                <li>Press "Go to Survey" and complete the survey.</li>
-                <p> Please press "Task Complete" when you finish and return.</p>
+                <p> Please press "Task Complete" when you return.</p>
             </ul>
             
             <button id="biometricTaskComplete">Task Complete</button>
@@ -176,7 +175,6 @@
             const vr2Complete = document.getElementById('VR2Complete');
             const break1Complete = document.getElementById('break1Complete');
             const break2Complete = document.getElementById('break2Complete');
-            // const surveyList = document.getElementById('surveyList');
             const surveysCompletedButton = document.getElementById('surveysCompletedButton');
             const biometricTaskComplete = document.getElementById('biometricTaskComplete');
             const submitButton = document.getElementById('submitButton');
@@ -260,15 +258,9 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             subjectInfoComplete.addEventListener('click', function() {
-                // surveyList.style.display = 'block';
                 biometricBaselineButton.style.display = 'block';
                 biometricBaselineDiv.style.display = 'block';
             });
-
-            // surveysCompletedButton.addEventListener('click', function(){
-            //     biometricBaselineButton.style.display = 'block';
-            //     biometricBaselineDiv.style.display = 'block';
-            // });
             
             biometricTaskComplete.addEventListener('click', function() {
                 stressBaselineButton.style.display = 'block';
@@ -396,18 +388,20 @@
                         return response.json();
                     })
                     .then(data => {
-                        console.log('Received data:', data);
-                        questionContainer.innerText = data.question;
-                        if (data.question === 'SER task completed.') {
+                        if (data.message === 'SER task completed.') {
                             stopRecording();
                             setEventMarker('subject_idle');
                             submitAnswer.disabled = true;
                             submitAnswer.style.display = 'none';
+                            status.innerText = data.message;
+                        } else {
+                            questionContainer.innerText = data.question;
+                            console.log(data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error getting SER question:', error);
-                        alert('Error getting SER question: ' + error);
+                        status.innerText = "Error occurred while getting the SER question.";
                     });
             });
         });
@@ -427,21 +421,20 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Received data:', data); 
                 if (data.status === 'error') {
+                    status.style.display = "block";
+                    status.disabled = false;
                     status.innerHTML = data.message;
-                    status.style.display = "block";
-                    status.disabled = false;
                 } else {
-                    // document.getElementById("status").innerHTML = data.message;
                     status.style.display = "block";
                     status.disabled = false;
-                    status.innerText = "Answer submitted successfully. Please wait for the next question.";
+                    status.innerText = data.message;
 
                     return startRecording();
                 }
             })
             .then(() => {
+                // NOTE: This might not be needed since thread blocking event was added to recording manager.
                 let checkInterval = setInterval(() => {
                     let streamActive = checkActiveStream();  
                     if (streamActive) {

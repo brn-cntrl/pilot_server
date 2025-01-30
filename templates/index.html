@@ -84,6 +84,7 @@
             <li>Test headphones: When subject is fitted with headphones, click "Test Audio Output" below.</li>
             <li>Test microphont: When subject is fitted with microphone, click "Start Monitoring" to monitor audio.</li>
             <li>Monitor the signal below and adjust microphone as needed.</li>
+            <li>Have the subject click "End Task" when test is complete.</li>
         </ul><br>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
 
@@ -92,10 +93,22 @@
 
         <button onclick="startMonitoring()">Start Monitoring</button><br><br>
         <div class="meter"><div class="level"></div></div>
-    </div> <br>
-</div>
-    <h2>Experimental Tasks</h2>
+    </div><br>
 
+    <button class="toggle">Speech Emotion Baseline (SER)</button>
+    <div class="innerModlue">
+        <h4>Instructions</h4>
+        <ul>
+            <li>Once the audio is tested, instruct the subject to click the Emotion Baseline button.</li>
+            <li>Instruct the subject to carefully follow the directions listed there.</li>
+            <li>The subject should click "Begin" and read each question before speaking their answer aloud.</li>
+            <li>The subject should wait for the status to read "Recording..." before speaking.</li>
+            <li>The subject should click "Submit" to register their answer and wait for the next question.</li>
+        </ul>
+    </div>
+    </div><br>
+
+    <h2>Experimental Tasks</h2>
     <button class="toggle">Begin Tasks</button><br>
     <div class="testModule" style="display:none;">
         <h3>Experimental Tasks</h3>
@@ -105,6 +118,7 @@
             <ul>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
+                <li>When finished, the subject must press "Test Complete" on the test page and "Task Complete" on their dashboard.</li>
                 <li>Click "Task Completed" when the subject has finished the task.</li>
             </ul><br>
             <button class="endTask">Task Completed</button>
@@ -595,11 +609,20 @@
 
             function recordTask(button, action){
                 const buttonId = button.id;
+                console.log(`Button ID: ${buttonId}`);
+
                 const parentDiv = button.closest('div');
                 const selectedCondition = parentDiv.querySelector('select').value;
-                let eventMarker = `${buttonId}_${selectedCondition}`;
+                let eventMarker;
+
+                if(action === 'start'){
+                    eventMarker = `${buttonId}_${selectedCondition}`;
+                } else {
+                    eventMarker = 'subject_idle';
+                }
                 
-                console.log(`eventMarker: ${eventMarker}, action: ${action}`);  // Debugging statement
+                // DEBUG
+                console.log(`eventMarker: ${eventMarker}, action: ${action}`); 
 
                 statusId1 = document.getElementById("recordingStatus1");
                 statusId2 = document.getElementById("recordingStatus2");
@@ -622,20 +645,20 @@
                 })
                 .then(data => {
                     console.log('Success:', data);
-                    if(eventMarker == 'task_1'){
+                    if(buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = data.message;
-                    } else if (eventMarker == 'task_2'){
+                    } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = data.message;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    if(eventMarker == 'task_1'){
+                    if(buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
                         statusId1.innerHTML = data.message;
-                    } else if (eventMarker == 'task_2'){
+                    } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
                         statusId2.innerHTML = data.message;
                     }
