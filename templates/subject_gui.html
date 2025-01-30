@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subject GUI</title>
+    <title>Subject Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Subject GUI Panel</h1>
+    <h1>Subject Dashboard</h1>
     <p>Please fill out each section in order. When each task is complete, a new one will appear until the trial is completed.</p>
     <div id="pretestDiv">
         <h2>Pretest</h2>
@@ -65,10 +65,12 @@
 
         <button id="testAudioButton" style="display:none;">Test Audio</button>
         <div class="testModule" id="testAudioDiv" style="display:none;">
-            <p>The experimenter will now place your headphones and attach a microphone to record audio for the session.</p>
-            <p>The experimenter will then play three short tones to test your headphones</p>
-            <p>The experimenter will then direct you to press "Record" to test your microphone</p>
-            <p>After you press "Record", please read the following out loud to test the microphone:</p>
+            <ul>
+                <li>The experimenter will now place your headphones and attach a microphone to record audio for the session.</li>
+                <li>The experimenter will then play three short tones to test your headphones</li>
+                <li>The experimenter will then direct you to press "Record" to test your microphone</li>
+                <li>After you press "Record", please read out loud the statement that appears below.</li>
+            </ul><br>
             <button id="testAudio">Record</button><br>
             <p id="audioStatusMessage"></p>
             <button id="testAudioTaskComplete">Task Complete</button>
