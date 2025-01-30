@@ -3,16 +3,21 @@ import re
 
 class TestManager:
     def __init__(self) -> None:
+        print("Test Manager initialized...")
         try:
             with open('test_files/SER_questions.json') as f:
                 self._ser_questions = json.load(f)
+                print("SER_questions.json loaded successfully")
+
         except FileNotFoundError:
             self._ser_questions = {}
-            print("SER_questions.json not found")
+            print("SER baseline file, SER_questions.json not found")
 
         try:
             with open('test_files/task_1_data.json') as f:
                 self._task_1_questions = json.load(f)
+                print("Stressor task file, task_1_data.json loaded successfully")
+
         except FileNotFoundError:
             self._task_1_questions = {}
             print("task_1_data.json not found")
@@ -20,6 +25,8 @@ class TestManager:
         try:
             with open('test_files/task_2_data.json') as f:
                 self._task_2_questions = json.load(f)
+                print("Stressor task 2 file, task_2_data.json loaded successfully")
+
         except FileNotFoundError:
             self._task_2_questions = {}
             print("task_2_data.json not found")

@@ -11,6 +11,9 @@ class AudioFileManager:
         self._recording_file = recording_file
         self._audio_folder = audio_save_folder
 
+        print("Audio File Manager initialized...")
+        print("Audio folder will be set to 'subject_data/<experiment_name>/<trial_name>/<subject_folder>/audio_files' when the subject is created.")
+    
     @property
     def recording_file(self) -> str:
         return self._recording_file
@@ -26,6 +29,7 @@ class AudioFileManager:
     @audio_folder.setter
     def audio_folder(self, audio_save_folder) -> None:
         self._audio_folder = audio_save_folder
+        print(f"Audio folder set to {self._audio_folder}")
 
     def set_audio_folder(self, experiment_name, trial_name, subject_folder):
         self.audio_folder = os.path.join("subject_data", experiment_name, trial_name, subject_folder, "audio_files")

@@ -47,7 +47,8 @@ class EmotiBitStreamer:
         self.dataset = None
             
         atexit.register(self.stop)
-        print("Emotibit Initialized")
+        print("Emotibit Initialized... ")
+        print("EmotiBit data folder, .hdf5 and .csv files will be set when experiment/trial and subject information is submitted.")
 
     @property
     def data_folder(self) -> str:
@@ -66,12 +67,13 @@ class EmotiBitStreamer:
         self._event_marker = value
 
     def set_data_folder(self, experiment_name, trial_name, subject_folder):
-        self.data_folder = os.path.join("subject_files", experiment_name, trial_name, subject_folder, "emotibit_data")
+        self.data_folder = os.path.join("subject_data", experiment_name, trial_name, subject_folder, "emotibit_data")
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
         # DEBUG
         print("Data folder set for emotibit streamer: ", self.data_folder)
+        
     def initialize_hdf5_file(self, experiment_name, trial_name, subject_id):
         """
         Initializes the HDF5 file and dataset if not already created.

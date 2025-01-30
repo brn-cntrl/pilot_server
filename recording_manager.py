@@ -26,6 +26,9 @@ class RecordingManager():
         self._timestamp = None
         self.timestamp_manager = TimestampManager()
 
+        print("Recording manager initialized...")
+        print(f"Recording manager's temporary recording file set to {self.recording_file}")
+
     ##################################################################
     ## GENERAL METHODS
     ##################################################################

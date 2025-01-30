@@ -10,6 +10,8 @@ class FormManager:
         self._surveys = self.load_surveys()
         self._formatted_surveys = []
         self._survey_links = []
+        print("Form Manager initialized...")
+        print("Form Manager's surveys file set to 'surveys/surveys.json'")
 
     @property
     def embed_codes(self) -> list:

@@ -17,7 +17,8 @@ class TimestampManager:
             self.current_timestamp = None
             self.lock = threading.Lock()
             self.timestamp_event = threading.Event()
-
+            print("Timestamp manager initialized...")
+            
     def update_timestamp(self):
         with self.lock:
             self.current_timestamp = datetime.now()
