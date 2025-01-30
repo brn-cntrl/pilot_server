@@ -13,3 +13,4 @@ scikit-image==0.20.0
 scipy==1.10.1
 transformers==4.48.0
 mysql-connector-python==9.2.0
+h5py==3.7.0
