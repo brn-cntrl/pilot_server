@@ -1,3 +1,20 @@
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".toggle").forEach(button => {
+        button.addEventListener("click", function () {
+            let nextDiv = this.nextElementSibling;
+
+            while (nextDiv && nextDiv.tagName !== "DIV") {
+                nextDiv = nextDiv.nextElementSibling;
+            }
+
+            if (nextDiv) {
+                // Toggle between display: none and display: block
+                nextDiv.style.display = nextDiv.style.display === "none" ? "block" : "none";
+            }
+        });
+    });
+});
+
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;
@@ -58,6 +75,7 @@ async function startRecording() {
         console.error('Recording Error:', error);
     }
 }
+
 async function stopRecording(){
     try{
         const response = await fetch('/stop_recording', {

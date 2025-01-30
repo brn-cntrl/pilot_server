@@ -24,13 +24,12 @@
             <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
         </ul>
     </div><br>
-    <button id="startTestButton" style="display:none;">Start Test</button><br>
+    <button id="startTestButton" style="display:none;">Start Test</button>
     <div class="testModule">
         <p id="loadingMessage">Test Loading...</p>
-        <button class="bigButton" id="submitAnswerButton" disabled>Submit Answer</button><br><br>
-        <p class="bigStatus" id="status"></p><br>
-        <button id="taskComplete">Task Complete</button>
-        
+        <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
+        <p id="status"></p><br>
+        <button id="taskComplete">Test Complete</button>
     </div>
     
     <script>
@@ -41,6 +40,7 @@
         let timeLeft = initialTime;
         let timerInterval;
         let eventMarker;
+        let startTestPressed = false;
 
         const startTestButton = document.getElementById('startTestButton');
         const submitAnswerButton = document.getElementById('submitAnswerButton');
@@ -79,46 +79,52 @@
             loadingMessage.style.display = 'none';
             
             // Start Test
+            
             startTestButton.addEventListener('click', function() {
                 if (eventMarker === undefined) {
                     alert('Failed to start test. Please refresh the page and try again.');
                     return;
                 }
+                if (startTestPressed) {
+                    alert("Test already started. Please refresh the page to start again.");
+                    return;
+                } else {
+                    setEventMarker(eventMarker);
 
-                setEventMarker(eventMarker);
+                    submitAnswerButton.disabled = true;
+                    loadingMessage.style.display = 'block';
+                    statusContainer.innerText = '';
 
-                submitAnswerButton.disabled = true;
-                loadingMessage.style.display = 'block';
-                statusContainer.innerText = '';
-
-                startRecording()
-                    .then(() => {
-                        return fetch('/get_question', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
+                    startRecording()
+                        .then(() => {
+                            return fetch('/get_question', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
                             }
+                            return response.json();
+                        })
+                        .then(data => {
+                            loadingMessage.style.display = 'none';
+                            startTestButton.disabled = true;
+                    
+                            submitAnswer.disabled = false;
+                            startClock();  
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to start test.');
                         });
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        loadingMessage.style.display = 'none';
-                        startTestButton.disabled = true;
-                
-                        submitAnswer.disabled = false;
-                        startClock();  
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Failed to start test.');
-                    });
+                    startTestPressed = true;
+                }
             });
-
+        
             taskComplete.addEventListener('click', function() {
                 getNextTest();
             });

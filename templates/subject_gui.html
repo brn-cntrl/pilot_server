@@ -12,14 +12,14 @@
     <div id="pretestDiv">
         <h2>Pretest</h2>
         <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p>
-        <button id="beginSurveysButton">Surveys</button>
-        <div class="testModule" id="surveysDiv" style="display:block;">
+        <button class="toggle">Surveys</button><br>
+        <div class="testModule" style="display:block;">
             <h2>Surveys and Participant Information</h2>
             <p>Before performing the tasks, please fill out the following forms and surveys.</p><br>
             <p>Names will be encrypted to ensure privacy of subject data</p>
 
-            <button id="participantInfoButton">Participant Information</button>
-            <div class="innerModule" id="participantInfoDiv" style="display:none;">
+            <button class="toggle">Participant Information</button><br>
+            <div class="innerModule" style="display:none;">
                 <form action="/submit" method="POST" id="nameForm">
                     <label for="first_name">First Name:</label>
                     <input type="text" id="first_name" name="first_name" required><br><br>
@@ -35,17 +35,17 @@
                 </form><br>
                 <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
                 <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div><br>
-                <button id="subjectInfoComplete">Task Complete</button><br>
+                <button id="subjectInfoComplete">Task Complete</button>
             </div>
 
-            <div id="surveyList" style="display:none;">
+            <!-- <div id="surveyList" style="display:none;">
                 <p id="surveysNote" style="display:block;">Note: These require both a subject and witness signature </p>
                 <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
                 <button id="surveysCompletedButton">Task Complete</button>
-            </div>
-        </div><br><br>
+            </div> -->
+        </div><br>
 
-        <button id="biometricBaselineButton" style="display:none;">Biometrics Baseline</button>
+        <button class="toggle" id="biometricBaselineButton" style="display:none;">Biometrics Baseline</button>
         <div class="testModule" id="biometricBaselineDiv" style="display:none;">
             <ul>
                 <li>The experimenter will now help you put on two devices needed to collect data for the session.</li>
@@ -56,14 +56,14 @@
             <button id="biometricTaskComplete">Task Complete</button>
         </div><br>
 
-        <button id="stressBaselineButton" style="display:none;">Stress Baseline</button>
+        <button class="toggle" id="stressBaselineButton" style="display:none;">Stress Baseline</button>
         <div class="testModule" id="stressBaselineDiv" style="display:none;">
             <p>Please fill out this form.</p>
             <div id="pss4Div1" style="display:none;"></div><br>
             <button id="stressBaselineTaskComplete">Task Complete</button>
         </div><br>
 
-        <button id="testAudioButton" style="display:none;">Test Audio</button>
+        <button class="toggle" id="testAudioButton" style="display:none;">Test Audio</button>
         <div class="testModule" id="testAudioDiv" style="display:none;">
             <ul>
                 <li>The experimenter will now place your headphones and attach a microphone to record audio for the session.</li>
@@ -76,7 +76,7 @@
             <button id="testAudioTaskComplete">Task Complete</button>
         </div><br>
 
-        <button id="emotionBaselineButton" style="display:none;">Emotion Baseline</button>
+        <button class="toggle" id="emotionBaselineButton" style="display:none;">Emotion Baseline</button>
         <div class="testModule" id="emotionBaselineDiv" style="display:none;">
             <ul></ul>
                 <li>Press "Begin"</li>
@@ -97,51 +97,51 @@
         <p>After completing a task, please wait for instructions before advancing to the next task.</p>
         
         <div class="testModule" id="testProceduresDiv" style="display:block;">
-            <button id="firstStressTask">First Stressor Task</button>
+            <button class="toggle" id="firstStressTask">First Stressor Task</button>
             <div class="innerModule" id="stressTask1Div" style="display:none;">
                 <p>Stressor task window is now open.</p>
                 <button id="stressTask1Complete">Task Complete</button><br>
             </div><br>
             
-            <button id="firstVRTask" style="display:none;">First VR Task</button>
+            <button class="toggle" id="firstVRTask" style="display:none;">First VR Task</button>
             <div class="innerModule" id="vrTask1Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p> 
                 <button id="VR1Complete">Task Complete</button><br>
             </div><br>
             
-            <button id="pss4Button2" style="display:none;">PSS4 Survey</button>
+            <button class="toggle" id="pss4Button2" style="display:none;">PSS4 Survey</button>
             <div class="innerModule" id="surveyDiv1" style="display:none;">
                 <p>Please fill out this form.</p>
                 <div id="pss4Div2" style="display:none;"></div><br>
                 <button id="pss4Complete2">Task Complete</button><br>
             </div><br>  
 
-            <button class="breakButton" id="break1Button" style="display:none;">Take Break</button>
+            <button class="breakButton toggle" id="break1Button" style="display:none;">Take Break</button>
             <div id="break1Div" style="display:none;">
                 <p>The break window is now open.</p>
                 <button id="break1Complete">Break Complete</button><br>
             </div><br>
             
-            <button id="secondStressTask" style="display:none;">Second Stressor Task</button>
+            <button class="toggle" id="secondStressTask" style="display:none;">Second Stressor Task</button>
             <div class="innerModule" id="stressTask2Div" style="display:none;">
                 <p>Stressor task window is open.</p>
                 <button id="stressTask2Complete">Task Complete</button><br>
             </div><br>
 
-            <button id="secondVRTask" style="display:none;">Second VR Task / Control</button>
+            <button class="toggle" id="secondVRTask" style="display:none;">Second VR Task / Control</button>
             <div class="innerModule" id="vrTask2Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p>
                 <button id="VR2Complete">Task Complete</button><br>
             </div><br>
 
-            <button id="pss4Button3" style="display:none;">PSS4 Survey</button>
+            <button class="toggle" id="pss4Button3" style="display:none;">PSS4 Survey</button>
             <div class="innerModule" id="surveyDiv2" style="display:none;">
                 <p>Please fill out this form.</p>
                 <div id="pss4Div3" style="display:none;"></div><br>
                 <button id="pss4Complete3">Task Complete</button><br>
             </div><br>
 
-            <button class="breakButton" id="break2Button" style="display:none">Take a Break</button>
+            <button class="breakButton toggle" id="break2Button" style="display:none">Take a Break</button>
             <div class="innerModule" id="break2Div" style="display:none;">
                 <p>The break window is now open.</p>
                 <button id="break2Complete">Break Complete</button><br>
@@ -152,7 +152,7 @@
         <h2>Post Test</h2>
         <p>Please fill out the surveys or tasks below.</p>
         <div class="testModule" style="display:block;">
-            <button id="exitSurveyButton">Exit Survey</button>
+            <button class="toggle" id="exitSurveyButton">Exit Survey</button>
             <div class="innerModule" id="exitSurveyDiv" style="display:none;"></div><br>
             <button id="postTestComplete">Task Complete</button><br>
             <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
@@ -176,12 +176,8 @@
             const vr2Complete = document.getElementById('VR2Complete');
             const break1Complete = document.getElementById('break1Complete');
             const break2Complete = document.getElementById('break2Complete');
-            const beginSurveysButton = document.getElementById('beginSurveysButton');
-            const surveysDiv = document.getElementById('surveysDiv');
-            const participantInfoButton = document.getElementById('participantInfoButton');
-            const surveyList = document.getElementById('surveyList');
+            // const surveyList = document.getElementById('surveyList');
             const surveysCompletedButton = document.getElementById('surveysCompletedButton');
-            const participantInfoDiv = document.getElementById('participantInfoDiv');
             const biometricTaskComplete = document.getElementById('biometricTaskComplete');
             const submitButton = document.getElementById('submitButton');
             const notification1 = document.getElementById('notification1');
@@ -242,12 +238,10 @@
 
             firstStressTask.addEventListener('click', function() {
                 window.open('/test_page', '_blank', 'width=800, height=600');
-                toggleVis('stressTask1Div');
             });
 
             secondStressTask.addEventListener('click', function() {
                 window.open('/test_page', '_blank', 'width=800, height=600');
-                toggleVis('stressTask2Div');
             });
         });
         
@@ -264,56 +258,17 @@
             .catch(error => console.error('Error:', error));
         }
 
-        document.addEventListener('DOMContentLoaded', function(){
-            beginSurveysButton.addEventListener('click', function() {
-                toggleVis('surveysDiv');
-            });
-            participantInfoButton.addEventListener('click', function() {
-                toggleVis('participantInfoDiv');
-            });
-            emotionBaselineButton.addEventListener('click', function() {
-                toggleVis('emotionBaselineDiv');
-            });
-            biometricBaselineButton.addEventListener('click', function() {
-                toggleVis('biometricBaselineDiv');
-            });
-            stressBaselineButton.addEventListener("click", function() {
-                toggleVis('stressBaselineDiv');
-            });
-            testAudioButton.addEventListener('click', function() {
-                toggleVis('testAudioDiv');
-            });
-
-            break1Button.addEventListener('click', function() {
-                toggleVis('break1Div');
-            });
-
-            break2Button.addEventListener('click', function() {
-                toggleVis('break2Div');
-            });
-
-            pss4Button2.addEventListener('click', function() {
-                toggleVis('surveyDiv1');
-            });
-
-            pss4Button3.addEventListener('click', function() {
-                toggleVis('surveyDiv2');
-            }); 
-
-            exitSurveyButton.addEventListener('click', function(){
-                toggleVis('exitSurveyDiv');
-            })
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             subjectInfoComplete.addEventListener('click', function() {
-                surveyList.style.display = 'block';
-            });
-
-            surveysCompletedButton.addEventListener('click', function(){
+                // surveyList.style.display = 'block';
                 biometricBaselineButton.style.display = 'block';
                 biometricBaselineDiv.style.display = 'block';
             });
+
+            // surveysCompletedButton.addEventListener('click', function(){
+            //     biometricBaselineButton.style.display = 'block';
+            //     biometricBaselineDiv.style.display = 'block';
+            // });
             
             biometricTaskComplete.addEventListener('click', function() {
                 stressBaselineButton.style.display = 'block';
