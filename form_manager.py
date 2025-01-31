@@ -79,43 +79,55 @@ class FormManager:
         outstring = re.sub(r"[^a-zA-Z0-9_\-]", "", outstring)
         return outstring
     
-    def clean_survey_info(self, infile, survey_name, subject_manager) -> None:
-        if infile.endswith('.csv'):
-            subject_first_name = subject_manager.subject_first_name
-            subject_last_name = subject_manager.subject_last_name
-            subject_id = subject_manager.subject_id
-            subject_data_folder = subject_manager.subject_folder
+    def find_survey(self, infile, subject_manager) -> bool:
+        """
+        Searches for a survey entry that matches the subject's details and writes the filtered data to a new CSV file.
+        Args:
+            infile (file-like object): The input CSV file containing survey data.
+            subject_manager (object): An object containing subject details such as first name, last name, email, ID, and data folder.
+        Returns:
+            bool: True if the subject is found in the survey data and the filtered data is written to a new CSV file, False otherwise.
+        Raises:
+            ValueError: If the required columns ("First Name", "Last Name", "Email") are not found in the CSV headers.
+        Notes:
+            - The method assumes that the input CSV file has headers and that the headers include "First Name", "Last Name", and "Email".
+            - The method writes the filtered data to a new CSV file named with the subject's ID and the original filename in the subject's data folder.
+        """
 
-            # Open the csv file for reading
-            with open(infile, 'r', newline='', encoding='utf-8') as infile:
-                # Look for the headers
-                reader = csv.reader(infile)
-                header = next(reader)
+        filename = infile.filename
+        subject_first_name = subject_manager.subject_first_name
+        subject_last_name = subject_manager.subject_last_name
+        subject_email = subject_manager.subject_email
+        subject_id = subject_manager.subject_id
+        subject_data_folder = subject_manager.subject_folder
 
-                first_name_idx = header.index("First Name")
-                last_name_idx = header.index("Last Name")
-                email_idx = header.index("Email")
+        with open(infile, 'r', newline='', encoding='utf-8') as infile:
+            reader = csv.reader(infile)
+            headers = next(reader)
+            timestamp_idx = 0
+            first_name_idx = headers.index("First Name")
+            last_name_idx = headers.index("Last Name")
+            email_idx = headers.index("Email")
 
-                outfile = os.path.join(f"{subject_data_folder}", f"{subject_id}_{survey_name}.csv")
-                with open(outfile, mode='w', newline='', encoding='utf-8') as outfile:
-                    writer = csv.writer(outfile)
-                    new_header = ['Subject ID'] + header
-                    writer.writerow(new_header)
+            new_headers = ["Timestamp"] + [col for i, col in enumerate(headers) if i not in (first_name_idx, last_name_idx, email_idx)]
+            output_csv = os.path.join(f"{subject_data_folder}", f"{subject_id}_{filename}")
 
-                    for row in reader:
-                        csv_first_name = self.clean_string(row[first_name_idx])
-                        csv_last_name = self.clean_string(row[last_name_idx])
-                        csv_email = row[email_idx]
+            with open(output_csv, mode='w', newline='', encoding='utf-8') as outfile:
+                writer = csv.writer(outfile)
+                writer.writerow(new_headers)
 
-                        if(csv_first_name == subject_first_name and 
-                           csv_last_name == subject_last_name and 
-                           csv_email == subject_manager.subject_email):
-                            row_with_id = [subject_id] + row
-                            writer.writerow(row_with_id)
-                            return True
-                        else:
-                            print("Subject not found in survey data.")
-                            return False
+                for row in reader:
+                    csv_first_name = self.clean_string(row[first_name_idx])
+                    csv_last_name = self.clean_string(row[last_name_idx])
+                    csv_email = row[email_idx].lower().strip().replace(" ", "_")    
+
+                    if(csv_first_name == subject_first_name and csv_last_name == subject_last_name and csv_email == subject_email):
+                        filtered_row = [row[timestamp_idx]] + [row[i] for i in range(len(row)) if i not in (first_name_idx, last_name_idx, email_idx)]
+                        writer.writerow(filtered_row)
+                        return True
+                    else:
+                        print("Subject not found in survey data.")
+                        return False
 
     def remove_survey(self, survey_name) -> None:
         for survey in self._surveys:

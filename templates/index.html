@@ -312,6 +312,7 @@
             <ul>
                 <li>First dowload the survey csv from Google Forms. Be sure to choose a download destination</li>
                 <li>Click "Upload File", navigate to the destination folder and select the csv.</li>
+                <li>If the subject's name and email are found, their survey responses will be stored in data folder of the current ID.</li>
             </ul><br>
             <button onclick="openFileDialog()">Upload File</button><br><br>
             <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)" />
@@ -375,7 +376,7 @@
             <p id="errorNotification4" style="display:none; color: red;">Error getting name and email.</p>
             <p id="decryptionStatusName" style="display:none;"></p>
             <p id="decryptionStatusEmail" style="display:none;"></p>
-        </div>
+        </div><br>
     </div><br>
 
     <h2>Shutdown</h2>

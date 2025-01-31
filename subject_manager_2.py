@@ -116,7 +116,6 @@ class SubjectManager:
         if not os.path.exists(csv_file_path):
             with open(csv_file_path, mode='w', newline='', encoding='utf-8') as csv_file:
                 writer = csv.writer(csv_file)
-                
                 writer.writerow([f"Experiment Name: {self.experiment_name}"])
                 writer.writerow([f"Trial Name: {self.trial_name}"])
                 writer.writerow([f"Subject ID: {self.subject_id}"])
@@ -127,47 +126,33 @@ class SubjectManager:
     def append_data(self, data: dict) -> None:
         """
         Append data to the main CSV file, ignoring columns that are not relevant to the current data collection.
-    
         Args:
             data (dict): Dictionary containing the data to be appended, where keys are column names and values are the corresponding data.
             Expected format: {'Timestamp': str, 'Event_Marker': str, 'Transcription': str, 'SER_Emotion': str, 'SER_Confidence': str}
         """
+        metadata_rows = 5
+
         try:
             with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
-                
                 reader = csv.reader(csvfile)
-
-                # Skip the metadata rows (subject info)
-                next(reader)  # Experiment Name
-                next(reader)  # Trial Name
-                next(reader)  # Subject ID
-                next(reader)  # PID
-                next(reader)  # Class Name
-
-                while True:
-                    headers = next(reader) 
-                    if headers:  
-                        break
-
-                rows = list(reader)  # Get existing rows
-
-                # debugging statements
-                print(f"Headers: {headers}")
-                print(f"Rows: {rows}")
-
+                file_contents = list(reader)
+                
+                if len(file_contents) < metadata_rows + 1:
+                    print("Metadata rows not found. Enter subject information first.")
+                    return
+                
         except FileNotFoundError:
-            # If the file doesn't exist, create it with the headers from data
-            print(f"CSV file not found. Enter subject information first.")
+            print("CSV file not found. Enter subject information first.")
+            return
 
-        # Filter the data to only include keys that are in the existing headers and have non-empty values
-        filtered_data = {key: value for key, value in data.items() if key in headers and value != ""}
-
-        # Prepare the row based on the order of the headers
-        row = [filtered_data.get(header, "") for header in headers]
+        filtered_data = {key: value for key, value in data.items() if key in self.headers and value != ""}
+        row = [filtered_data.get(header, "") for header in self.headers]
+        
+        # DEBUG
+        print(row)
 
         with open(self.csv_file_path, mode='a', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
-
             writer.writerow(row)
 
         print(f"Data has been successfully appended to {self.csv_file_path}.")

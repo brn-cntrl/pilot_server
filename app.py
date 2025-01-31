@@ -104,6 +104,16 @@ def stop_biometric_baseline() -> Response:
     
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
+    """
+    Retrieve the current SER (Speech Emotion Recognition) question and increment the question index.
+    This function fetches the current SER question from the test manager's list of questions,
+    increments the question index, and returns the question in a JSON response. If the index
+    exceeds the number of available questions, it stops the recording and resets the index.
+    Returns:
+        Response: A JSON response containing the current question or a completion message.
+    Raises:
+        Exception: If an error occurs during the process, a JSON response with the error message is returned.
+    """
     global test_manager, recording_manager
     questions = test_manager.ser_questions.get('questions', [])
     
@@ -143,7 +153,6 @@ def process_ser_answer() -> Response:
             If successful, returns {'status': 'Answer submitted.'}.
             If an error occurs, returns {'status': 'error', 'message': str(e)} with a 400 status code.
     """
-
     global subject_manager, recording_manager, audio_file_manager, test_manager
 
     recording_manager.stop_recording()
@@ -238,6 +247,21 @@ def get_stream_active() -> Response:
 
 @app.route('/test_audio', methods=['POST'])
 def test_audio() -> Response:
+    """
+    Endpoint to test audio recording and transcription.
+    This function stops the current audio recording, transcribes the audio file,
+    and returns the transcription result in a JSON response. It handles various
+    exceptions that may occur during the transcription process and returns
+    appropriate error messages.
+    Returns:
+        Response: A JSON response containing the transcription result or an error message.
+            - If transcription is successful, returns {'result': transcription}.
+            - If transcription could not understand the audio, returns {'result': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
+            - If there is a request error with the Google Speech Recognition service, returns {'result': 'error', 'message': "Could not request results from Google Speech Recognition service."} with status code 400.
+            - If an unknown value error occurs, returns {'status': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
+            - If a request error occurs, returns {'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"} with status code 500.
+            - If any other exception occurs, returns {'status': 'error', 'message': str(e)} with status code 500.
+    """
     global recording_manager
     try:
         # stop_recording()
@@ -281,7 +305,6 @@ def submit_answer() -> Response:
         - 400: If the transcription could not be understood or if there was an error requesting results from the speech recognition service.
         - 500: If there was any other error during the process.
     """
-
     global recording_manager, subject_manager, audio_file_manager
 
     current_test = test_manager.current_test_index
@@ -370,29 +393,32 @@ def upload_survey_csv() -> Response:
     global subject_manager, form_manager
 
     if subject_manager.subject_folder is None:
-        return jsonify({'message': 'Subject informatin is not set.'}), 400
-    else:
-        try:
-            if 'file' not in request.files:
-                return jsonify({'message': 'No file part.'}), 400
-            
-            file = request.files['file']
-            filename = file.filename
-            filename = os.path.splitext(filename)[0]
-
-            form_manager.clean_survey_info(file, filename, subject_manager)
-
-            return jsonify({'message': 'File uploaded successfully.'}), 200
+        return jsonify({'message': 'Subject information is not set.'}), 400
+   
+    try:
+        if 'file' not in request.files:
+            return jsonify({'message': 'No file part.'}), 400
         
-        except Exception as e:
-            return jsonify({'error': 'Error uploading file.'}), 400
+        file = request.files['file']
+        if not file.filename or not file.filename.lower().endswith(".csv"):
+            return jsonify({"success": False, "error": "Invalid file type. Only CSV files are allowed."}), 400
+        
+        survey_found = form_manager.find_survey(file, subject_manager)
+        if survey_found:
+            return jsonify({'message': 'Survey data processed.'}), 200
+        else:
+            return jsonify({'message': 'Subject not found in survey data.'}), 400
+    
+    except Exception as e:
+        return jsonify({'error': 'Error uploading file.'}), 400
 
 @app.route('/upload_subject_data', methods=['POST'])
 def upload_subject_data() -> Response:
     global subject_manager, emotibit_streamer
     try:
-        pass
-        # TODO: Convert hdf5 data to csv here.
+        emotibit_streamer.hdf5_to_csv()
+
+        # TODO: Add code for uploading to MySQL
 
         return jsonify({'message': 'Subject biometric data processed.'}), 200
 
@@ -402,12 +428,20 @@ def upload_subject_data() -> Response:
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
     """
-    Endpoint to handle the submission of user information.
-    This function processes incoming JSON requests to submit user information.
-    It retrieves the user's name and email from the request and assigns a unique ID.
-    It also retrieves the PID and class name from the request and stores them in the subject manager.
-    When the subject_manager's set_subject() function is triggered, the subject_manager creates a 
-    new .csv file with name, id, PID, and class name as metadata at the head of the document.
+    Handle the submission of user information and set up necessary resources for the experiment.
+    This function performs the following steps:
+    1. Validates that the experiment and trial names are set.
+    2. Cleans and retrieves the subject's first name, last name, and email from the form data.
+    3. Validates the email address format.
+    4. Encrypts the subject's name and email to generate a unique subject ID.
+    5. Cleans and retrieves the subject's PID and class name from the form data.
+    6. Sets the subject information in the subject manager.
+    7. Configures the audio file manager and emotibit streamer with the experiment, trial, and subject information.
+    8. Generates custom URLs for the PSS4 and exit surveys.
+    Returns:
+        Response: A JSON response indicating the success or failure of the operation.
+        - On success: Returns a JSON object with a success message and URLs for the PSS4 and exit surveys, with a 200 status code.
+        - On failure: Returns a JSON object with an error message, with a 400 status code.
     """
     global subject_manager, form_manager, audio_file_manager, emotibit_streamer
 
@@ -418,46 +452,23 @@ def submit() -> Response:
             return jsonify({'message': 'Experiment and trial names must be set.'}), 400
         
         else:
-            # NOTE: get_available_id() is a temporary test method to generate unique IDs
-            # The aws_handler will assign the ID when subject instance is created
-            # at the end of the test session
-            subject_first_name = request.form.get('first_name')
-            subject_first_name = form_manager.clean_string(subject_first_name)
+            subject_first_name = form_manager.clean_string(request.form.get('first_name'))
             subject_manager.subject_first_name = subject_first_name
-
-            subject_last_name = request.form.get('last_name')
-            subject_last_name = form_manager.clean_string(subject_last_name)
+            subject_last_name = form_manager.clean_string(request.form.get('last_name'))
             subject_manager.subject_last_name = subject_last_name
+            subject_email = request.form.get('email').lower().strip().replace(" ", "_")
 
-            subject_email = request.form.get('email')
-            is_email = is_valid_email(subject_email)
-            if not is_email:
+            if not is_valid_email(subject_email):
                 return jsonify({'message': 'Invalid email address.'}), 400
             
             subject_manager.subject_email = subject_email
             subject_id = encrypt_name(subject_first_name, subject_last_name, subject_email)
-
-            subject_PID = request.form.get('PID')
-            subject_PID = form_manager.clean_string(subject_PID)
-            subject_class = request.form.get('class')
-            subject_class = form_manager.clean_string(subject_class)
-
-            subject_info = {"id": subject_id, "PID": subject_PID, "class_name": subject_class}
-
-            subject_manager.set_subject(subject_info)
+            subject_PID = form_manager.clean_string(request.form.get('PID')) 
+            subject_class = form_manager.clean_string(request.form.get('class'))
+            subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
             audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
-            
-            try:
-                subject_manager.set_subject(subject_info)
-                audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
-                emotibit_streamer.set_data_folder(experiment_name, trial_name, subject_id)
-                emotibit_streamer.initialize_hdf5_file(experiment_name, trial_name, subject_id)
-
-            except Exception as e:
-                print(f"Error setting EmotiBit data folder: {str(e)}")
-                return jsonify({'message': 'Error setting subject information.'}), 400
-            
-            # form_manager.autofill_forms(subject_manager.subject_name, subject_manager.subject_id)
+            emotibit_streamer.set_data_folder(experiment_name, trial_name, subject_id)
+            emotibit_streamer.initialize_hdf5_file(subject_id)
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
 
@@ -470,12 +481,10 @@ def submit() -> Response:
 def encrypt_subject() -> Response:
     global form_manager
 
-    first_name = request.form.get('first_name')
-    last_name = request.form.get('last_name')
-    first_name = form_manager.clean_string(first_name)
-    last_name = form_manager.clean_string(last_name)
-
+    first_name = form_manager.clean_string(request.form.get('first_name'))
+    last_name = form_manager.clean_string(request.form.get('last_name'))
     email = request.form.get('email')
+
     if not is_valid_email(email):
         return jsonify({'error': 'Invalid email address.'}), 400
     
@@ -486,8 +495,7 @@ def encrypt_subject() -> Response:
 @app.route('/decrypt_subject', methods=['POST'])
 def decrypt_subject() -> Response:
     try:
-        subject_id = request.form.get('id_string')
-        firstname, lastname, email = decrypt_name(subject_id)
+        firstname, lastname, email = decrypt_name(request.form.get('id_string'))
         fullname = f"{firstname} {lastname}"
 
         return jsonify({'full_name': fullname, 'email': email})
@@ -509,16 +517,11 @@ def set_device() -> Response:
     global device_index, recording_manager
     """
     Route for setting the audio device for the session.
-    Args:
-        device_index (int): The index of the audio device to set.
-    Returns:
-        Response: A JSON response indicating the status of the device setting.
     """
     data = request.get_json()
     device_index = int(data.get('device_index'))
-
     p = pyaudio.PyAudio()
-    
+
     if device_index is not None:
         try:
             info = p.get_device_info_by_index(device_index)
@@ -534,7 +537,6 @@ def set_device() -> Response:
             
         except Exception as e:
             return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
-    
     else:
         p.terminate()
         return jsonify({'message': 'Device index not provided.'}), 400
@@ -546,27 +548,14 @@ def record_task_audio():
     This function processes JSON data from a request to either start or stop an audio recording.
     It manages the recording state, updates event markers, and saves audio files with appropriate metadata.
     Request JSON structure:
-    {
-        "action": "start" or "stop",
-        "question": <question_number>,
-        "event_marker": <event_marker_text>
-    }
+    {"action": "start" or "stop", "question": <question_number>,"event_marker": <event_marker_text>}
+
     Returns:
         Response: A JSON response with a message indicating the result of the action and an HTTP status code.
-        - If action is 'start':
-            {
-                "message": "Recording started."
-            }, 200
-        - If action is 'stop':
-            {
-                "message": "Recording stopped."
-            }, 200
-        - If action is invalid:
-            {
-                "message": "Invalid action."
-            }, 400
+        - If action is 'start': {"message": "Recording started."}, 200
+        - If action is 'stop':  {"message": "Recording stopped."}, 200
+        - If action is invalid: {"message": "Invalid action."}, 400
     """
-
     global recording_manager, timestamp_manager, subject_manager
     data = request.get_json()
     action = data.get('action')
@@ -590,7 +579,6 @@ def record_task_audio():
 
             # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
             subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
-            
             audio_file_manager.save_audio_file(file_name)
 
             return jsonify({'message': 'Recording stopped.'}), 200
@@ -605,9 +593,8 @@ def record_task() -> Response:
     """
     Endpoint to handle general task audio recording.
     This function processes incoming JSON requests to start or stop audio recording.
-
     The function performs the following actions:
-        - If the action is 'start', it returns a success message. The actual "start_recording" route is called from the client.
+        - If the action is 'start', it returns a success message. The "start_recording" route is called from the client.
         - If the action is 'stop', it stops the recording, splits the audio into segments, generates
             timestamps, transcribes the audio, predicts emotions, and stores the results in the subject data.
     Returns:
@@ -616,16 +603,13 @@ def record_task() -> Response:
         - Exception: If any error occurs during the processing of the request, an error message is returned
                    with a 400 HTTP status code.
     """
-
     global recording_manager, subject_manager, audio_file_manager
     global timestamp_manager, emotibit_streamer
-    # global ser_manager
 
     try:
         data = request.get_json()
         event_marker = data.get('event_marker')
         action = data.get('action')
-
         current_time_unix = timestamp_manager.get_timestamp()
         
         if action == 'start':
@@ -641,12 +625,9 @@ def record_task() -> Response:
             recording_manager.stop_recording()
 
             # Handling the emotibit event marker in client "Task Completed" function.
-            # emotibit_streamer.event_marker = event_marker 
-
             id = subject_manager.subject_id
             audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 20, "tmp/")
 
-            # Extract the index number from the filename to enforce sorting order
             audio_segments = sorted(audio_segments, key=lambda x: 
                                     int(os.path.splitext(os.path.basename(x))[0].split('_')[-1]))
 
@@ -687,9 +668,7 @@ def prs():
     AUDIO_DIR = 'static/prs_audio'
     intro = "1-PRS-Intro.mp3"
     prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro]
-   
     random.shuffle(prs_audio_files)
-
     html_template = """
     <!DOCTYPE html>
     <html lang="en">
@@ -768,8 +747,6 @@ def prs():
     </body>
     </html>
     """
-
-    # Render the HTML with the randomized audio files
     return render_template_string(html_template, intro=intro, audio_files=prs_audio_files)
 
 @app.route('/room_observation')
@@ -796,45 +773,10 @@ def video(filename) -> Response:
 @app.route('/test_page', methods=['GET'])
 def test_page() -> Response:
     global test_manager
-    test_manager.current_question_index = 0
-    test_manager.current_test_index = 0
-
+    # DEBUG
+    print(f"Current quesiton index: {test_manager.current_question_index}")
+    print(f"Current test index: {test_manager.current_test_index}")
     return render_template('test_page.html')
-
-@app.route('/survey/<survey_name>')
-def survey(survey_name) -> Response:
-    global form_manager
-    survey = next((s for s in form_manager.surveys if s['name'] == survey_name), None)
-    if survey and survey['url']:
-        embed_url = survey['url']
-        return render_template('survey.html', survey_name=survey_name, embed_url=embed_url)
-    return "Survey not found or no URL provided.", 404
-
-@app.route('/get_surveys', methods=['GET'])
-def get_surveys() -> Response:
-    global form_manager
-    surveys = form_manager.surveys
-    return jsonify(surveys)
-
-@app.route('/vr_task', methods=['GET'])
-def vr_task() -> Response:
-    return render_template('vr_task.html')
-
-@app.route('/pss4', methods=['GET'])
-def pss4() -> Response:
-    return render_template('pss4.html')
-
-@app.route('/demographic_survey', methods=['GET'])
-def demographic_survey() -> Response:
-    return render_template('demographic_survey.html')
-
-@app.route('/background', methods=['GET'])
-def background() -> Response:
-    return render_template('background.html')
-
-@app.route('/exit_survey', methods=['GET'])
-def exit_survey() -> Response:
-    return render_template('exit_survey.html')
 
 # Emotibit #######################################################
 def start_emotibit() -> None:
@@ -858,8 +800,15 @@ def stop_emotibit() -> None:
 
 # File and System Ops ############################################
 def is_valid_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    """
+    Validate if the provided email address is in a correct format.
+    Args:
+        email (str): The email address to validate.
+    Returns:
+        bool: True if the email address is valid, False otherwise.
+    """
 
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if re.match(pattern, email):
         return True
     else:
@@ -868,7 +817,6 @@ def is_valid_email(email):
 def encrypt_name(firstname: str, lastname: str, email: str) -> str:
     """Encrypts the subject's name and email into a reversible string."""
     
-    # Just double checking here
     firstname = firstname.lower().replace(" ", "_")
     lastname = lastname.lower().replace(" ", "_")
     email = email.lower()
@@ -897,41 +845,6 @@ def check_answer(transcription, correct_answers) -> bool:
     transcription = preprocess_text(transcription)
 
     return any(word in correct_answers for word in transcription.split())
-
-def is_folder_empty(app, folder_name) -> bool:
-    folder_path = os.path.join(app.root_path, folder_name)
-    return not os.path.exists(folder_path) or len(os.listdir(folder_path)) == 0
-
-def generate_unique_id(file_path='ID_list.txt') -> str:
-    import random
-    import string
-    """
-    Generates a unique, pseudorandom ID string of fixed length 8, checks if it's logged in a text file,
-    logs it if not found, and returns the string.
-
-    Args:
-        file_path (str): Path to the text file where IDs are logged.
-
-    Returns:
-        str: The unique ID string.
-    """
-    id_length = 12
-
-    if not os.path.exists(file_path):
-        with open(file_path, 'w') as f:
-            pass
-
-    # Generate and check for uniqueness
-    while True:
-        random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=id_length - 2))
-        unique_id = random_part[:3] + '-' + random_part[3:7] + '-' + random_part[7:]
-        
-        with open(file_path, 'r+') as f:
-            logged_ids = f.read().splitlines()
-
-            if unique_id not in logged_ids:
-                f.write(unique_id + '\n')
-                return unique_id
 
 def shutdown_server() -> None:
     time.sleep(1)

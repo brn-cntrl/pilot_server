@@ -74,14 +74,14 @@ class EmotiBitStreamer:
         # DEBUG
         print("Data folder set for emotibit streamer: ", self.data_folder)
 
-    def initialize_hdf5_file(self, experiment_name, trial_name, subject_id):
+    def initialize_hdf5_file(self, subject_id):
         """
         Initializes the HDF5 file and dataset if not already created.
         Called once the test and subject information are both posted from the front end.
         """
         current_date = datetime.now().strftime("%Y-%m-%d")
-        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{experiment_name}_{trial_name}_{subject_id}_biometrics.h5")
-        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{experiment_name}_{trial_name}_{subject_id}_biometrics.csv")
+        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.csv")
 
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
@@ -397,7 +397,7 @@ class EmotiBitStreamer:
         """
         Convert an HDF5 file to a CSV file.
 
-        Args:
+        Dependencies:
             h5_filename (str): The path to the HDF5 file.
             csv_filename (str): The path to the CSV file to be created.
         """
