@@ -21,22 +21,14 @@ from audio_file_manager import AudioFileManager
 from form_manager import FormManager
 from timestamp_manager import TimestampManager
 
-##################################################################
-## Globals 
-##################################################################
-
-# Initialize the Flask app 
 app = Flask(__name__)
-device_index = 0
 emotibit_thread = None
 
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
-# DYNAMODB = boto3.resource('dynamodb', region_name='us-west-1')
-# TABLE = DYNAMODB.Table('Users')
-# ID_TABLE = DYNAMODB.Table('available_ids')
 
-# Singletons stored in global scope NOTE: These could be moved to Flask g instance to further reduce global access
+# Class instances stored in global scope 
+# NOTE: These could be moved to Flask g instance to further reduce global access
 subject_manager = SubjectManager() 
 recording_manager = RecordingManager('tmp/recording.wav') 
 test_manager = TestManager()
@@ -186,7 +178,6 @@ def get_question() -> Response:
     the test number and resets the question index to 0 to fetch the next set
     of questions. If no questions are found for the current or next test,
     it returns a JSON response with `{"question": None}`.
-
     Returns:
         - Response: A JSON response containing the current question and the
             test number, or `{"question": None}` if no questions are available.
@@ -244,48 +235,6 @@ def get_stream_active() -> Response:
     global recording_manager
     stream_is_active = recording_manager.get_stream_is_active()
     return jsonify({'stream_active': stream_is_active})
-
-@app.route('/test_audio', methods=['POST'])
-def test_audio() -> Response:
-    """
-    Endpoint to test audio recording and transcription.
-    This function stops the current audio recording, transcribes the audio file,
-    and returns the transcription result in a JSON response. It handles various
-    exceptions that may occur during the transcription process and returns
-    appropriate error messages.
-    Returns:
-        Response: A JSON response containing the transcription result or an error message.
-            - If transcription is successful, returns {'result': transcription}.
-            - If transcription could not understand the audio, returns {'result': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
-            - If there is a request error with the Google Speech Recognition service, returns {'result': 'error', 'message': "Could not request results from Google Speech Recognition service."} with status code 400.
-            - If an unknown value error occurs, returns {'status': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
-            - If a request error occurs, returns {'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"} with status code 500.
-            - If any other exception occurs, returns {'status': 'error', 'message': str(e)} with status code 500.
-    """
-    global recording_manager
-    try:
-        # stop_recording()
-        recording_manager.stop_recording()
-        transcription = transcribe_audio(recording_manager.recording_file)
-        
-        if transcription.startswith("Google Speech Recognition could not understand"):
-            return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
-        
-        if transcription.startswith("Could not request results"):
-            return jsonify({'result': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
-                           
-        else:
-            return jsonify({'result': transcription})
-    
-    except sr.UnknownValueError:
-        return jsonify({'status': 'error', 'message': "Sorry, I could not understand the response."}), 400
-    
-    except sr.RequestError as e:
-        return jsonify({'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"}), 500
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer() -> Response:
@@ -360,14 +309,6 @@ def submit_answer() -> Response:
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/shutdown', methods=['POST'])
-def shutdown() -> Response:
-    response = jsonify ({'message': 'Server shutting down...'})
-    response.status_code = 200
-    threading.Thread(target=shutdown_server).start() 
-
-    return response
 
 @app.route('/submit_experiment', methods=['POST'])
 def submit_experiment() -> Response:
@@ -503,9 +444,59 @@ def decrypt_subject() -> Response:
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown() -> Response:
+    response = jsonify ({'message': 'Server shutting down...'})
+    response.status_code = 200
+    threading.Thread(target=shutdown_server).start() 
+
+    return response
+
 ##################################################################
 ## Audio Routes
 ##################################################################
+@app.route('/test_audio', methods=['POST'])
+def test_audio() -> Response:
+    """
+    Endpoint to test audio recording and transcription.
+    This function stops the current audio recording, transcribes the audio file,
+    and returns the transcription result in a JSON response. It handles various
+    exceptions that may occur during the transcription process and returns
+    appropriate error messages.
+    Returns:
+        Response: A JSON response containing the transcription result or an error message.
+            - If transcription is successful, returns {'result': transcription}.
+            - If transcription could not understand the audio, returns {'result': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
+            - If there is a request error with the Google Speech Recognition service, returns {'result': 'error', 'message': "Could not request results from Google Speech Recognition service."} with status code 400.
+            - If an unknown value error occurs, returns {'status': 'error', 'message': "Sorry, I could not understand the response."} with status code 400.
+            - If a request error occurs, returns {'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"} with status code 500.
+            - If any other exception occurs, returns {'status': 'error', 'message': str(e)} with status code 500.
+    """
+    global recording_manager
+    try:
+        # stop_recording()
+        recording_manager.stop_recording()
+        transcription = transcribe_audio(recording_manager.recording_file)
+        
+        if transcription.startswith("Google Speech Recognition could not understand"):
+            return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
+        
+        if transcription.startswith("Could not request results"):
+            return jsonify({'result': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
+                           
+        else:
+            return jsonify({'result': transcription})
+    
+    except sr.UnknownValueError:
+        return jsonify({'status': 'error', 'message': "Sorry, I could not understand the response."}), 400
+    
+    except sr.RequestError as e:
+        return jsonify({'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"}), 500
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
 @app.route('/get_audio_devices', methods=['GET'])
 def get_audio_devices() -> Response:
     global recording_manager
@@ -514,7 +505,7 @@ def get_audio_devices() -> Response:
 
 @app.route('/set_device', methods=['POST'])
 def set_device() -> Response:
-    global device_index, recording_manager
+    global recording_manager
     """
     Route for setting the audio device for the session.
     """
@@ -549,7 +540,6 @@ def record_task_audio():
     It manages the recording state, updates event markers, and saves audio files with appropriate metadata.
     Request JSON structure:
     {"action": "start" or "stop", "question": <question_number>,"event_marker": <event_marker_text>}
-
     Returns:
         Response: A JSON response with a message indicating the result of the action and an HTTP status code.
         - If action is 'start': {"message": "Recording started."}, 200

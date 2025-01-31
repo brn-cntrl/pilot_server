@@ -17,9 +17,7 @@ All OSC addresses must be included in the oscOutputSettings.xml file. Some
 settings may not be present in the file, but the addresses can be included.
 A full list of type tags can be found here: 
 https://github.com/EmotiBit/EmotiBit_Docs/blob/master/Working_with_emotibit_data.md/#EmotiBit-data-types
-
 """
-
 class EmotiBitStreamer:
     def __init__(self, port: int) -> None:
         self._ip = "127.0.0.1"
@@ -296,10 +294,8 @@ class EmotiBitStreamer:
 
     def get_live_entries(self, lookback_minutes: int = 2) -> list:
         """Retrieve non-baseline entries (live data) from the last 'lookback_minutes' minutes.
-
         Args:
             lookback_minutes (int): The number of minutes to look back for live data.
-        
         Returns:
             list: A list of dictionaries containing live data from the HDF5 file.
         """
@@ -339,7 +335,6 @@ class EmotiBitStreamer:
         Calculate the averages of the given data.
         Args:
             data (list): A list of dictionaries containing data to calculate averages from.
-
         Returns:
             dict: A dictionary containing the averages of the given data.
         """
@@ -358,7 +353,6 @@ class EmotiBitStreamer:
         """
         Compare the averages of the baseline data with a specified window of live data
         from the CSV file. If there is not enough data, return a message indicating so.
-
         Returns:
             dict or str: A dictionary with comparison results or a string message if
                          not enough data has been collected.
@@ -396,7 +390,6 @@ class EmotiBitStreamer:
     def hdf5_to_csv(self) -> None:
         """
         Convert an HDF5 file to a CSV file.
-
         Dependencies:
             h5_filename (str): The path to the HDF5 file.
             csv_filename (str): The path to the CSV file to be created.
