@@ -122,7 +122,7 @@ def get_ser_question() -> Response:
         
         elif test_manager.current_ser_question_index >= len(questions):
             recording_manager.stop_recording()
-            test_manager.current_ser_question_index = 0
+            # test_manager.current_ser_question_index = 0
 
             return jsonify({'message': 'SER task completed.'}), 200  
 
@@ -233,7 +233,7 @@ def get_next_test() -> Response:
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:
     global recording_manager
-    stream_is_active = recording_manager.get_stream_is_active()
+    stream_is_active = recording_manager.stream_is_active
     return jsonify({'stream_active': stream_is_active})
 
 @app.route('/submit_answer', methods=['POST'])
