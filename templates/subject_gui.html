@@ -359,24 +359,14 @@
             submitAnswer.style.display = 'block';
             submitAnswer.disabled = true; 
             
-            status.innerText = "Please wait...";
+            status.innerText = "Please wait before responding...";
             setEventMarker('ser_baseline');
             startRecording()
                 .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();
-                        if (streamActive) {
-                            clearInterval(checkInterval);
-                            console.log('Stream is active');
-                            submitAnswer.disabled = false;
-                            status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
-                            
-                            fetchNextQuestion(); 
-                        } else {
-                            console.log('Stream is not active');
-                            status.innerText = "Please wait before responding...";
-                        }
-                    }, 1000);
+                    playBeep();
+                    submitAnswer.disabled = false;
+                    status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
+                    fetchNextQuestion();  
                 })
                 .catch(error => {
                     console.error('Error starting audio stream:', error);
@@ -400,21 +390,14 @@
                     status.innerText = data.message;
                 } else {
                     console.log(data.message);
-                    status.innerText = "Answer submitted. Preparing the next question...";
+                    status.innerText = "Answer submitted. Please wait...";
                     return startRecording(); 
                 }
             })
             .then(() => {
-                let checkInterval = setInterval(() => {
-                    let streamActive = checkActiveStream();
-                    if (streamActive) {
-                        clearInterval(checkInterval);
-                        submitAnswer.disabled = false;
-                        fetchNextQuestion(); 
-                    } else {
-                        status.innerText = "Please wait...";
-                    }
-                }, 2000);
+                playBeep();
+                submitAnswer.disabled = false;
+                fetchNextQuestion(); 
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -445,20 +428,12 @@
 
         testAudio.addEventListener('click', async function() {
             if (testAudio.innerText === 'Record') {
+                audioStatusMessage.innerText = "Please wait...";
                 startRecording()
                 .then(() => {
-                    let checkInterval = setInterval(() => {
-                        let streamActive = checkActiveStream();  
-                        if(streamActive) {
-                            console.log('Stream is active');
-                            audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
-                            testAudio.innerText = 'Stop';
-                            clearInterval(checkInterval); 
-                        } else {
-                            console.log('Stream is not active');
-                            audioStatusMessage.innerText = "Please wait...";
-                        }
-                    }, 2000);
+                    playBeep();
+                    audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
+                    testAudio.innerText = 'Stop';      
                 })
             }
             else if (testAudio.innerText === 'Stop') {

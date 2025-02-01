@@ -556,7 +556,7 @@
                 const gainNode = audioContext.createGain();
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 oscillator.start();
@@ -610,6 +610,8 @@
 
             function recordTask(button, action){
                 const buttonId = button.id;
+                const statusId1 = document.getElementById("recordingStatus1");
+                const statusId2 = document.getElementById("recordingStatus2");
                 console.log(`Button ID: ${buttonId}`);
 
                 const parentDiv = button.closest('div');
@@ -618,15 +620,25 @@
 
                 if(action === 'start'){
                     eventMarker = `${buttonId}_${selectedCondition}`;
+                    if (buttonId == 'task_1_recording'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerText = 'Please wait...';
+                    } else if (buttonId == 'task_2_recording'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerText = 'Please wait...';
+                    }
                 } else {
                     eventMarker = 'subject_idle';
+                    if (buttonId == 'task_1_recording'){
+                        statusId1.style.display = 'block';
+                        statusId1.innerText = 'Audio processing. Please wait...';
+                    } else if (buttonId == 'task_2_recording'){
+                        statusId2.style.display = 'block';
+                        statusId2.innerText = 'Audio processing. Please wait...';
+                    }
                 }
-                
                 // DEBUG
                 console.log(`eventMarker: ${eventMarker}, action: ${action}`); 
-
-                statusId1 = document.getElementById("recordingStatus1");
-                statusId2 = document.getElementById("recordingStatus2");
 
                 fetch('/record_task', {
                     method: 'POST',
@@ -645,44 +657,26 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Success:', data);
                     if(buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
-                        statusId1.innerHTML = data.message;
+                        statusId1.innerText = data.message;
                     } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
-                        statusId2.innerHTML = data.message;
+                        statusId2.innerText = data.message;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     if(buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
-                        statusId1.innerHTML = data.message;
+                        statusId1.innerText = data.message;
                     } else if (buttonId == 'task_2_recording'){
                         statusId2.style.display = 'block';
-                        statusId2.innerHTML = data.message;
+                        statusId2.innerText = data.message;
                     }
                 });
-
-                if(action == 'start'){
-                    console.log("Stream is active.");
-                    if (buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerHTML = "Recording started...";
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerHTML = "Recording started...";
-                    }
-
-                } else if (action == 'stop'){
-                    if(buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerHTML = 'Recording stopped. Please wait. Post-processing may take several minutes.';
-                    }
+                if (action === 'start'){
+                    playBeep();
                 }
             }
             

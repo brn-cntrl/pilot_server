@@ -19,7 +19,7 @@ class RecordingManager():
         self.recording_started_event = threading.Event()
         self.stream_ready_event = threading.Event()
         self.recording_thread = None
-        self.stream_is_active = False
+        self._stream_is_active = False
         self._recording_file = recording_file
         self.device_index = 0
         self.audio_devices = self.fetch_audio_devices()
@@ -47,6 +47,14 @@ class RecordingManager():
     @recording_file.setter
     def recording_file(self, recording_file) -> None:
         self._recording_file = recording_file
+
+    @property
+    def stream_is_active(self) -> bool:
+        return self._stream_is_active
+    
+    @stream_is_active.setter
+    def stream_is_active(self, value) -> None:
+        self._stream_is_active = value
 
     def start_recording(self) -> None:
         self.stop_event.clear()
@@ -104,9 +112,6 @@ class RecordingManager():
     ##################################################################
     ## GETTERS
     ##################################################################
-    def get_stream_is_active(self) -> bool:
-        return self.stream_is_active    
-    
     def get_stop_event(self) -> threading.Event:
         return self.stop_event
     

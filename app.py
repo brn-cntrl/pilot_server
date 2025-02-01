@@ -557,6 +557,11 @@ def record_task_audio():
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
+            start_time = 10 # seconds
+            while not recording_manager.stream_is_active:
+                if time.time() - start_time > 10:
+                    return jsonify({'message': 'Error starting recording.'}), 400
+                time.sleep(0.5)
 
             return jsonify({'message': 'Recording started...'}), 200
         
@@ -605,11 +610,17 @@ def record_task() -> Response:
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
-
+            timeout = 10 # seconds
+            start_time = time.time()
             # DEBUG
             print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
 
-            return jsonify({'message': 'Recording started.', 'event_marker': event_marker}), 200
+            while not recording_manager.stream_is_active:
+                if time.time() - start_time > timeout:
+                    return jsonify({'message': 'Error starting recording.'}), 400
+                time.sleep(0.5)
+
+            return jsonify({'message': 'Recording started.'}), 200
         
         elif action == 'stop':
             recording_manager.stop_recording()
@@ -623,10 +634,10 @@ def record_task() -> Response:
 
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
 
-            vr_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None} 
+            task_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None} 
                     for ts, fn, in zip(timestamps, audio_segments)]
             
-            for data in vr_data:
+            for data in task_data:
                 subject_manager.append_data(data)
             
             audio_file_manager.backup_tmp_audio_files()
@@ -645,6 +656,14 @@ def start_recording() -> Response:
     global recording_manager
     try:
         recording_manager.start_recording()
+        start_time = time.time()
+
+        timeout = 10 # seconds
+        while not recording_manager.stream_is_active:
+            if time.time() - start_time > timeout:
+                return jsonify({'status': 'Error starting recording.'}), 400
+            time.sleep(0.5)
+
         return jsonify({'status': 'Recording started.'}), 200
     except Exception as e:
         return jsonify({'status': 'Error starting recording.'}), 400
@@ -701,38 +720,33 @@ def prs():
         </div>
         {% endfor %}
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const eventMarker = localStorage.getItem('currentEventMarker');
-                // Debugging statement
-                console.log("Current Event Marker:", eventMarker);
-                const recordButtons = document.querySelectorAll(".record-button");
-                recordButtons.forEach((button, index) => {
-                    button.addEventListener("click", function () {
-                        const audioElement = button.previousElementSibling.querySelector("source");
-                        const statusElement = button.nextElementSibling;
-                        if (audioElement) {
-                            const audioSrc = audioElement.getAttribute("src"); 
-                            const fileName = audioSrc.split('/').pop();
-                            const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
-                        if(button.innerText === 'Record Answer') {
-                            recordTask(eventMarker, 'start', baseName);
-                            let checkInterval = setInterval(() => {
-                                if (checkActiveStream()){
-                                    statusElement.innerText = 'Recording started...';
-                                    button.innerText = 'Stop Recording';
-                                    clearInterval(checkInterval);
-                                } else {
-                                    statusElement.innerHTML ="Waiting for recording to start...";
-                                }
-                            }, 2000);
+            recordButtons.forEach((button) => {
+                button.addEventListener("click", async function () {
+                    const audioElement = button.previousElementSibling.querySelector("source");
+                    const statusElement = button.nextElementSibling;
+                    
+                    if (audioElement) {
+                        const audioSrc = audioElement.getAttribute("src"); 
+                        const fileName = audioSrc.split('/').pop();
+                        const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+
+                        if (button.innerText === 'Record Answer') {
+                            statusElement.innerText = "Starting recording...";
+                            try {
+                                await startRecording();  // Wait for recording to start before updating UI
+                                button.innerText = 'Stop Recording';
+                                playBeep();
+                            } catch (error) {
+                                console.error("Recording failed:", error);
+                            }
                         } else {
-                            recordTask(eventMarker, 'stop', baseName);
-                            statusElement.innerText = 'Processing...';
+                            recordTask(eventMarker, 'stop', baseName, statusElement);
                             button.innerText = 'Record Answer';
-                        } 
-                    });
+                        }
+                    }
                 });
             });
+        });
         </script>
     </body>
     </html>

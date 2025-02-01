@@ -105,11 +105,12 @@
                 status3.innerHTML = 'Question 1 is now playing...';
             });
 
-            let secondsBeforeEnd = 2; 
+            let secondsBeforeEnd = 1; 
             player3.addEventListener('timeupdate', function() {
                 if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
                     player3.dataset.recordingStarted = "true"; 
                     recordTaskAudio(eventMarker, 'start', 1, status3); 
+                    playBeep();
                 }
             });
 
@@ -140,6 +141,7 @@
                 if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
                     player4.dataset.recordingStarted = "true"; 
                     recordTaskAudio(eventMarker, 'start', 2, status4); 
+                    playBeep();
                 }
             });
 
@@ -166,11 +168,17 @@
                 function beep() {
                     const beepContext = new AudioContext();
                     const oscillator = beepContext.createOscillator();
+                    const gainNode = audioContext.createGain();
                     oscillator.type = 'sine'; 
                     oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
-                    oscillator.connect(beepContext.destination);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
                     oscillator.start();
-                    oscillator.stop(beepContext.currentTime + 0.1); 
+                    setTimeout(() => {
+                        oscillator.stop();
+                        // audioContext.close();
+                    }, 500); 
                 }
             }
         });
