@@ -53,14 +53,21 @@ function recordTaskAudio(eventMarker, action, question, divID){
      })
     .then(response => response.json())
     .then(data => {
-        console.log(data.message);
-        divID.style.display = 'block';
-        divID.innerHTML = data.message;
+        if (data.message === 'Error starting recording.'|| data.message === 'Invalid action.') {
+            console.error(data.message);
+            divID.style.display = 'block';
+            divID.innerText = `Please stop playback... ${data.message}`;
+            return;
+        } else {
+            console.log(data.message);
+            divID.style.display = 'block';
+            divID.innerText = data.message;
+        }
     })
     .catch(error => {
-        console.error('Error:', data.error);
+        console.error('Error:', error);
         divID.style.display = 'block';
-        divID.innerHTML = data.error;
+        divID.innerText = `Please stop playback... ${error}`;
     });
 }
     
@@ -145,30 +152,6 @@ async function submitSERAnswer(){
             document.getElementById("status").style.display = "block";
             document.getElementById("status").disabled = false;
         });
-}
-
-// function playTickSound() {
-//     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-//     const oscillator = audioContext.createOscillator();
-//     oscillator.type = 'sine'; 
-//     oscillator.frequency.setValueAtTime(1000, audioContext.currentTime); 
-//     oscillator.connect(audioContext.destination);
-//     oscillator.start();
-//     oscillator.stop(audioContext.currentTime + 0.001); 
-// }
-
-function checkActiveStream() {
-    return fetch('/get_stream_active', {
-        method: 'GET'
-    })
-    .then(response => response.json())
-    .then(data => {
-        return data.stream_active; 
-    })
-    .catch(error => {
-        console.error('Error fetching stream status:', error);
-        return false; 
-    });
 }
 
 function setDevice() {
