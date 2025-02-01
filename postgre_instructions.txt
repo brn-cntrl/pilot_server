@@ -1,0 +1,11 @@
+Installation (Mac)
+brew install postgresql
+
+Start:
+brew services start postgresql
+
+Stop:
+brew services stop postgresql
+
+Restart:
+brew services restart postgresql
