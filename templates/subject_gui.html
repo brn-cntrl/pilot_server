@@ -92,7 +92,7 @@
         <div class="testModule" id="testProceduresDiv" style="display:block;">
             <button class="toggle" id="firstStressTask">First Stressor Task</button>
             <div class="innerModule" id="stressTask1Div" style="display:none;">
-                <p>Stressor task window is now open.</p>
+                <button class="openStressTask"></button>>
                 <button id="stressTask1Complete">Task Complete</button><br>
             </div><br>
             
@@ -117,7 +117,7 @@
             
             <button class="toggle" id="secondStressTask" style="display:none;">Second Stressor Task</button>
             <div class="innerModule" id="stressTask2Div" style="display:none;">
-                <p>Stressor task window is open.</p>
+                <button class="openStressTask"></button>
                 <button id="stressTask2Complete">Task Complete</button><br>
             </div><br>
 
@@ -217,6 +217,7 @@
         let pss4;
         let breakWin;
         let breakButtons = document.getElementsByClassName('breakButton');
+        let stressButtons = document.getElementsByClassName('openStressTask');
         let pss4Div1 = document.getElementById('pss4Div1');
         let pss4Div2 = document.getElementById('pss4Div2');
         let pss4Div3 = document.getElementById('pss4Div3');
@@ -228,13 +229,11 @@
                 });
             }
 
-            firstStressTask.addEventListener('click', function() {
-                window.open('/test_page', '_blank', 'width=800, height=600');
-            });
-
-            secondStressTask.addEventListener('click', function() {
-                window.open('/test_page', '_blank', 'width=800, height=600');
-            });
+            for (let i = 0; i < stressButtons.length; i++) {
+                stressButtons[i].addEventListener('click', function() {
+                    window.open('/test_page', '_blank', 'width=800, height=600');
+                });
+            }
         });
         
         // Resets emotion baseline question index to 0 when page is loaded
@@ -389,14 +388,15 @@
                 if (data.status === 'error') {
                     status.innerText = data.message;
                 } else {
+                    status.innerText = data.status;
                     console.log(data.message);
-                    status.innerText = "Answer submitted. Please wait...";
                     return startRecording(); 
                 }
             })
             .then(() => {
                 playBeep();
                 submitAnswer.disabled = false;
+                status.style.display = 'none';;
                 fetchNextQuestion(); 
             })
             .catch(error => {
@@ -414,7 +414,7 @@
                         submitAnswer.disabled = true;
                         submitAnswer.style.display = 'none';
                         status.innerText = data.message;
-                        quesitonContainer.innerText = "No more questions."
+                        questionContainer.innerText = "No more questions."
                     } else {
                         questionContainer.innerText = data.question;
                         console.log(data.question);

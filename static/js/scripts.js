@@ -15,6 +15,27 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+function setNextTest(){
+    fetch('/set_next_test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;
@@ -306,6 +327,24 @@ function stopBaseline() {
     .catch(error => {
         console.error('Error:', error);
     });
+}
+
+function playBeep() {
+    function beep() {
+        const beepContext = new AudioContext();
+        const oscillator = beepContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = 'sine'; 
+        oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        setTimeout(() => {
+            oscillator.stop();
+            // audioContext.close();
+        }, 500); 
+    }
 }
 
 async function startMonitoring() {

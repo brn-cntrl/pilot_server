@@ -162,153 +162,110 @@ def process_ser_answer() -> Response:
         subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
         audio_file_manager.save_audio_file(file_name)
 
-        return jsonify({'status': 'Answer submitted successfully.'})
+        return jsonify({'status': 'Answer processed successfully.'})
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
-@app.route('/get_question', methods=['POST'])
-def get_question() -> Response:
-    """
-    Retrieve the current question for the ongoing test.
-    This route fetches the current question based on the test manager variables
-    `current_question_index` and `current_test_index`. It accesses the
-    task dictionary to get the list of questions for the current
-    test. If there are no more questions in the current test, it increments
-    the test number and resets the question index to 0 to fetch the next set
-    of questions. If no questions are found for the current or next test,
-    it returns a JSON response with `{"question": None}`.
-    Returns:
-        - Response: A JSON response containing the current question and the
-            test number, or `{"question": None}` if no questions are available.
-    """
-    global test_manager
-
-    if test_manager.current_test_index > 1: # All tests complete
-        test_manager.current_test_index = 0
-        test_manager.current_question_index = 0
-        return jsonify({"question": "All tests completed."})
-    else:
-        # NOTE: Leaving questions here for debugging purposes. The question is not part of the response.
-        questions = test_manager.get_task_questions(test_manager.current_test_index)
-    
+@app.route('/get_first_question', methods=['POST'])
+def get_first_question() -> Response:
+    global test_manager, recording_manager
+    test_manager.current_question_index = 0
+    questions = test_manager.get_task_questions(test_manager.current_test_index)
+    try:
         if questions is None:
             return jsonify({"message": "No questions found."})
-    
-        if test_manager.current_question_index >= len(questions): 
-            test_manager.current_question_index = 0
-            # test_manager.current_test_index += 1
-
-            return jsonify({"message": "All questions answered."})
         else:
+            recording_manager.start_recording()
             question = questions[test_manager.current_question_index]
-            # DEBUG
-            print(f"Test Index: {test_manager.current_test_index}.")
-            print(f"Question Index: {test_manager.current_question_index}, Question: {question}.")
             
-            return jsonify({'message': 'Question found.', 'question': question['question'], "test_number": test_manager.current_test_index})
+            return jsonify({'message': 'Question found.', 'question': question['question'], "test_index": test_manager.current_test_index})
+    except Exception as e:
+        return jsonify({'message': 'Error getting first question.', 'error': str(e)}), 400
+    
+@app.route('/process_answer', methods=['POST'])
+def process_answer() -> Response:
+    """
+    Process the answer submitted by the user.
+    This function handles the following tasks:
+    - Stops the current recording.
+    - Retrieves the current test and its questions.
+    - Extracts the test status from the request.
+    - Generates a filename for the audio file based on the subject ID, timestamp, test, and question index.
+    - Transcribes the audio file and saves it.
+    - Appends the transcription and other data to the subject's data file.
+    - Handles errors related to transcription.
+    - Updates the test and question indices based on the test status and correctness of the answer.
+    - Returns a JSON response indicating the status of the operation.
+    Returns:
+        Response: A Flask JSON response indicating the status and result of the operation.
+    """
+
+    global recording_manager, subject_manager, audio_file_manager, test_manager
+    recording_manager.stop_recording()
+    current_test = test_manager.current_test_index
+    questions = test_manager.get_task_questions(current_test)
+    test_ended = request.get_json().get('test_status')
+
+    try:
+        ts = recording_manager.timestamp
+        id = subject_manager.subject_id
+
+        file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+        transcription = transcribe_audio(audio_file_manager.recording_file)
+        audio_file_manager.save_audio_file(file_name)
+
+        # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+
+        
+        if test_ended:
+            if current_test < 1:
+                test_manager.current_test_index += 1
+            else:
+                test_manager.current_test_index = 0
+            return jsonify({'status': 'times_up.', 'message': 'Answer recorded and logged.'})
+        
+        else:
+            if test_manager.current_question_index >= len(questions):
+                test_manager.current_question_index = 0
+                if current_test < 1:
+                    test_manager.current_test_index += 1
+                else:
+                    test_manager.current_test_index = 0
+                return jsonify({'status': 'complete', 'message': 'Answer recorded and logged.'})
+            
+            else:
+                if transcription.startswith("Google Speech Recognition could not understand"):
+                    return jsonify({'status': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
+    
+                elif transcription.startswith("Could not request results"):
+                    return jsonify({'status': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
+                
+                correct_answer = questions[test_manager.current_question_index]['answer']
+                result = 'incorrect'
+
+                if test_manager.check_answer(transcription, correct_answer):
+                    result = 'correct'
+                    test_manager.current_question_index += 1
+                
+                recording_manager.start_recording()
+                return jsonify({'status': 'Answer submitted and recording started...', 'result': result})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/get_current_test', methods=['POST'])
 def get_current_test() -> Response:
     global test_manager
     print(f"Test Index: {test_manager.current_test_index}.")
     return jsonify({"test_number": test_manager.current_test_index})
-    
-@app.route('/get_next_test', methods=['POST'])
-def get_next_test() -> Response:
-    global test_manager
-
-    test_manager.current_test_index += 1
-
-    if test_manager.current_test_index > 1:
-        test_manager.current_question_index = 0
-        return jsonify({"message": "All tests completed."})
-    
-    else:
-        # DEBUG
-        print(f"Test Index: {test_manager.current_test_index}.")
-        # questions = test_manager.get_task_questions(test_manager.current_test_index)
-        return jsonify({"message": "Next test initiated.", "test_number": test_manager.current_test_index})
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:
     global recording_manager
     stream_is_active = recording_manager.stream_is_active
     return jsonify({'stream_active': stream_is_active})
-
-@app.route('/submit_answer', methods=['POST'])
-def submit_answer() -> Response:
-    """
-    Route to submit an answer for the current stress task question.
-    This function handles the submission of an answer by performing the following steps:
-        1. Stops the current audio recording.
-        2. Transcribes the recorded audio.
-        3. Predicts the emotion label. NOTE: REMOVED FOR NOW
-        4. Saves the audio file.
-        5. Appends the transcription and emotion prediction to the test data. NOTE: REMOVED FOR NOW
-        6. Checks the transcription against the correct answer and determines if it is correct or incorrect.
-        7. Increments the question index for the next question.
-    Returns:
-        - JSON response indicating the status of the submission and the result (correct/incorrect).
-    Raises:
-        - 400: If the transcription could not be understood or if there was an error requesting results from the speech recognition service.
-        - 500: If there was any other error during the process.
-    """
-    global recording_manager, subject_manager, audio_file_manager
-
-    current_test = test_manager.current_test_index
-    questions = test_manager.get_task_questions(current_test)
-    
-    try:
-        recording_manager.stop_recording()
-        transcription = transcribe_audio(audio_file_manager.recording_file)
-        ts = recording_manager.timestamp
-        id = subject_manager.subject_id
-
-        # TODO: Fix event marker on test page
-        file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
-        try:
-            audio_file_manager.save_audio_file(file_name)
-
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return jsonify({'status': 'error', 'message': str(e)}), 500
-
-        if transcription.startswith("Google Speech Recognition could not understand"):
-            return jsonify({'status': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
-        
-        elif transcription.startswith("Could not request results"):
-            return jsonify({'status': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
-
-        else:
-            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
-
-        correct_answer = questions[test_manager.current_question_index]['answer']
-
-        # DEBUG
-        print(f"Correct Answer: {correct_answer}.")
-
-        result = 'incorrect'
-
-        if test_manager.check_answer(transcription, correct_answer):
-            result = 'correct'
-            test_manager.current_question_index += 1
-        else:
-            result = 'incorrect'
-            test_manager.current_question_index = 0
-
-        return jsonify({'status': 'Answer submitted.', 'result': result})
-    
-    except sr.UnknownValueError:
-        return jsonify({'status': 'error', 'message': "Sorry, I could not understand the response."}), 400
-    
-    except sr.RequestError as e:
-        return jsonify({'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"}), 500
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/submit_experiment', methods=['POST'])
 def submit_experiment() -> Response:

@@ -13,29 +13,21 @@
     
     <div id="Instructions">
         <h2>Task</h2>
-        <ul>
-            <li>Press the start button to begin.</li>
-            <li>You will start with the number 1,022</li>
-            <li>Subtract 13 from 1,022, and continue subtracting 13 from each new result.</li>
-            <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
-            <li>Try to be as accurate and fast as possible while completing the task.</li>
-            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,022.</li>
-            <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
-            <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
-        </ul>
+        <div id="instructionContainer"></div>
     </div><br>
     <button id="startTestButton" style="display:none;">Start Test</button>
     <div class="testModule">
         <p id="loadingMessage">Test Loading...</p>
         <button id="submitAnswerButton" disabled>Submit Answer</button><br><br>
+        <p id="result"></p><br>
         <p id="status"></p><br>
     </div><br>
-    <button id="taskComplete">Test Complete</button>
+    <!-- <button id="taskComplete">Test Complete</button> -->
     <script>
-        let testNumber = 1; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
+        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
         let startTime;
         let elapsedTime = 0;
-        let initialTime = 300;  // 5 minutes
+        let initialTime = 30;  // 300 = 5 minutes
         let timeLeft = initialTime;
         let timerInterval;
         let eventMarker;
@@ -47,8 +39,33 @@
         const loadingMessage = document.getElementById('loadingMessage');
         const statusContainer = document.getElementById('status');
         const result = document.getElementById('result');
-        const taskComplete = document.getElementById('taskComplete');
+        // const taskComplete = document.getElementById('taskComplete');
+        const instructionContainer = document.getElementById('instructionContainer');
 
+        let isProcessing = false;
+
+        let firstTestInstructions = `<ul>
+            <li>Press the start button to begin.</li>
+            <li>You will start with the number 1,009</li>
+            <li>Subtract 13 from 1,009 and continue subtracting 13 from each new result.</li>
+            <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
+            <li>Try to be as accurate and fast as possible while completing the task.</li>
+            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,022.</li>
+            <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
+            <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
+        </ul>`
+
+        let secondTestInstructions = `<ul>
+            <li>Press the start button to begin.</li>
+            <li>You will start with the number 1,059</li>
+            <li>Subtract 13 from 1,059 and continue subtracting 13 from each new result.</li>
+            <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
+            <li>Try to be as accurate and fast as possible while completing the task.</li>
+            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,059.</li>
+            <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
+            <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
+        </ul>`
+        
         document.addEventListener('DOMContentLoaded', (event) => {
             // Initialize test
             fetch('/get_current_test', {
@@ -65,8 +82,13 @@
             })
             .then(data => {
                 testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
+                console.log("Test Number: ", testNumber);
                 eventMarker = "stressor_test_" + testNumber;
-                
+                if(testNumber == 1){
+                    instructionContainer.innerHTML = firstTestInstructions;
+                } else if(testNumber == 2){
+                    instructionContainer.innerHTML = secondTestInstructions;
+                }
                 //DEBUG STATEMENT
                 console.log("Event Marker: ", eventMarker);
             })
@@ -77,9 +99,8 @@
             startTestButton.style.display = 'block';
             submitAnswerButton.disabled = true;
             loadingMessage.style.display = 'none';
-            
+
             // Start Test
-            
             startTestButton.addEventListener('click', function() {
                 if (eventMarker === undefined) {
                     alert('Failed to start test. Please refresh the page and try again.');
@@ -95,109 +116,36 @@
                     loadingMessage.style.display = 'block';
                     statusContainer.innerText = 'Please wait...';
 
-                    startRecording()
-                        .then(() => {
-                            return fetch('/get_question', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            loadingMessage.style.display = 'none';
-                            startTestButton.disabled = true;
-                            statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
-                            submitAnswerButton.disabled = false;
-                            playBeep();
-                            startClock();  
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Failed to start test.');
-                        });
+                    fetch('/get_first_question', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                   
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data);
+                        loadingMessage.style.display = 'none';
+                        startTestButton.disabled = true;
+                        statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                        submitAnswerButton.disabled = false;
+                        startClock();  
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to start test.');
+                    });
                     testStarted = true;
                 }
             });
-        
-            taskComplete.addEventListener('click', function() {
-                if (!testEnded) {
-                    alert("Test has not been completed.");
-                    return;
-                } else {
-                    getNextTest();
-                }
-            });
-
-            submitAnswerButton.addEventListener('click', function() {
-                submitAnswer();
-            });
+            submitAnswerButton.addEventListener('click', processAnswer);
         });
-
-        async function getNextQuestion() {
-            submitAnswerButton.disabled = true;
-            statusContainer.innerText = "Please wait...";
-
-            try {
-                const response = await fetch('/get_question', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.message === "No questions found." || data.message === "All questions answered.") {
-                    statusContainer.innerText = data.message;
-                    submitAnswerButton.style.display = 'none';
-                    stopClock();
-                    return;
-                }
-
-                console.log("Fetched question:", data.question); // Question is fetched but not displayed
-                statusContainer.innerText = "Please wait...";
-
-                await startRecording();
-                playBeep();
-                statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
-                startClock();
-                submitAnswerButton.disabled = false;
-
-            } catch (error) {
-                console.error('Error fetching next question:', error);
-                statusContainer.innerText = "Error fetching question.";
-            }
-        }
-
-        function getNextTest(){
-            fetch('/get_next_test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                testNumber = data.test_number + 1;
-                eventMarker = "stressor_test_" + testNumber;
-                console.log("Test Number: ", eventMarker);
-                console.log(data.message);
-            });
-        }
         
         function startClock() { 
             if(!timerInterval) {
@@ -219,80 +167,94 @@
             timeLeft--;
             if(timeLeft < 0) {
                 clearInterval(timerInterval);
-                statusContainer.innerText = 'Time is up! Please stop.';
-                submitAnswerButton.style.display = 'none';
                 endTest();
-                testStarted = false;
             }
         }
 
         function endTest() {
+            stopClock();
+            testEnded = true;
+            testStarted = false;
+            submitAnswerButton.disabled = true;
+            submitAnswerButton.style.display = 'none';
+            startTestButton.style.display = 'none';
+            startTestButton.disabled = true;
+            result.style.display = 'none';
+
+            // This will simply return if isProcessing is true.
+            processAnswer(testEnded);
+
             eventMarker = 'subject_idle';
             setEventMarker(eventMarker);
-            testEnded = true;
-            submitAnswerButton.style.display = 'none';
-            submitAnswerButton.disabled = true;
-
             if (testNumber === 1){
-                statusContainer.innerText = 'Test completed! Please perform the next activities in your dashboard before starting the next test.';
-                startTestButton.style.display = 'none';
-                startTestButton.disabled = true;
+                statusContainer.innerText = 'Time is up! Please move on to the next task.';
+                
             } else if (testNumber === 2){
-                statusContainer.innerText = 'All tests completed! Thank you for participating in the experiment.';
-                startTestButton.style.display = 'none';
-                startTestButton.disabled = true;
+                statusContainer.innerText = 'Time is up! All tests completed. Thank you for participating in the experiment.';
             }
         }
 
-        async function submitAnswer() {
+        function processAnswer(){
+            if(isProcessing) {
+                return; // If function is busy, gtfo.
+            }
+
+            isProcessing = true;
             statusContainer.innerText = "Analyzing Answer...";
             submitAnswerButton.disabled = true;
 
-            try {
-                const response = await fetch('/submit_answer', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
+            fetch('/process_answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test_status: testEnded })
+            })
+            .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'complete' || testEnded) {
+                    console.log(data);
+                    // This block handles the eventuality that all questions have been answered
+                    // It also covers eventuality that function is in-progress when clock ends.
+                    if (data.status === 'complete') {
+                        statusContainer.innerText = "Test complete. Please move on to the next task.";
+                        submitAnswerButton.style.display = 'none';
+                    } 
 
-                const data = await response.json();
+                    statusContainer.innerText = "Test complete. Please move on to the next task.";
+                    submitAnswerButton.style.display = 'none';
+                    result.style.display = "none";
+                    testStarted = false;
+                    // Omitting testEnded here to prevent chance of any further processing.
+                    stopClock();
+                    eventMarker = 'subject_idle';
+                    setEventMarker(eventMarker);
 
-                if (data.result === 'correct') {
-                    statusContainer.innerText = "Correct.";
-                    await getNextQuestion();
-                } 
-                else if (data.result === 'incorrect') {
+                } else if (data.result === 'correct') {
+                    result.innerText = "Correct.";
+                    submitAnswerButton.disabled = false;
+
+                // Nex question functionality handled internally by server.
+                } else if (data.result === 'incorrect') {
                     const restartNumber = testNumber === 1 ? "1,022" : "1,059";
-                    statusContainer.innerText = `Incorrect. Please start again from ${restartNumber}.`;
-                    await getNextQuestion();
+                    result.innerText = `Incorrect. Please start again from ${restartNumber}.`;
+                    statusContainer.innerText = "Resetting questions...";
+                    submitAnswerButton.disabled = false;
                 } 
                 else if (data.result === 'error') {
                     statusContainer.innerText = "Sorry, I could not understand the response.";
-                    stopClock();
-
-                    await getNextQuestion();
+                    submitAnswerButton.disabled = false;
                 } 
-                else if (data.result === 'test_completed') {
-                    submitAnswerButton.style.display = 'none';
-                    startTestButton.style.display = 'none';
-                    statusContainer.innerText = 'Test completed!';
-                    stopClock();
-                    resetClock();
-                    return;
-                }
-
-                submitAnswerButton.disabled = false;
-
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Error:', error);
                 statusContainer.innerText = "An error occurred. Please try again.";
                 submitAnswerButton.disabled = false;
-            }
+            });
         }
-
     </script>
 </body>
 </html> 
