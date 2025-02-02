@@ -92,52 +92,52 @@
         <div class="testModule" id="testProceduresDiv" style="display:block;">
             <button class="toggle" id="firstStressTask">First Stressor Task</button>
             <div class="innerModule" id="stressTask1Div" style="display:none;">
-                <button class="openStressTask"></button>>
-                <button id="stressTask1Complete">Task Complete</button><br>
+                <button class="openStressTask">Stressor Task 1</button><br><br>
+                <button id="stressTask1Complete">Task Complete</button>
             </div><br>
             
             <button class="toggle" id="firstVRTask" style="display:none;">First VR Task</button>
             <div class="innerModule" id="vrTask1Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p> 
-                <button id="VR1Complete">Task Complete</button><br>
+                <button id="VR1Complete">Task Complete</button>
             </div><br>
             
             <button class="toggle" id="pss4Button2" style="display:none;">PSS4 Survey</button>
             <div class="innerModule" id="surveyDiv1" style="display:none;">
                 <p>Please fill out this form.</p>
                 <div id="pss4Div2" style="display:none;"></div><br>
-                <button id="pss4Complete2">Task Complete</button><br>
+                <button id="pss4Complete2">Task Complete</button>
             </div><br>  
 
-            <button class="breakButton toggle" id="break1Button" style="display:none;">Take Break</button>
-            <div id="break1Div" style="display:none;">
-                <p>The break window is now open.</p>
-                <button id="break1Complete">Break Complete</button><br>
+            <button class="toggle" id="break1Button" style="display:none;">Break 1</button>
+            <div class="innerModule" id="break1Div" style="display:none;">
+                <button class="breakButton">Take Break</button><br><br>
+                <button id="break1Complete">Break Complete</button>
             </div><br>
             
             <button class="toggle" id="secondStressTask" style="display:none;">Second Stressor Task</button>
             <div class="innerModule" id="stressTask2Div" style="display:none;">
-                <button class="openStressTask"></button>
-                <button id="stressTask2Complete">Task Complete</button><br>
+                <button class="openStressTask">Stressor Task 2</button><br><br>
+                <button id="stressTask2Complete">Task Complete</button>
             </div><br>
 
             <button class="toggle" id="secondVRTask" style="display:none;">Second VR Task / Control</button>
             <div class="innerModule" id="vrTask2Div" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p>
-                <button id="VR2Complete">Task Complete</button><br>
+                <button id="VR2Complete">Task Complete</button>
             </div><br>
 
             <button class="toggle" id="pss4Button3" style="display:none;">PSS4 Survey</button>
             <div class="innerModule" id="surveyDiv2" style="display:none;">
                 <p>Please fill out this form.</p>
                 <div id="pss4Div3" style="display:none;"></div><br>
-                <button id="pss4Complete3">Task Complete</button><br>
+                <button id="pss4Complete3">Task Complete</button>
             </div><br>
 
-            <button class="breakButton toggle" id="break2Button" style="display:none">Take a Break</button>
+            <button class="toggle" id="break2Button" style="display:none">Break 2</button>
             <div class="innerModule" id="break2Div" style="display:none;">
-                <p>The break window is now open.</p>
-                <button id="break2Complete">Break Complete</button><br>
+                <button class="breakButton">Take Break</button><br><br>
+                <button id="break2Complete">Break Complete</button>
             </div>
         </div>
     </div>
@@ -146,7 +146,7 @@
         <p>Please fill out the surveys or tasks below.</p>
         <div class="testModule" style="display:block;">
             <button class="toggle" id="exitSurveyButton">Exit Survey</button>
-            <div class="innerModule" id="exitSurveyDiv" style="display:none;"></div><br>
+            <div class="innerModule" id="exitSurveyDiv" style="display:none;"></div><br><br>
             <button id="postTestComplete">Task Complete</button><br>
             <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
         </div>
@@ -161,7 +161,7 @@
         const stressTask1Div = document.getElementById('stressTask1Div');
         const stressTask2Div = document.getElementById('stressTask2Div');
         const break1Button = document.getElementById('break1Button');
-        const break2Button = document.getElementById('bream2Button');
+        const break2Button = document.getElementById('break2Button');
         const break1Div = document.getElementById('break1Div');
         const break2Div = document.getElementById('break2Div');
         const vr1Complete = document.getElementById('VR1Complete');
@@ -282,6 +282,7 @@
 
             VR1Complete.addEventListener('click', function(){
                 break1Button.style.display = 'block';
+                break1Div.style.display = 'block';
             });
 
             break1Complete.addEventListener('click', function(){

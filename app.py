@@ -202,6 +202,7 @@ def process_answer() -> Response:
     """
 
     global recording_manager, subject_manager, audio_file_manager, test_manager
+    print("stopping the recording")
     recording_manager.stop_recording()
     current_test = test_manager.current_test_index
     questions = test_manager.get_task_questions(current_test)
@@ -212,35 +213,31 @@ def process_answer() -> Response:
         id = subject_manager.subject_id
 
         file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+        print("transcribing....")
         transcription = transcribe_audio(audio_file_manager.recording_file)
+        print("saving file...")
         audio_file_manager.save_audio_file(file_name)
-
+        print("saving data...")
         # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
-        
         if test_ended:
-            if current_test < 1:
-                test_manager.current_test_index += 1
-            else:
-                test_manager.current_test_index = 0
             return jsonify({'status': 'times_up.', 'message': 'Answer recorded and logged.'})
         
         else:
             if test_manager.current_question_index >= len(questions):
                 test_manager.current_question_index = 0
-                if current_test < 1:
-                    test_manager.current_test_index += 1
-                else:
-                    test_manager.current_test_index = 0
+                print(f"Question index is {test_manager.current_question_index}")
                 return jsonify({'status': 'complete', 'message': 'Answer recorded and logged.'})
             
             else:
                 if transcription.startswith("Google Speech Recognition could not understand"):
-                    return jsonify({'status': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
+                    recording_manager.start_recording()
+                    return jsonify({'status': 'transcription_error'}), 400
     
                 elif transcription.startswith("Could not request results"):
-                    return jsonify({'status': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
+                    recording_manager.start_recording()
+                    return jsonify({'status': 'transcription_error'}), 400
                 
                 correct_answer = questions[test_manager.current_question_index]['answer']
                 result = 'incorrect'
@@ -249,6 +246,11 @@ def process_answer() -> Response:
                     result = 'correct'
                     test_manager.current_question_index += 1
                 
+                if result == 'incorrect':
+                    test_manager.current_question_index = 0
+                
+                print(f"Result: {result}")
+                print("Starting the recording...")
                 recording_manager.start_recording()
                 return jsonify({'status': 'Answer submitted and recording started...', 'result': result})
 
@@ -258,6 +260,18 @@ def process_answer() -> Response:
 @app.route('/get_current_test', methods=['POST'])
 def get_current_test() -> Response:
     global test_manager
+    # If both tests have been taken, reset them to allow a new cycle
+    if test_manager.test_1_taken and test_manager.test_2_taken:
+        test_manager.test_1_taken = False
+        test_manager.test_2_taken = False
+
+    if not test_manager.test_1_taken:
+        test_manager.current_test_index = 0
+        test_manager.test_1_taken = True
+    elif not test_manager.test_2_taken:
+        test_manager.current_test_index = 1
+        test_manager.test_2_taken = True
+
     print(f"Test Index: {test_manager.current_test_index}.")
     return jsonify({"test_number": test_manager.current_test_index})
 

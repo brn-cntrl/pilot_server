@@ -27,7 +27,7 @@
         let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
         let startTime;
         let elapsedTime = 0;
-        let initialTime = 30;  // 300 = 5 minutes
+        let initialTime = 60;  // 300 = 5 minutes
         let timeLeft = initialTime;
         let timerInterval;
         let eventMarker;
@@ -39,7 +39,6 @@
         const loadingMessage = document.getElementById('loadingMessage');
         const statusContainer = document.getElementById('status');
         const result = document.getElementById('result');
-        // const taskComplete = document.getElementById('taskComplete');
         const instructionContainer = document.getElementById('instructionContainer');
 
         let isProcessing = false;
@@ -49,6 +48,7 @@
             <li>You will start with the number 1,009</li>
             <li>Subtract 13 from 1,009 and continue subtracting 13 from each new result.</li>
             <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
+            <li>Say your answer in number form (e.g. "One thousand ninety-six").</li>
             <li>Try to be as accurate and fast as possible while completing the task.</li>
             <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,022.</li>
             <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
@@ -60,6 +60,7 @@
             <li>You will start with the number 1,059</li>
             <li>Subtract 13 from 1,059 and continue subtracting 13 from each new result.</li>
             <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
+            <li>Say your answer in number form (e.g. "One thousand ninety-six").</li>
             <li>Try to be as accurate and fast as possible while completing the task.</li>
             <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,059.</li>
             <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
@@ -222,6 +223,7 @@
                     if (data.status === 'complete') {
                         statusContainer.innerText = "Test complete. Please move on to the next task.";
                         submitAnswerButton.style.display = 'none';
+                        isProcessing = false;
                     } 
 
                     statusContainer.innerText = "Test complete. Please move on to the next task.";
@@ -232,28 +234,40 @@
                     stopClock();
                     eventMarker = 'subject_idle';
                     setEventMarker(eventMarker);
+                    isProcessing = false;
 
                 } else if (data.result === 'correct') {
                     result.innerText = "Correct.";
                     submitAnswerButton.disabled = false;
+                    statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                    isProcessing = false;
 
-                // Nex question functionality handled internally by server.
-                } else if (data.result === 'incorrect') {
+                } else if (data.result === 'transciption_error'){
+                    result.innerText = "Sorry, I couldn't understand you.";
+                    statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                    submitAnswerButton.disabled = false;
+                    isProcessing = false;
+                }
+                else if (data.result === 'incorrect') {
                     const restartNumber = testNumber === 1 ? "1,022" : "1,059";
                     result.innerText = `Incorrect. Please start again from ${restartNumber}.`;
-                    statusContainer.innerText = "Resetting questions...";
+                    statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                     submitAnswerButton.disabled = false;
+                    isProcessing = false;
                 } 
                 else if (data.result === 'error') {
                     statusContainer.innerText = "Sorry, I could not understand the response.";
                     submitAnswerButton.disabled = false;
+                    isProcessing = false;
                 } 
             })
             .catch(error => {
                 console.error('Error:', error);
-                statusContainer.innerText = "An error occurred. Please try again.";
+                statusContainer.innerText = "Something went wrong. Please repeat your answer.";
                 submitAnswerButton.disabled = false;
+                isProcessing = false;
             });
+            
         }
     </script>
 </body>
