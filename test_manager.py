@@ -31,10 +31,28 @@ class TestManager:
             self._task_2_questions = {}
             print("task_2_data.json not found")
 
+        self._test_1_taken = False
+        self._test_2_taken = False
         self._current_question_index = 0  
         self._current_test_index = 0
         self._current_ser_question_index = 0
     
+    @property
+    def test_1_taken(self):
+        return self._test_1_taken
+    
+    @test_1_taken.setter
+    def test_1_taken(self, test_1_taken):
+        self._test_1_taken = test_1_taken
+
+    @property
+    def test_2_taken(self):
+        return self._test_2_taken
+    
+    @test_2_taken.setter
+    def test_2_taken(self, test_2_taken):
+        self._test_2_taken = test_2_taken
+        
     @property
     def ser_questions(self):
         return self._ser_questions
