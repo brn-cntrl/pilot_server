@@ -68,22 +68,28 @@ class AudioFileManager:
             print(f"An error occurred while trying to delete the file '{file_path}': {str(e)}")
 
     def rename_audio_file(self, timestamp, id, name_param1, name_param2) -> str:
-        filename = f"{timestamp}_ID_{id}_{name_param1}_{name_param2}.wav"
+        filename = f"{timestamp}_{id}_{name_param1}_{name_param2}.wav"
 
         return filename
 
     def backup_tmp_audio_files(self) -> None:
-        # Copy contents of tmp folder to audio_files folder
         tmp_folder = "tmp/"
-        audio_files_folder = "audio_files/"
-        for file_name in os.listdir(tmp_folder):
-            full_file_name = os.path.join(tmp_folder, file_name)
-            if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, audio_files_folder)
         
-        # Delete contents of tmp folder
         for file_name in os.listdir(tmp_folder):
+            if file_name == os.path.basename(self.recording_file):
+                continue
+
+            full_path = os.path.join(tmp_folder, file_name)
+            
+            if os.path.isfile(full_path):
+                shutil.copy(full_path, self.audio_folder)
+        
+        for file_name in os.listdir(tmp_folder):
+            if file_name == os.path.basename(self.recording_file):
+                continue
+            
             full_file_name = os.path.join(tmp_folder, file_name)
+            
             if os.path.isfile(full_file_name):
                 os.remove(full_file_name)
 
@@ -168,7 +174,7 @@ class AudioFileManager:
         audio_array = audio / np.max(np.abs(audio))
         return audio_array
     
-    def split_wav_to_segments(self, id, task_id, input_wav, segment_duration=20, output_folder="tmp/") -> list:
+    def split_wav_to_segments(self, id, task_id, input_wav, segment_duration=5, output_folder="tmp") -> list:
         """
         Splits a WAV file into user defined number of segments and saves each segment in the specified output folder.
 
@@ -179,12 +185,12 @@ class AudioFileManager:
         Returns:
         - List of paths/filenames to the saved segment files.
         """
+        import math
         # Ensure the output folder exists
         if not output_folder or not isinstance(output_folder, str):
             raise ValueError("Invalid output folder path.")
         
         os.makedirs(output_folder, exist_ok=True)
-        
         segment_files = []
         try:
             with wave.open(input_wav, 'rb') as wf:
@@ -198,14 +204,20 @@ class AudioFileManager:
 
                 # Calculate frames per segment
                 segment_frames = int(segment_duration * sample_rate)
-                total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
-                
-                for i in range(total_segments):
-                    wf.setpos(i * segment_frames)
-                
-                    frames = wf.readframes(segment_frames)
+                # total_segments = int(duration // segment_duration) + (1 if duration % segment_duration != 0 else 0)
+                total_segments = max(1, int(math.ceil(duration / segment_duration)))
 
-                    segment_file = os.path.join(output_folder, f"{id}_{task_id}_segment_{i}.wav")
+                for i in range(total_segments):
+                    start_frame = i * segment_frames
+                    remaining_frames = total_frames - start_frame
+                    frames_to_read = min(segment_frames, remaining_frames)
+                    # wf.setpos(i * segment_frames)
+                    # remaining_frames = total_frames - (i * segment_frames)
+                    # frames_to_read = min(segment_frames, remaining_frames)
+                    wf.setpos(start_frame)
+                    frames = wf.readframes(frames_to_read)
+                    # {str(id)}_{str(task_id)}_
+                    segment_file = os.path.join(output_folder, f"{str(id)}_{str(task_id)}_segment_{str(i).zfill(2)}.wav")
                     print(f"Creating segment file: {segment_file}")  # Debugging statement
                     
                     with wave.open(segment_file, 'wb') as segment_wf:

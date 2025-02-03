@@ -139,46 +139,21 @@ class FormManager:
 
     def customize_form_url(self, url, subject_id) -> str:
         """
-        Replaces placeholder values in a URL dynamically without regex or urllib.
-
+        Replaces 'Sample+ID' in a Google Forms URL with the provided subject_id.
         Parameters:
-            url (str): The URL containing dynamic placeholders.
-            subject_id (str): The value to replace the second placeholder.
-
+            url (str): The Google Forms URL containing 'Sample+ID' as a placeholder.
+            subject_id (str): The value to replace 'Sample+ID'.
         Returns:
-            str: The updated URL with placeholders replaced dynamically.
+            str: The updated URL with 'Sample+ID' replaced by subject_id.
         """
         if not url.strip(): 
             return url
 
-        if "?" in url:
-            base_url, query_string = url.split("?", 1)
-        else:
-            return url  
-
-        query_pairs = query_string.split("&")
-        updated_pairs = []
-        placeholder_count = 0
-
-        for pair in query_pairs:
-            if "entry." in pair and "=" in pair:
-                key, value = pair.split("=", 1)
-                if placeholder_count == 0:
-                    value = subject_id  
-                    placeholder_count += 1
-                # elif placeholder_count == 1:
-                #     value = subject_id  
-                    # placeholder_count += 1
-                updated_pairs.append(f"{key}={value}")
-            else:
-                updated_pairs.append(pair)
-
-        # Reconstruct the full URL
-        updated_query_string = "&".join(updated_pairs)
-        updated_url = f"{base_url}?{updated_query_string}"
+        subject_id = subject_id.replace(" ", "+")
+        updated_url = url.replace("Sample+ID", subject_id)
 
         return updated_url
-    
+
     def autofill_forms(self, subject_id) -> None:
         formatted_surveys = []
         print(f"Autofilling forms for ID: {subject_id}")
@@ -196,17 +171,6 @@ class FormManager:
             del self.formatted_surveys
         else:
             raise ValueError("No surveys to autofill.")
-    
-    # def  _code(self, survey_name) -> str:
-    #     return_value = ""
-    #     for survey in self.surveys:
-    #         if survey["name"] == survey_name:
-    #             return_value = f'<iframe src="{survey["url"]}" width="920" height="680"></iframe>'
-    #             return return_value
-    #         else:
-    #             return_value = f"<p>Survey with name '{survey_name}' not found.</p>"
-                
-    #     return return_value
     
     def load_surveys(self) -> list:
         if not os.path.exists(self._surveys_file):
@@ -235,7 +199,6 @@ class FormManager:
         Returns:
             str: The customized URL for the specified survey.
         """
-
         survey_url = self.get_survey_url(survey_name)
 
         if survey_url is None: 

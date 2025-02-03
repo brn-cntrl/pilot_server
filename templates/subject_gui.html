@@ -363,7 +363,6 @@
             setEventMarker('ser_baseline');
             startRecording()
                 .then(() => {
-                    playBeep();
                     submitAnswer.disabled = false;
                     status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                     fetchNextQuestion();  
@@ -395,7 +394,6 @@
                 }
             })
             .then(() => {
-                playBeep();
                 submitAnswer.disabled = false;
                 status.style.display = 'none';;
                 fetchNextQuestion(); 
@@ -432,7 +430,6 @@
                 audioStatusMessage.innerText = "Please wait...";
                 startRecording()
                 .then(() => {
-                    playBeep();
                     audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
                     testAudio.innerText = 'Stop';      
                 })

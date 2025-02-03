@@ -515,7 +515,7 @@
             });
 
             completedTaskButtons.forEach(button => {
-                setEventMarker('subject_idle');
+                setEventMarker('subject_idle'); // This will be redundant for a few tasks
             });
 
             roomObservationButtons.forEach(button => {
@@ -583,7 +583,7 @@
                     recTaskGen2.innerText = "Stop Recording";
                     recordTask(recTaskGen2, 'start');
                 } else {
-                    task1Record.innerText = "Start Recording";
+                    recTaskGen2.innerText = "Start Recording";
                     recordTask(recTaskGen2, 'stop');
                 }
             });
@@ -616,10 +616,9 @@
 
                 const parentDiv = button.closest('div');
                 const selectedCondition = parentDiv.querySelector('select').value;
-                let eventMarker;
+                let eventMarker = `${buttonId}_${selectedCondition}`;
 
-                if(action === 'start'){
-                    eventMarker = `${buttonId}_${selectedCondition}`;
+                if(action === 'start') {
                     if (buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
                         statusId1.innerText = 'Please wait...';
@@ -627,8 +626,7 @@
                         statusId2.style.display = 'block';
                         statusId2.innerText = 'Please wait...';
                     }
-                } else {
-                    eventMarker = 'subject_idle';
+                } else {;
                     if (buttonId == 'task_1_recording'){
                         statusId1.style.display = 'block';
                         statusId1.innerText = 'Audio processing. Please wait...';

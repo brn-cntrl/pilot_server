@@ -577,31 +577,37 @@ def record_task() -> Response:
         event_marker = data.get('event_marker')
         action = data.get('action')
         current_time_unix = timestamp_manager.get_timestamp()
-        
+        print(f"Current time in unix: {current_time_unix}")
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
-            timeout = 10 # seconds
-            start_time = time.time()
-            # DEBUG
+             # DEBUG
             print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
-
-            while not recording_manager.stream_is_active:
-                if time.time() - start_time > timeout:
-                    return jsonify({'message': 'Error starting recording.'}), 400
-                time.sleep(0.5)
+            # timeout = 10 # seconds
+            # start_time = time.time()
+           
+            # while not recording_manager.stream_is_active:
+            #     if time.time() - start_time > timeout:
+            #         return jsonify({'message': 'Error starting recording.'}), 400
+            #     time.sleep(0.5)
 
             return jsonify({'message': 'Recording started.'}), 200
         
         elif action == 'stop':
             recording_manager.stop_recording()
-
-            # Handling the emotibit event marker in client "Task Completed" function.
+            emotibit_streamer.event_marker = 'subject_idle'
+            # DEBUG
+            print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
+            
             id = subject_manager.subject_id
-            audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 20, "tmp/")
+            audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 60, "tmp/")
 
             audio_segments = sorted(audio_segments, key=lambda x: 
                                     int(os.path.splitext(os.path.basename(x))[0].split('_')[-1]))
+            
+            for segment in audio_segments:
+                key = os.path.splitext(os.path.basename(segment))[0].split('_')[-1]
+                print(f"Segment: {segment}, Key: {key}")
 
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
 
@@ -644,6 +650,17 @@ def start_recording() -> Response:
 ##################################################################
 @app.route('/prs')
 def prs():
+    """
+    Generates and returns an HTML template for the PRS (Perceived Restorativeness Scale) task.
+    The HTML template includes:
+    - Instructions for the PRS task.
+    - An introductory audio file.
+    - A list of PRS audio files that are randomly shuffled.
+    - Recording buttons for subject responses.
+    Returns:
+        str: Rendered HTML template with the introductory audio file and shuffled PRS audio files.
+    """
+    
     import random
     AUDIO_DIR = 'static/prs_audio'
     intro = "1-PRS-Intro.mp3"
@@ -840,14 +857,25 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     Returns:
         - List of start timestamps in ISO 8601 format for each segment.
     """
+    print("Generating timestamps...")
+    
+    # segment_files = sorted([f for f in os.listdir(output_folder) if f.endswith('.wav')])
+
+    segment_files = sorted(
+        [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],
+        key=lambda x: int(x.split('_')[-1].split('.')[0]) if x.split('_')[-1].split('.')[0].isdigit() else float('inf')
+    )
+    print(segment_files)
+
     segment_timestamps = []
-    segment_files = sorted([f for f in os.listdir(output_folder) if f.endswith('.wav')])
-    
-    segment_timestamps = [
-        datetime.datetime.fromtimestamp(start_time_unix + (i * segment_duration)).isoformat(timespec='seconds')
-        for i in range(len(segment_files))
-    ]
-    
+    start_time_unix = datetime.datetime.fromisoformat(start_time_unix)
+    for i in range(len(segment_files)):
+        timestamp = start_time_unix + datetime.timedelta(seconds=i * segment_duration)
+        print(f"i: {i}, start_time_unix: {start_time_unix}, segment_duration: {segment_duration}, timestamp: {timestamp}")
+        segment_timestamps.append(timestamp.isoformat(timespec='seconds'))
+
+    print(f"Generated timestamps: {segment_timestamps}")
+    print (segment_timestamps)
     return segment_timestamps
 
 ##################################################################
