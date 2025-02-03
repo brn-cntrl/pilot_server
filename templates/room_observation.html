@@ -16,6 +16,8 @@
         <li>When they are ready, press play on the the introduction audio player.</li>
         <li>Each section is timed and will pause for responses automatically.</li>
         <li>Recording will also start and stop automatically.</li>
+        <li>The subject will hear a "beep" to indicate that recording has started</li>
+        <li>They will hear a short series of beeps 15 seconds before the time for each question is up.</li>
         <li>When the last notification indicates recording has stopped, the subject has finished the task.</li>
     </ul>
     <button onclick="startMonitoring()">Start Monitoring</button><br><br>
@@ -66,7 +68,6 @@
             const eventMarker = localStorage.getItem('currentEventMarker');
             if(!eventMarker || eventMarker === 'null' || eventMarker === 'undefined') {
                 alert('No condition found for task. Please go back to the main interface and select a condition.');
-                window.location.href = '/';
             } 
             
             const player1 = document.getElementById('audioPlayer1');
@@ -78,6 +79,7 @@
             const status2 = document.getElementById('audio2-status');
             const status3 = document.getElementById('audio3-status');
             const status4 = document.getElementById('audio4-status');
+
             player1.addEventListener('play', function() {
                 status1.innerHTML = 'Introduction is now playing...';
             });
@@ -105,17 +107,19 @@
                 status3.innerHTML = 'Question 1 is now playing...';
             });
 
-            let secondsBeforeEnd = 1; 
-            player3.addEventListener('timeupdate', function() {
-                if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
-                    player3.dataset.recordingStarted = "true"; 
-                    recordTaskAudio(eventMarker, 'start', 1, status3); 
-                    playBeep();
-                }
-            });
+            // let secondsBeforeEnd = 1; 
+            // player3.addEventListener('timeupdate', function() {
+            //     if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
+            //         player3.dataset.recordingStarted = "true"; 
+            //         recordTaskAudio(eventMarker, 'start', 1, status3); 
+            //         playBeep();
+            //     }
+            // });
 
             player3.addEventListener('ended', function() {
                 status3.innerHTML = 'Recording started... 3 minute timer started.';
+                recordTaskAudio(eventMarker, 'start', 1, status3); 
+                playBeep();
                 setTimeout(function() {
                     let beepCount = 0;
                     const interval = setInterval(function() {
@@ -137,16 +141,18 @@
                 status4.innerHTML = 'Question 2 is now playing...';
             });
             
-            player4.addEventListener('timeupdate', function() {
-                if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
-                    player4.dataset.recordingStarted = "true"; 
-                    recordTaskAudio(eventMarker, 'start', 2, status4); 
-                    playBeep();
-                }
-            });
+            // player4.addEventListener('timeupdate', function() {
+            //     if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
+            //         player4.dataset.recordingStarted = "true"; 
+            //         recordTaskAudio(eventMarker, 'start', 2, status4); 
+            //         playBeep();
+            //     }
+            // });
 
             player4.addEventListener('ended', function() {
                 status4.innerHTML = 'Recording started... 3 minute timer started.';
+                recordTaskAudio(eventMarker, 'start', 2, status4); 
+                playBeep();
                 setTimeout(function() {
                     let beepCount = 0;
                     const interval = setInterval(function() {
@@ -163,24 +169,6 @@
                     status4.innerText = "Recording has stopped. Task is complete.";
                 }, 180000);  
             });
-
-            function playBeep() {
-                function beep() {
-                    const beepContext = new AudioContext();
-                    const oscillator = beepContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    oscillator.type = 'sine'; 
-                    oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    oscillator.start();
-                    setTimeout(() => {
-                        oscillator.stop();
-                        // audioContext.close();
-                    }, 500); 
-                }
-            }
         });
     </script> 
 </body>

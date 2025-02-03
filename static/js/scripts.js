@@ -330,21 +330,19 @@ function stopBaseline() {
 }
 
 function playBeep() {
-    function beep() {
-        const beepContext = new AudioContext();
-        const oscillator = beepContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.type = 'sine'; 
-        oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
-        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.start();
-        setTimeout(() => {
-            oscillator.stop();
-            // audioContext.close();
-        }, 500); 
-    }
+    const beepContext = new AudioContext();
+    const oscillator = beepContext.createOscillator();
+    const gainNode = beepContext.createGain();
+    oscillator.type = 'sine'; 
+    oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
+    gainNode.gain.setValueAtTime(0.07, beepContext.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(beepContext.destination);
+    oscillator.start();
+    setTimeout(() => {
+        oscillator.stop();
+        // audioContext.close();
+    }, 300); 
 }
 
 async function startMonitoring() {

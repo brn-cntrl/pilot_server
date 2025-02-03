@@ -691,16 +691,18 @@ def prs():
         </div>
         {% endfor %}
         <script>
+            const eventMarker = localStorage.getItem('currentEventMarker');
+            const recordButtons = document.querySelectorAll(".record-button");   
             recordButtons.forEach((button) => {
                 button.addEventListener("click", async function () {
-                    const audioElement = button.previousElementSibling.querySelector("source");
-                    const statusElement = button.nextElementSibling;
+                    const audioElement = button.closest("div").querySelector("audio");
+                    const statusElement = button.previousElementSibling;
                     
                     if (audioElement) {
-                        const audioSrc = audioElement.getAttribute("src"); 
-                        const fileName = audioSrc.split('/').pop();
-                        const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
-
+                        const audioSrc = audioElement.querySelector("source").getAttribute("src"); 
+                        const fileName = audioSrc.split('/').pop(); 
+                        const baseName = fileName.replace(/\.[^/.]+$/, ""); 
+            
                         if (button.innerText === 'Record Answer') {
                             statusElement.innerText = "Starting recording...";
                             try {
@@ -711,13 +713,14 @@ def prs():
                                 console.error("Recording failed:", error);
                             }
                         } else {
-                            recordTask(eventMarker, 'stop', baseName, statusElement);
+                            console.log(eventMarker);
+                            recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
                             button.innerText = 'Record Answer';
+                            setEventMarker('subject_idle');
                         }
                     }
                 });
             });
-        });
         </script>
     </body>
     </html>
