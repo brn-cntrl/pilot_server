@@ -233,7 +233,8 @@ class EmotiBitStreamer:
                 self.baseline_buffer.append(self.current_row)
             elif self.event_marker != "biometric_baseline" and not self.processing_baseline:
                 self.data_buffer.append(self.current_row)
-                
+            
+            print(self.current_row)
             self.write_to_hdf5(self.current_row)
 
     ###########################################
@@ -376,6 +377,7 @@ class EmotiBitStreamer:
         print("Comparison Results:", comparisons)  # Debugging Output
         return comparisons 
 
+    # NOTE: If derived values are add to the h5 file as a second dataset, this method will need to be altered.
     def hdf5_to_csv(self) -> None:
         """
         Convert an HDF5 file to a CSV file.
@@ -396,10 +398,8 @@ class EmotiBitStreamer:
                 # Get the field names (column names) from the dataset
                 field_names = dataset.dtype.names
                 
-                # Open the CSV file for writing
                 with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csv_file:
                     writer = csv.DictWriter(csv_file, fieldnames=field_names)
-                    
                     writer.writeheader()
                     
                     for idx in range(dataset.shape[0]):

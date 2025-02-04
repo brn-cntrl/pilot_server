@@ -96,7 +96,8 @@ class SubjectManager:
         
         else:
             # Create a folder named for the subject name and ID if it doesn't exist
-            folder_name = self.subject_id
+          
+            folder_name = f"{datetime.now().isoformat()}_{self.subject_id}"
             self.subject_folder = os.path.join(self.data_root, self.experiment_name, self.trial_name, folder_name)
 
             if not os.path.exists(self.subject_folder):

@@ -96,7 +96,7 @@
     </div><br>
 
     <button class="toggle">Speech Emotion Baseline (SER)</button>
-    <div class="innerModlue">
+    <div class="innerModule" style="display:none;">
         <h4>Instructions</h4>
         <ul>
             <li>Once the audio is tested, instruct the subject to click the Emotion Baseline button.</li>
@@ -265,6 +265,18 @@
             <button class="endTask">Task Completed</button>
         </div><br>
         
+        <button class="toggle">IAT Task</button><br>
+        <div class="innerModule" id="IAT1Div">
+            <h4>IAT Instructions</h4>
+            <ul>
+                <li>Direct the subject to the IAT task.</li>
+                <li>Click "Task Completed" when the subject has finished the task.</li>
+            </ul><br>
+            <button id="startIAT1">Start Task</button><br><br>
+            <p id="IAT1Status"></p> <!-- DO WE WANT CONDITIONS HERE?-->
+            <button class="endTask">Task Completed</button>
+        </div><br>
+
         <button class="toggle">PRS Task</button><br>
         <div class="innerModule" id="prsDiv2" style="display:none">
             <h4>PRS Instructions</h4>
@@ -280,7 +292,7 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select>
+            </select><br>
             <button class="startPRSTask">Start Task</button><br><br>
             <button id="comparePRS2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="comparePRS2status"></p>
@@ -338,6 +350,13 @@
     <h2>More Tools</h2>
     <button class="toggle">Show Tools</button>
     <div class="testModule" style="display:none;">
+
+        <button class="toggle">Analysis</button><br>
+        <div class="innerModule" style="display:none;">
+            <h4>Perform Post-Experiment Analyses</h4>
+            <button id="launchAnalysis">Launch Jupyter Notebook</button>
+        </div><br>
+
         <button class="toggle">Subject Encryption</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Encrypt Subject Name and Email</h4>
@@ -388,6 +407,7 @@
 
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
+        const launchAnalysis = document.getElementById('launchAnalysis');
         const comparePRS1Button = document.getElementById('comparePRS1Button');
         const comparePRS2Button = document.getElementById('comparePRS2Button');
         const compareTask1Button = document.getElementById('compareTask1Button');
@@ -516,7 +536,13 @@
                 });
             });
         });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            launchAnalysis.addEventListener('click', function() {
             
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             launchSubjectGUI.addEventListener('click', function() {
                 window.open('/subject_gui', '_blank', 'width=1200, height=720');

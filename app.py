@@ -3,7 +3,6 @@ import webview
 import warnings
 import threading
 from threading import Thread
-import boto3
 import os, sys
 import datetime
 import time
@@ -27,6 +26,10 @@ emotibit_thread = None
 
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
+
+
+#TODO: break between select and start under PRS
+#TODO: Add implicit task instruction before the PRS
 
 # Class instances stored in global scope 
 # NOTE: These could be moved to Flask g instance to further reduce global access
@@ -649,6 +652,26 @@ def start_recording() -> Response:
 ##################################################################
 ## Views 
 ##################################################################
+@app.route('/notebook')
+def notebook():
+    import subprocess
+    """
+    Renders the Jupyter Notebook interface for the experiment.
+    Returns:
+        Response: A Flask response object containing the rendered HTML template for the Jupyter Notebook.
+    """
+    notebook = 'analysis.ipynb'
+
+    notebook_path = os.getcwd()
+
+    command = ['jupyter', 'notebook', '--notebook-dir', notebook_path, '--port=8888']
+
+    notebook_url = f'http://localhost:8888/notebooks/{os.path.relpath(notebook, notebook_path)}'
+
+    subprocess.Popen(command)
+
+    return f'Jupyter Notebook is running. Open it <a href="{notebook_url}">here</a>.'
+    
 @app.route('/prs')
 def prs():
     """
