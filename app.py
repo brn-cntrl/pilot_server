@@ -690,7 +690,7 @@ def prs():
     intro = "1-PRS-Intro.mp3"
     prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro]
     random.shuffle(prs_audio_files)
-    html_template = """
+    html_template = r"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
