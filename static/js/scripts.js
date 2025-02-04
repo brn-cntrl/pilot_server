@@ -266,26 +266,30 @@ function compareToBaseline(divID) {
         Object.keys(data).forEach(key => {
             const result = data[key];
             // Check if result is valid and not null/undefined/NaN
-            if (!result || result.elevated === null || result.elevated === "NaN" || result.elevated === undefined) {
+            if (!result || result.status === null || result.status === "NaN" || result.status === undefined) {
                 console.warn(`Skipping ${key} due to invalid data:`, result);
                 return;
             }
-            if (result.elevated === "Live data") {
+            if (result.status === "Elevated") {
                 liveElevatedCount++;
-            } else if (result.elevated === "Baseline data") {
+            } else if (result.status === "Lowered") {
                 baselineElevatedCount++;
+            } else if (result.status === "Same") {
+                baselineElevatedCount++;
+                liveElevatedCount++;
             }
+            console.log(data);
         });
         if (baselineElevatedCount > liveElevatedCount) {
             restTime = 3;
+            divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} seconds.`;
         } else if (liveElevatedCount > baselineElevatedCount) {
             restTime = 8;
+            divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} seconds.`;
         } else {
             restTime = 3;
+            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} seconds.`;
         }
-
-        divID.innerText = `Baseline comparison complete. Rest time: ${restTime} seconds.`;
-        console.log('Determined restTime:', restTime);
     })
     .catch(error => {
         console.error('Error comparing to baseline:', error);

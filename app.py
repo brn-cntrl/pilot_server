@@ -61,8 +61,7 @@ def baseline_comparison() -> Response:
 
     try:
         response = emotibit_streamer.compare_baseline()
-        print(f"Route baseline comparison results: {response}")
-        return jsonify({response}), 200
+        return jsonify(response), 200
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
