@@ -244,7 +244,9 @@ function handleOtherOption() {
     }
 }
 var restTime = 3;
-function compareToBaseline() {
+function compareToBaseline(divID) {
+    divID.style.display = 'block';
+    divID.innerText = "Comparing to baseline... Please wait.";  
     fetch('/baseline_comparison', {
         method: 'POST',
         headers: {
@@ -260,8 +262,14 @@ function compareToBaseline() {
     .then(data => {
         let baselineElevatedCount = 0;
         let liveElevatedCount = 0;
+
         Object.keys(data).forEach(key => {
             const result = data[key];
+            // Check if result is valid and not null/undefined/NaN
+            if (!result || result.elevated === null || result.elevated === "NaN" || result.elevated === undefined) {
+                console.warn(`Skipping ${key} due to invalid data:`, result);
+                return;
+            }
             if (result.elevated === "Live data") {
                 liveElevatedCount++;
             } else if (result.elevated === "Baseline data") {
@@ -275,12 +283,16 @@ function compareToBaseline() {
         } else {
             restTime = 3;
         }
+
+        divID.innerText = `Baseline comparison complete. Rest time: ${restTime} seconds.`;
         console.log('Determined restTime:', restTime);
     })
     .catch(error => {
         console.error('Error comparing to baseline:', error);
+        divID.innerText = "Error comparing to baseline. Please try again.";
     });
 }
+
 async function startEmotibit(){
     try{
         const response = await fetch('/start_emotibit_stream', {

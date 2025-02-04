@@ -3,6 +3,7 @@ import h5py
 import os
 from pythonosc import dispatcher, osc_server
 from threading import Thread, Event
+import threading
 import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
 import time
@@ -26,7 +27,9 @@ class EmotiBitStreamer:
         self.is_streaming = False
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
         self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
-        self.data_window = {key: deque(maxlen=500) for key in ["BI", "PG"]}  # Sliding window for derived metrics
+        self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
+        self.baseline_buffer = []
+        self.data_buffer = deque(maxlen=10000)
         self._event_marker = 'subject_idle'
         self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
@@ -38,15 +41,33 @@ class EmotiBitStreamer:
         self._data_folder = None
         self.csv_filename = None
         self.csv_writer = None
-
+        self.lock = threading.Lock()
         # Variables for h5 file
         self.hdf5_filename = None
         self.hdf5_file = None
         self.dataset = None
-            
+        self._baseline_collected = False
+        self._processing_baseline = False
+
         atexit.register(self.stop)
         print("Emotibit Initialized... ")
         print("EmotiBit data folder, .hdf5 and .csv files will be set when experiment/trial and subject information is submitted.")
+
+    @property
+    def baseline_collected(self) -> bool:
+        return self._baseline_collected
+    
+    @baseline_collected.setter
+    def baseline_collected(self, value: bool) -> None:
+        self._baseline_collected = value
+
+    @property
+    def processing_baseline(self) -> bool:
+        return self._processing_baseline
+    
+    @processing_baseline.setter
+    def processing_baseline(self, value: bool) -> None:
+        self._processing_baseline = value
 
     @property
     def data_folder(self) -> str:
@@ -86,12 +107,12 @@ class EmotiBitStreamer:
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
                     ('timestamp', h5py.string_dtype(encoding='utf-8')),
-                    ('EDA', 'f8'),
-                    ('HR', 'f8'),
-                    ('BI', 'f8'),
-                    ('HRV', 'f8'),
-                    ('PG', 'f8'),
-                    ('RR', 'f8'),
+                    ('EDA', 'f4'),
+                    ('HR', 'f4'),
+                    ('BI', 'f4'),
+                    ('HRV', 'f4'),
+                    ('PG', 'f4'),
+                    ('RR', 'f4'),
                     ('event_marker', h5py.string_dtype(encoding='utf-8'))
                 ])
                 self.dataset = self.hdf5_file.create_dataset(
@@ -99,6 +120,12 @@ class EmotiBitStreamer:
                 )
             else:
                 self.dataset = self.hdf5_file['data']  
+
+            with h5py.File(self.hdf5_filename, "r") as f:
+                if "data" in f:
+                    dt = f["data"]
+                else:
+                    print("Dataset 'data' not found in the HDF5 file.")
 
             # DEBUG
             print("HDF5 file created for emotibit data: ", self.hdf5_filename)
@@ -121,6 +148,7 @@ class EmotiBitStreamer:
             return
         
         self.collecting_baseline = False
+        self.baseline_collected = True
         print("Stopping Baseline Collection... ")
 
     def start(self) -> None:
@@ -161,10 +189,6 @@ class EmotiBitStreamer:
     ###########################################
     def generic_handler(self, address: str, *args) -> None:
         """Generic handler for all incoming OSC messages."""
-
-        # Debug statement
-        print(f"Received data at {address}: {args}")
-
         if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
             self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
@@ -175,19 +199,25 @@ class EmotiBitStreamer:
         timestamp = self.current_timestamp
         value = args[0]
         self.last_received[stream_type] = time.time()
-        derived_value = None
+        # derived_value = None
+
+        # DEBUG
+        print(self.event_marker)
 
         self.current_row["timestamp"] = timestamp
         self.current_row["event_marker"] = self.event_marker
 
-        if stream_type in self.data_window:
-            self.data_window[stream_type].append(value)
-            if stream_type == "BI" and len(self.data_window["BI"]) > 30:  
-                derived_value = self.calculate_hrv()
-                self.current_row['HRV'] = derived_value if derived_value is not None else None
-            elif stream_type == "PG" and len(self.data_window["PG"]) > 100:  
-                derived_value = self.calculate_rr()
-                self.current_row['RR'] = derived_value if derived_value is not None else None
+        # if stream_type in self.data_window:
+        #     if value is not None:
+        #         self.data_window[stream_type].append(value)
+                
+        #         if stream_type == "BI" and len(self.data_window["BI"]) > 10:  
+        #             derived_value = self.calculate_hrv()
+        #             self.current_row['HRV'] = derived_value if derived_value is not None else None
+        #             print(f"HRV: {derived_value}")
+        #         elif stream_type == "PPG:GRN" and len(self.data_window["PPG:GRN"]) > 200:  
+        #             derived_value = self.calculate_rr()
+        #             self.current_row['RR'] = derived_value if derived_value is not None else None
 
         if stream_type == "EDA":
             self.current_row["EDA"] = value
@@ -195,11 +225,16 @@ class EmotiBitStreamer:
             self.current_row["HR"] = value
         elif stream_type == "BI":
             self.current_row["BI"] = value
-        elif stream_type == "PG":
+        elif stream_type == "PPG:GRN":
             self.current_row["PG"] = value
 
-        # self.write_to_csv(self.current_row)
-        self.write_to_hdf5(self.current_row)
+        if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]):
+            if self.event_marker == "biometric_baseline" and not self.baseline_collected:
+                self.baseline_buffer.append(self.current_row)
+            elif self.event_marker != "biometric_baseline" and not self.processing_baseline:
+                self.data_buffer.append(self.current_row)
+                
+            self.write_to_hdf5(self.current_row)
 
     ###########################################
     # Derived Metrics
@@ -207,26 +242,33 @@ class EmotiBitStreamer:
     def calculate_hrv(self) -> float:
         """Calculate HRV (RMSSD) from BI values."""
         bi_values = np.array(self.data_window["BI"])
-        if len(bi_values) < 30: # 30 beat interval values
+        cleaned_bi_values = self.remove_outliers(bi_values)
+
+        if len(cleaned_bi_values) < 10: # 10 beat interval values
             return None  
 
-        intervals = np.diff(bi_values) / 1000.0  
-        rmssd = np.sqrt(np.mean(np.square(np.diff(intervals))))
+        differences = np.diff(bi_values) / 1000.0  
+        rmssd = np.sqrt(np.mean(np.square(differences)))
         return rmssd
+    
+    def remove_outliers(self, bi_values, threshold=2.0):
+        mean_bi = np.mean(bi_values)
+        std_bi = np.std(bi_values)
+        return [bi for bi in bi_values if abs(bi - mean_bi) < threshold * std_bi]
 
     def calculate_rr(self) -> float:
         """Calculate RR from PG values."""
-        ppg_values = np.array(self.data_window["PG"])
-        if len(ppg_values) < 100:
+        ppg_values = np.array(self.data_window["PPG:GRN"])
+        if len(ppg_values) < 200:
             return None  
 
         # Bandpass filter
-        filtered_signal = self.bandpass_filter(ppg_values, 0.1, 0.5, 25)  # Assuming 25 Hz sampling rate
+        filtered_signal = self.bandpass_filter(ppg_values, 0.1, 0.6, 12)  # Assuming 12 Hz sampling rate
         envelope = np.abs(hilbert(filtered_signal))
 
         # FFT for respiratory frequency
         fft_result = np.fft.rfft(envelope)
-        freqs = np.fft.rfftfreq(len(envelope), 1 / 25)  # 25 Hz sampling rate
+        freqs = np.fft.rfftfreq(len(envelope), 1 / 12)  # 12 Hz sampling rate
         resp_freq = freqs[np.argmax(np.abs(fft_result))]
         return resp_freq * 60  # Convert to breaths per minute
 
@@ -245,6 +287,10 @@ class EmotiBitStreamer:
     def write_to_hdf5(self, row: dict) -> None:
         """Write the incoming dictionary to the HDF5 dataset as a single row."""
         try:
+            if self.hdf5_file is None or self.dataset is None:
+                print("HDF5 file or dataset is not initialized.")
+                return
+
             # Create a structured array for the new row
             new_data = np.zeros(1, dtype=self.dataset.dtype)  
             new_data[0]['timestamp'] = row.get('timestamp', '')  
@@ -255,137 +301,80 @@ class EmotiBitStreamer:
             new_data[0]['PG'] = row.get('PG', np.nan)
             new_data[0]['RR'] = row.get('RR', np.nan)
             new_data[0]['event_marker'] = row.get('event_marker', '')
+            
+            # print(f"Adding to HDF5: {new_data[0]}")
 
-            current_size = self.dataset.shape[0]
-            self.dataset.resize((current_size + 1,))  
-
-            self.dataset[current_size] = new_data[0]  
+            new_size = self.dataset.shape[0] + 1
+            self._resize_dataset(new_size)  
+            self.dataset[-1] = new_data[0]
 
         except Exception as e:
             print(f"Error writing to HDF5: {e}")
 
-    def get_baseline_entries(self) -> list:
-        """Check the HDF5 file for rows with 'baseline' under 'baseline_status' and return as a list of dictionaries."""
-        baseline_entries = []
-
+    def _resize_dataset(self, new_size):
+        """Resize the HDF5 dataset while ensuring thread synchronization."""
         try:
-            with h5py.File(self.hdf5_filename, 'r') as f:
-                dataset = f['data']
+            current_size = self.dataset.shape[0]
+            if new_size > current_size:
+                self.dataset.resize(new_size, axis=0)
 
-                event_marker = dataset['event_marker'].asstr()
-                baseline_status = np.where(event_marker == 'baseline')[0]
-                
-                for idx in baseline_status:
-                    entry = {
-                        field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' else dataset[field][idx]
-                        for field in dataset.dtype.names
-                    }
-
-                    baseline_entries.append(entry)
-
-            return baseline_entries
-
-        except FileNotFoundError:
-            print(f"Error: The file {self.h5_filename} was not found.")
-            return []
         except Exception as e:
-            print(f"Error reading the HDF5 file: {e}")
-            return []
+            print(f"Error resizing dataset: {e}")
 
-    def get_live_entries(self, lookback_minutes: int = 2) -> list:
-        """Retrieve non-baseline entries (live data) from the last 'lookback_minutes' minutes.
-        Args:
-            lookback_minutes (int): The number of minutes to look back for live data.
-        Returns:
-            list: A list of dictionaries containing live data from the HDF5 file.
-        """
-        non_baseline_entries = []
+    def get_averages(self, stream_type) -> float:
+        baseline_avgs = []
+        test_avgs = []
 
-        try:
-            # Open the HDF5 file
-            with h5py.File(self.hdf5_filename, 'r') as f:
-                dataset = f['data']
-                
-                current_time = datetime.now()
-                time_threshold = current_time - timedelta(minutes=lookback_minutes)
-                
-                for idx in range(dataset.shape[0]):
-                    event_marker = dataset['event_marker'][idx].decode('utf-8')  
-                    timestamp = dataset['timestamp'][idx].decode('utf-8')  
-                    
-                    if event_marker != 'baseline' and timestamp:
-                        row_time = datetime.fromisoformat(timestamp)  
-                        if row_time >= time_threshold and row_time <= current_time:
-                            entry = {
-                                        field: dataset[field][idx] if dataset[field].dtype.kind != 'S' 
-                                        else dataset[field][idx].decode('utf-8') 
-                                        for field in dataset.dtype.names
-                                    }
-                            non_baseline_entries.append(entry)
+        for obj in self.data_buffer:
+            if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
+                baseline_avgs.append(np.mean(obj[stream_type]))
 
-            return non_baseline_entries
+            elif obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
+                test_avgs.append(np.mean(obj[stream_type]))
 
-        except FileNotFoundError:
-            print(f"Error: The file {self.hdf5_filename} was not found.")
-            return []
-
-
-    def get_averages(self, data) -> dict:
-        """
-        Calculate the averages of the given data.
-        Args:
-            data (list): A list of dictionaries containing data to calculate averages from.
-        Returns:
-            dict: A dictionary containing the averages of the given data.
-        """
-        averages = {}
-        for entry in data:
-            for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]:
-                if key not in averages:
-                    averages[key] = []
-                if entry.get(key) not in [None, 'N/A']:
-                    averages[key].append(float(entry.get(key)))
+        return(baseline_avgs, test_avgs)   
         
-        averages = {key: sum(values) / len(values) if values else None for key, values in averages.items()}
-        return averages
-    
     def compare_baseline(self) -> dict:
         """
-        Compare the averages of the baseline data with a specified window of live data
-        from the CSV file. If there is not enough data, return a message indicating so.
-        Returns:
-            dict or str: A dictionary with comparison results or a string message if
-                         not enough data has been collected.
+        Compare the averages of the baseline data with a specified window of live data.
+        Returns a dictionary with the comparison results.
         """
-        live_data = self.get_live_entries()
-        baseline_data = self.get_baseline_entries()
+        if not self.baseline_collected:
+            print("Baseline not collected yet.")
+            return {}
+        
+        comparisons = {}
+        ppg_bl_avgs, ppg_tst_avgs = self.get_averages("PG")
+        bi_bl_avgs, bi_tst_avgs = self.get_averages("BI")
+        hr_bl_avgs, hr_tst_avgs = self.get_averages("HR")
+        eda_bl_avgs, eda_tst_avgs = self.get_averages("EDA")
 
-        baseline_averages = self.get_averages(baseline_data)
-        live_averages = self.get_averages(live_data)
-
-        comparison_results = {}
-        for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]:
-            baseline_avg = baseline_averages.get(key)
-            live_avg = live_averages.get(key)
+        def evaluate_elevation(baseline_list, test_list):
+            """Compares baseline and test lists and determines elevation status."""
+            if not baseline_list:
+                return {"status": "No baseline data", "baseline_avg": None, "test_avg": np.mean(test_list) if test_list else None}
+            if not test_list:
+                return {"status": "No test data", "baseline_avg": np.mean(baseline_list), "test_avg": None}
             
-            # Calculate the difference and check if the non-baseline average is elevated
-            if baseline_avg is not None and live_avg is not None:
-                if live_avg > baseline_avg:
-                    higher = "Live data"
-                elif live_avg < baseline_avg:
-                    higher = "Baseline data"
-                else:
-                    higher = "Equal"
+            baseline_avg = np.mean(baseline_list)
+            test_avg = np.mean(test_list)
+            
+            if test_avg > baseline_avg:
+                status = "Elevated"
+            elif test_avg < baseline_avg:
+                status = "Lowered"
             else:
-                higher = None
-            
-            comparison_results[key] = {
-                "baseline_avg": baseline_avg,
-                "live_avg": live_avg,
-                "elevated": higher
-            }
-    
-        return comparison_results
+                status = "Equal"
+
+            return {"status": status, "baseline_avg": baseline_avg, "test_avg": test_avg}
+        
+        comparisons["PG"] = evaluate_elevation(ppg_bl_avgs, ppg_tst_avgs)
+        comparisons["BI"] = evaluate_elevation(bi_bl_avgs, bi_tst_avgs)
+        comparisons["HR"] = evaluate_elevation(hr_bl_avgs, hr_tst_avgs)
+        comparisons["EDA"] = evaluate_elevation(eda_bl_avgs, eda_tst_avgs)
+
+        print("Comparison Results:", comparisons)  # Debugging Output
+        return comparisons 
 
     def hdf5_to_csv(self) -> None:
         """

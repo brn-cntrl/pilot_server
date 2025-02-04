@@ -147,7 +147,8 @@
             <button id="task_1_recording">Start Recording</button><br><br>
             <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="compareTask1status"></p>
             <button class="endTask">Task Completed</button>
         </div><br>
 
@@ -188,7 +189,8 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
             <button class="startPRSTask">Start Task</button><br><br>
-            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button id="comparePRS1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="comparePRS1status"></p>
             <button class="endTask">Task Completed</button>
         </div><br>
 
@@ -238,7 +240,8 @@
             <button id="task_2_recording">Start Recording</button><br><br>
             <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
-            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button id="compareTask2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="compareTask2status"></p>
             <button class="endTask">Task Completed</button>
         </div><br>
 
@@ -279,7 +282,8 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select>
             <button class="startPRSTask">Start Task</button><br><br>
-            <button class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <button id="comparePRS2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="comparePRS2status"></p>
             <button class="endTask">Task Completed</button>
         </div><br>
 
@@ -339,7 +343,7 @@
             <h4>Encrypt Subject Name and Email</h4>
             <p>Instructions</p>
             <ul>
-                <li>Use this to derive the encrypted ID of subject if you need to search the subject data files for a match.</li>
+                <li>Use this to derive the obfuscated ID for a subject if you need to search the subject data files for a match.</li>
                 <li>Otherwise, this algorithm runs automatically when subjects enter their information on the subject dashboard.</li>
                 <li>Enter the subject's first name, last name, and email address below.</li>
                 <li>Click "Encrypt Subject" to generate a unique subject ID.</li>
@@ -360,11 +364,11 @@
 
         <button class="toggle">Subject Decryption</button><br>
         <div class="innerModule" style="display:none;">
-            <h4>Encrypt Subject Name and Email</h4>
+            <h4>Decrypt Subject ID string</h4>
             <p>Instructions</p>
             <ul>
                 <li>Use this to get the first name, last name, and email of subject if you need to search the subject data files for a match.</li>
-                <li>Enter the encryption string.</li>
+                <li>Enter the ID string.</li>
                 <li>Click "Decrypt Subject" to generate a unique subject ID.</li>
             </ul>
             <form id="decryptSubject" action="/decrypt_subject" method="POST">
@@ -384,6 +388,15 @@
 
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
+        const comparePRS1Button = document.getElementById('comparePRS1Button');
+        const comparePRS2Button = document.getElementById('comparePRS2Button');
+        const compareTask1Button = document.getElementById('compareTask1Button');
+        const compareTask2Button = document.getElementById('compareTask2Button');
+        const comparePRS1status = document.getElementById('comparePRS1status');
+        const comparePRS2status = document.getElementById('comparePRS2status');
+        const compareTask1status = document.getElementById('compareTask1status');
+        const compareTask2status = document.getElementById('compareTask2status');
+        const emotibitStatus = document.getElementById('emotibitStatus');
         const testAudioOutput = document.getElementById('testAudioOutput');
         const stopEmotibitButton = document.getElementById('stopEmotibit');
         const emotibitDiv = document.getElementById('emotibitDiv');
@@ -401,7 +414,7 @@
         const baselineButton = document.getElementById("startBiometricBaseline");
         const startBreakButton1 = document.getElementById('startBreak1');
         const startBreakButton2 = document.getElementById('startBreak2');
-        const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
+        // const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
         const shutdownButton = document.getElementById('shutdownButton');
         const notification3 = document.getElementById('notification3');
@@ -410,6 +423,21 @@
         const errorNotification4 = document.getElementById('errorNotification4');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
+
+        document.addEventListener("DOMContentLoaded", () => {
+            comparePRS1Button.addEventListener("click", function(){
+                compareToBaseline(comparePRS1status);
+            });
+            comparePRS2Button.addEventListener("click", function(){
+                compareToBaseline(comparePRS2status);
+            });
+            compareTask1Button.addEventListener("click", function(){
+                compareToBaseline(compareTask1status);
+            });
+            compareTask2Button.addEventListener("click", function(){
+                compareToBaseline(compareTask2status);
+            });
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
             const form = encryptSubject;
@@ -508,11 +536,11 @@
                 }
             });
 
-            compareBaselineButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    compareToBaseline();
-                });
-            });
+            // compareBaselineButtons.forEach(button => {
+            //     button.addEventListener('click', function() {
+            //         compareToBaseline();
+            //     });
+            // });
 
             completedTaskButtons.forEach(button => {
                 setEventMarker('subject_idle'); // This will be redundant for a few tasks
@@ -721,14 +749,19 @@
                 fetch('/stop_emotibit', {
                     method: 'POST'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     emotibitDiv.style.display = 'block';
                     emotibitStatus.innerText = data.message;
                     console.log(data.message);
                 })
                 .catch(error => {
-                    emotibitStatus.innerText = data.error;
+                    emotibitStatus.innerText = error.message || "An error occurred.";
                     console.error('Error:', error);
                 });
             });

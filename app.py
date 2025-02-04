@@ -11,6 +11,7 @@ import pyaudio
 import librosa
 import signal 
 import re
+import string
 import speech_recognition as sr
 from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
@@ -60,7 +61,8 @@ def baseline_comparison() -> Response:
 
     try:
         response = emotibit_streamer.compare_baseline()
-        return jsonify({"message": response})
+        print(f"Route baseline comparison results: {response}")
+        return jsonify({response}), 200
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -89,7 +91,7 @@ def stop_biometric_baseline() -> Response:
     global emotibit_streamer
     try:
         emotibit_streamer.stop_baseline_collection()
-        return jsonify({'status': 'Baseline data collection stopped.'})
+        return jsonify({'message': 'Baseline data collection stopped.'}), 200
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -598,7 +600,7 @@ def record_task() -> Response:
             emotibit_streamer.event_marker = 'subject_idle'
             # DEBUG
             print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
-            
+
             id = subject_manager.subject_id
             audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 60, "tmp/")
 
@@ -783,6 +785,7 @@ def start_emotibit() -> None:
     except Exception as e:
         print(f"An error occurred while trying to start OSC stream: {str(e)}")
 
+@app.route('/stop_emotibit', methods=['POST'])
 def stop_emotibit() -> None:
     global emotibit_streamer
     try:
@@ -811,24 +814,43 @@ def is_valid_email(email):
 
 def encrypt_name(firstname: str, lastname: str, email: str) -> str:
     """Encrypts the subject's name and email into a reversible string."""
-    
+    import base64
+
+    # Replace spaces with safe characters
     firstname = firstname.lower().replace(" ", "_")
     lastname = lastname.lower().replace(" ", "_")
-    email = email.lower()
-
+    email = email.lower().replace(" ", "_")
+    
+    # Combine the data (name and email) into a single string
     fullname = f"{firstname}_{lastname}"
-    combined = f"{fullname}|{email}"
-    obfuscated = "".join(chr(ord(c) + 3) for c in combined[::-1])
-
+    combined = f"{fullname}#{email}"
+    
+    # Encode the combined string into bytes
+    combined_bytes = combined.encode('utf-8')
+    
+    # Obfuscate by base64 encoding the string, using only safe characters
+    obfuscated = base64.urlsafe_b64encode(combined_bytes).decode('utf-8')
+    
     return obfuscated
+
 
 def decrypt_name(obfuscated: str) -> tuple:
     """Decrypts the obfuscated string back into the original name and email."""
+    import base64
+    # Decode the base64 encoded string
+    decoded_bytes = base64.urlsafe_b64decode(obfuscated)
     
-    combined = "".join(chr(ord(c) - 3) for c in obfuscated)[::-1]
-    name, email = combined.split("|", 1)
+    # Decode bytes back to a string
+    combined_safe = decoded_bytes.decode('utf-8')
+    
+    # Split the combined string into name and email
+    name, email = combined_safe.split("#", 1)
+    
+    # Split the name into first and last names
     firstname, lastname = name.split("_", 1)
+    
     return firstname, lastname, email
+
 
 def preprocess_text(text) -> str:
     text = text.lower()
