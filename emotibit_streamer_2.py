@@ -26,10 +26,10 @@ class EmotiBitStreamer:
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
-        self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
+        # self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
         self.baseline_buffer = []
-        self.data_buffer = deque(maxlen=10000)
+        self.data_buffer = deque(maxlen=8000)
         self._event_marker = 'subject_idle'
         self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
@@ -150,6 +150,7 @@ class EmotiBitStreamer:
         self.collecting_baseline = False
         self.baseline_collected = True
         print("Stopping Baseline Collection... ")
+        print(f"Baseline Values: {self.baseline_buffer}")
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
@@ -198,11 +199,11 @@ class EmotiBitStreamer:
         stream_type = address.split('/')[-1]
         timestamp = self.current_timestamp
         value = args[0]
-        self.last_received[stream_type] = time.time()
+        # self.last_received[stream_type] = time.time()
         # derived_value = None
 
         # DEBUG
-        print(self.event_marker)
+        # print(self.event_marker)
 
         self.current_row["timestamp"] = timestamp
         self.current_row["event_marker"] = self.event_marker
@@ -228,13 +229,16 @@ class EmotiBitStreamer:
         elif stream_type == "PPG:GRN":
             self.current_row["PG"] = value
 
-        if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]):
+        if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "PG"]):
             if self.event_marker == "biometric_baseline" and not self.baseline_collected:
                 self.baseline_buffer.append(self.current_row)
+                # Debug
+                print(f"Baseline Buffer: {self.baseline_buffer[-1]}")
             elif self.event_marker != "biometric_baseline" and not self.processing_baseline:
                 self.data_buffer.append(self.current_row)
-            
-            print(self.current_row)
+                # Debug
+                print(f"Data Buffer: {self.data_buffer[-1]}")
+
             self.write_to_hdf5(self.current_row)
 
     ###########################################
@@ -292,7 +296,6 @@ class EmotiBitStreamer:
                 print("HDF5 file or dataset is not initialized.")
                 return
 
-            # Create a structured array for the new row
             new_data = np.zeros(1, dtype=self.dataset.dtype)  
             new_data[0]['timestamp'] = row.get('timestamp', '')  
             new_data[0]['EDA'] = row.get('EDA', np.nan)
@@ -302,8 +305,6 @@ class EmotiBitStreamer:
             new_data[0]['PG'] = row.get('PG', np.nan)
             new_data[0]['RR'] = row.get('RR', np.nan)
             new_data[0]['event_marker'] = row.get('event_marker', '')
-            
-            # print(f"Adding to HDF5: {new_data[0]}")
 
             new_size = self.dataset.shape[0] + 1
             self._resize_dataset(new_size)  
@@ -326,11 +327,12 @@ class EmotiBitStreamer:
         baseline_avgs = []
         test_avgs = []
 
-        for obj in self.data_buffer:
+        for obj in self.baseline_buffer:
             if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
                 baseline_avgs.append(np.mean(obj[stream_type]))
-
-            elif obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
+                
+        for obj in self.data_buffer:
+            if obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
                 test_avgs.append(np.mean(obj[stream_type]))
 
         return(baseline_avgs, test_avgs)   

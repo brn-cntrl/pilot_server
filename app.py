@@ -27,9 +27,14 @@ emotibit_thread = None
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
-
+#TODO: Add h5 close to shutdown
 #TODO: break between select and start under PRS
 #TODO: Add implicit task instruction before the PRS
+#TODO: Add demographic survey
+#TODO: Rearrange text and reword on subject panel
+#TODO: Add PID label
+#TODO: Add 20 sec time limit to PRS page
+#TODO: Fix number typo on test-page
 
 # Class instances stored in global scope 
 # NOTE: These could be moved to Flask g instance to further reduce global access
@@ -382,8 +387,8 @@ def submit() -> Response:
             subject_PID = form_manager.clean_string(request.form.get('PID')) 
             subject_class = form_manager.clean_string(request.form.get('class'))
             subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
-            audio_file_manager.set_audio_folder(experiment_name, trial_name, subject_id)
-            emotibit_streamer.set_data_folder(experiment_name, trial_name, subject_id)
+            audio_file_manager.set_audio_folder(subject_manager.subject_folder, trial_name, subject_id)
+            emotibit_streamer.set_data_folder(subject_manager.subject_folder, trial_name, subject_id)
             emotibit_streamer.initialize_hdf5_file(subject_id)
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
