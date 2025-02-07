@@ -49,8 +49,7 @@ class TimestampManager:
         else:
             self.timestamp_event.wait()  # Wait for the current update to finish
 
-        with self.lock:
-            if type == "iso":
-                return self.current_timestamp.isoformat()
+        if type == "iso":
+            return self.current_timestamp.isoformat()
             
-            return self.current_timestamp  # Default to raw
+        return self.current_timestamp  # Default to raw

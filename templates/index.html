@@ -9,7 +9,12 @@
 </head>
 <body>
     <h1>Experiment Dashboard</h1>
-    
+    <span class="buttonRow">
+        <button class="stopEmotibit">Stop Emotibit</button>
+        <button class="stopServer">Stop Server</button><br>
+        <p class="emotibitStatus"></p>
+    </span>
+
     <h2>Pre-Test</h2>
     <div class="testModule" id="preTestDiv">
     <button class="toggle">Experiment/Trial Information</button><br>
@@ -19,7 +24,7 @@
         <ul>
             <li>Enter the name of the experiment and the name of the trial in the fields below.</li>
             <li>Click "Submit" to save the experiment and trial names.</li>
-            <li>IMPORTANT: This information must be entered before starting the experiment</li>
+            <li><span class="required">IMPORTANT:</span> This information must be entered before starting the experiment</li>
         </ul>
         <form id="experimentNameForm" action="/submit_experiment" method="POST">
             <label for="experiment_name">Experiment Name:</label>
@@ -44,34 +49,69 @@
         <button id="launchSubjectGUI">Launch Subject GUI</button>
     </div><br>
 
-    <button class="toggle">Surveys</button><br>
+    <button class="toggle">Subject Information</button><br>
     <div class="innerModule" style="display:none">
-        <h3>Surveys and Participant Information</h3>
-        <h4>Survey Instructions</h4>
+        <h3>Subject Information</h3>
+        <h4>Instructions</h4>
         <ul>
-            <li>Subject must first fill out the "Subject Information" survey.</li>
-            <li>Subject must fill out any additional surveys as they appear.</li>
-            <li>Additional surveys may be added below.</li>
+            <li>Instruct the subject to fill out the subject information form.</li>
+            <li><span class="required">IMPORTANT:</span> Subject must fill out the "Subject Information" form before any tasks are begun.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul><br>
-        <!-- <p><span class="required">*</span>Add any additional surveys and be sure to submit participant information before filling out surveys</p> -->
-        <!-- <div id="surveyList">
-            <h4>Current Surveys in Test Procedure</h4>
-            <p id="surveyStatus" style="display:block;">No surveys generated. Submit subject information to generate surveys.</p>
-        </div> -->
+    </div><br>
+
+    <button class="toggle">Device Setup</button><br>
+    <div class="innerModule" style="display:none;">
+        <h3>Device Setup</h3>
+        <p>Checklist</p>
+        <ul>
+            <li>Ensure the subject is fitted with the microphone and headphones.</li>
+            <li>Ensure the audio interface and microphones are connected and powered on.</li>
+            <li><span class="required">IMPORTANT:</span> Subject must fill out the "Subject Information" form before the EmotiBit can be started.</li>
+            <li>Ensure the EmotiBit is fitted to the subject.</li>
+            <li>Power on the EmotiBit by sliding the DIP switch on the board to the right.</li>
+            <li>Open the Oscilloscope app on the desktop and select the EmotiBit device from the dropdown menu.</li>
+            <li><span class="required">IMPORTANT:</span> Once you see the graphs detecting data, check "Record" on the Oscilloscope interface.</li>
+            <li>From the "Output List" on the Oscilloscope interface, check "OSC" to stream data to the server.</li>
+            <li>Start the EmotiBit stream by pressing the button below.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
+        </ul><br>
+        <button id="startEmotibitButton">Start EmotiBit</button><br>
+        <p id="emotibitStatus"></p>
+    </div><br>
+
+    <button class="toggle">Demographics Survey</button><br>
+    <div class="innerModule" style="display:none;">
+        <h4>Demographics Survey</h4>
+        <p>Instructions</p>
+        <ul>
+            <li>Ensure the EmotiBit is streaming data.</li>
+            <li>Instruct the subject to fill out the demographics survey before proceeding.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
+        </ul>
     </div><br>
 
     <button class="toggle">Biometrics Baseline</button><br>
     <div class="innerModule" style="display:none;">
-        <h4>Instructions for EmotiBit</h4>
-        <p>Important: Subject must complete the "Subject Information" survey task before the EmotiBit can be started.</p>
+        <h4>Instructions for EmotiBit Baseline</h4>
         <ul>
-            <li>Fit subject with the Emotibit (See supplementary material for fitting device onto subject).</li>
-            <li>Power on the EmotiBit by sliding the DIP switch to the right.</li>
+            <li>Ensure the Emotibit is well-fitted.</li>
             <li>Press "Start Collecting Baseline" to start the EmotiBit streamer and begin collecting baseline data.</li>
-            <li>NOTE: EmotiBit will run continuously until "Stop Emotibit" is clicked ("Post-Test" at bottom of page).</li>
+            <li>NOTE: EmotiBit will run continuously until "Stop Emotibit" is clicked.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul>
         <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
+    </div><br>
+
+    <button class="toggle">PSS4 Survey</button><br>
+    <div class="innerModule" style="display:none;">
+        <h4>Instructions for PSS4 Survey</h4>
+        <ul>
+            <li>Ensure the EmotiBit is streaming data.</li>
+            <li>Instruct the subject to fill out the PSS4 survey before proceeding.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
+        </ul>
     </div><br>
 
     <button class="toggle">Test Audio</button><br>
@@ -84,7 +124,7 @@
             <li>Test headphones: When subject is fitted with headphones, click "Test Audio Output" below.</li>
             <li>Test microphont: When subject is fitted with microphone, click "Start Monitoring" to monitor audio.</li>
             <li>Monitor the signal below and adjust microphone as needed.</li>
-            <li>Have the subject click "End Task" when test is complete.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul><br>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
 
@@ -99,11 +139,12 @@
     <div class="innerModule" style="display:none;">
         <h4>Instructions</h4>
         <ul>
-            <li>Once the audio is tested, instruct the subject to click the Emotion Baseline button.</li>
+            <li>Once the audio is tested, instruct the subject to click the "Mood Q&A" button.</li>
             <li>Instruct the subject to carefully follow the directions listed there.</li>
             <li>The subject should click "Begin" and read each question before speaking their answer aloud.</li>
             <li>The subject should wait for the status to read "Recording..." before speaking.</li>
             <li>The subject should click "Submit" to register their answer and wait for the next question.</li>
+            <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul>
     </div>
     </div><br>
@@ -116,12 +157,12 @@
         <div class="innerModule" style="display:none;">
             <h4>Task Instructions</h4>
             <ul>
+                <li>Instruct the subject to click "Experimental Tasks" on their screen.</li>
+                <li>Instruct the subject to click "Test 1" and then "Go to Test 1"</li>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
-                <li>When finished, the subject must press "Test Complete" on the test page and "Task Complete" on their dashboard.</li>
-                <li>Click "Task Completed" when the subject has finished the task.</li>
-            </ul><br>
-            <button class="endTask">Task Completed</button>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
+            </ul>
         </div><br>
 
         <!-- Task for continuous recording -->
@@ -129,13 +170,15 @@
         <div class="innerModule" id='taskGenDiv1' style="display:none">
             <h4>Task Instructions</h4>
             <ul>
+                <li><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</li>
+                <li>General Recording is continuous for the length of the task</li>
                 <li>Select condition from the drop menu below before beginning task.</li>
-                <li>NOTE: Recording for this task is continuous for the length of the task</li>
                 <li>Press "Start Recording" to begin the task.</li>
                 <li>Press "Stop Recording" when the task is completed.</li>
-                <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul><br>
+
             <select onchange="updateCondition('taskGenDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -149,7 +192,6 @@
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
             <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="compareTask1status"></p>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button class="toggle">Task 1</button><br>
@@ -158,6 +200,7 @@
             <ul>
                 <li>Select condition from the drop menu below before beginning the task.</li>
                 <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul><br>
             <select onchange="updateCondition('taskDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
@@ -167,10 +210,19 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
             <button class="openRoomObservationTask">Go to Task</button><br><br>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
-        <button class="toggle">PRS Task</button><br>
+        <button class="toggle">IAT Task 1</button><br>
+        <div class="innerModule" style="display:none;">
+            <h4>IAT Instructions</h4>
+            <ul>
+                <li>Direct the subject to the IAT task.</li>
+                <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
+            </ul><br>
+            <button class="IATButton">Start Task</button><br><br>
+        </div><br>
+
+        <button class="toggle">PRS Task 1</button><br>
         <div class="innerModule" id='prsDiv1' style="display:none">
             <h4>PRS Instructions</h4>
             <ul>
@@ -179,7 +231,7 @@
                 <li>Press "Start Task" to open the PRS task window</li>
                 <li>Continue with the instructions at the top of the PRS page.</li>
                 <li>After the task is completed, return here and click "Calculate Rest Time."</li>
-                <li>Click "Task Complete" when finished.</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
             <select onchange="updateCondition('prsDiv1', 'prs_1')">
                 <option value="no_condition" selected>Select an option</option>
@@ -191,44 +243,42 @@
             <button class="startPRSTask">Start Task</button><br><br>
             <button id="comparePRS1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="comparePRS1status"></p>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
-        <button class="toggle">Take Break</button><br>
+        <button class="toggle">Break 1</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Break Instructions</h4>
             <ul>
                 <li>Have the subject click the "Take Break" button.</li>
                 <li>Once they are on the break page, have them select the "Break 1" button.</li>
                 <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
-                <li>Click "Task Completed" when finished.</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
-            <button id="startBreak1">Start Break</button><br><br>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button class="toggle">Stressor Task 2</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Task Instructions</h4>
             <ul>
+                <li>Instruct the subject to click "Test 2" and then "Go to Test 2"</li>
                 <li>Have the subject read the instructions on their screen before starting the task.</li>
                 <li>The subject must press "Start Test", speak each answer aloud, and press "submit" to register the answer.</li>
-                <li>Click "Task Completed" when the subject has finished the task.</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul><br>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button class="toggle">Task 2 (General Recording)</button><br>
         <div class="innerModule" id="taskGenDiv2" style="display:none">
             <h4>Task Instructions</h4>
             <ul>
-                <li>NOTE: Recording for this task is continuous for the length of the task</li>
+                <li><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</li>
+                <li>General Recording is continuous for the length of the task</li>
+                <li>Select condition from the drop menu below before beginning task.</li>
                 <li>Press "Start Recording" to begin the task.</li>
                 <li>Press "Stop Recording" when the task is completed.</li>
-                <li>Please note that post-processing may take several minutes.</li>
                 <li>After the task is completed, press "Calculate Rest Time."</li>
-                <li>Click "Task Completed" when finished.</li>
-            </ul>
+            </ul><br>
+
             <select onchange="updateCondition('taskGenDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -242,7 +292,6 @@
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
             <button id="compareTask2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="compareTask2status"></p>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
         <button class="toggle" id="taskButton2">Task 2</button><br>
@@ -251,7 +300,7 @@
             <ul>
                 <li>Select condition from the drop menu below before beginning the task.</li>
                 <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
-                <li>Click "Task Completed" when the subject has finished the task.</li>
+                <li>Make sure the subject clicks "Task Completed" when the the task is finished.</li>
             </ul>
             <select onchange="updateCondition('taskDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
@@ -262,22 +311,19 @@
             </select><br><br>
 
             <button class="openRoomObservationTask">Go to Task</button><br><br>
-            <button class="endTask">Task Completed</button>
         </div><br>
         
-        <button class="toggle">IAT Task</button><br>
-        <div class="innerModule" id="IAT1Div">
+        <button class="toggle">IAT Task 2</button><br>
+        <div class="innerModule" style="display:none;">
             <h4>IAT Instructions</h4>
             <ul>
                 <li>Direct the subject to the IAT task.</li>
-                <li>Click "Task Completed" when the subject has finished the task.</li>
+                <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
             </ul><br>
-            <button id="startIAT1">Start Task</button><br><br>
-            <p id="IAT1Status"></p> <!-- DO WE WANT CONDITIONS HERE?-->
-            <button class="endTask">Task Completed</button>
+            <button class="IATButton">Start Task</button><br><br>
         </div><br>
 
-        <button class="toggle">PRS Task</button><br>
+        <button class="toggle">PRS Task 2</button><br>
         <div class="innerModule" id="prsDiv2" style="display:none">
             <h4>PRS Instructions</h4>
             <ul>
@@ -285,6 +331,7 @@
                 <li>Press "Start Task" to open the PRS task window</li>
                 <li>Continue with the instructions there.</li>
                 <li>After the task is completed, return here and press "Calculate Rest Time."</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
             <select onchange="updateCondition('prsDiv2', 'prs_2')">
                 <option value="no_condition" selected>Select an option</option>
@@ -292,71 +339,106 @@
                 <option value="physical_no_plants">Physical / No Plants</option>
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
-            </select><br>
+            </select><br><br>
             <button class="startPRSTask">Start Task</button><br><br>
             <button id="comparePRS2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="comparePRS2status"></p>
-            <button class="endTask">Task Completed</button>
         </div><br>
 
-        <button class="toggle">Take a Break</button><br>
+        <button class="toggle">Break 2</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Instructions for the break:</h4>
             <ul>
                 <li>Have the subject click the "Take Break" button.</li>
                 <li>Once they are on the break page, have them select the "Break 2" button.</li>
                 <li>Instruct the subject to watch the video for the amount of time listed in the instructions on their screen.</li>
-                <li>Press the "Start Break" button below.</li>
+                <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
-            <button id="startBreak2">Start Break</button><br><br>
-            <button class="endTask">Task Completed</button>
         </div><br>
     </div>
 
     <h2>Post-Test</h2>
     <button class="toggle">Post-test Tasks</button>
     <div class="testModule" style="display:none;">
-        <button id="stopEmotibit">Stop Emotibit</button><br>
-        <div id="emotibitDiv" style="display:none;">
-            <p id="emotibitStatus"></p>
-        </div><br>
-
-        <button class="toggle">External Surveys</button><br>
-        <div class="innerModule" style="display:none;" disabled>
-            <h4>Upload External Surveys</h4>
-            <p>Instructions</p>
-            <ul>
-                <li>First dowload the survey csv from Google Forms. Be sure to choose a download destination</li>
-                <li>Click "Upload File", navigate to the destination folder and select the csv.</li>
-                <li>If the subject's name and email are found, their survey responses will be stored in data folder of the current ID.</li>
-            </ul><br>
-            <button onclick="openFileDialog()">Upload File</button><br><br>
-            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)" />
-            <p id="uploadCSVstatus"></p>
-        </div><br>
-
-        <button class="toggle">Post Processing</button>
+        <button class="toggle">Exit Survey</button><br>
         <div class="innerModule" style="display:none;">
-            <h4>EmotiBit Post Processing</h4>
+            <h4>Exit Survey</h4>
             <p>Instructions</p>
             <ul>
-                <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
-            </ul><br>
-            <button id="uploadSubjectData">Convert EmotiBit Data</button><br><br>
-            <p id="postProcessingStatus"></p>
-        </div><br>
-    </div>
+                <li>Instruct the subject to fill out the exit survey before completing the experiment.</li>
+            </ul>
+
+            <button class="toggle stopEmotibit">Stop Emotibit</button><br>
+            <div id="emotibitDiv" style="display:none;">
+                <p class="emotibitStatus"></p>
+            </div><br>
+
+            <button class="toggle">Post Processing</button>
+            <div class="innerModule" style="display:none;">
+                <h4>EmotiBit Post Processing</h4>
+                <p>Instructions</p>
+                <ul>
+                    <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
+                </ul><br>
+                <button id="uploadSubjectData">Convert EmotiBit Data</button><br><br>
+                <p id="postProcessingStatus"></p>
+            </div><br>
+        </div>
+    </div><br>
 
     <h2>More Tools</h2>
     <button class="toggle">Show Tools</button>
     <div class="testModule" style="display:none;">
-
-        <button class="toggle">Analysis</button><br>
-        <div class="innerModule" style="display:none;">
-            <h4>Perform Post-Experiment Analyses</h4>
-            <button id="launchAnalysis">Launch Jupyter Notebook</button>
+        <button class="toggle">External Google Forms</button><br>
+        <div class="innerModule" style="display:none;" disabled>
+            <h4>Upload External Surveys</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>First convert Google Form responses to Google Sheet and dowload the sheet as CSV. Be sure to remember the download destination</li>
+                <li>Click "Upload File", navigate to the destination folder and select the CSV.</li>
+                <li>If the subject's ID or name and email are found, their survey responses will be stored in the data folder for the current ID.</li>
+            </ul><br>
+            <button onclick="openFileDialog()">Upload File</button><br><br>
+            <input type="file" id="fileInput" style="display: none;" onchange="selectCSVFile(event)" />
+            <p id="uploadCSVstatus"></p>
         </div><br>
 
+        <button class="toggle">Additional Surveys</button><br>
+        <div class="innerModule" style="display:none;">
+            <h4>Upload Blank Google Form Survey</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Create the Google Form survey you would like to add.</li>
+                <li><span class="required">IMPORTANT:</span> Include an "ID" text entry at the head of the survey.</li>
+                <li>Submit the name and URL of the survey you want to add with the form below.</li>
+            </ul>
+            
+            <form id="surveyForm" action="/upload_survey" method="POST">
+                <label for="survey_name">Survey Name:</label>
+                <input type="text" id="survey_name" name="survey_name" required><br><br>
+                <label for="survey_url">Survey URL:</label>
+                <input type="text" id="survey_url" name="survey_url" required><br><br>
+                <button type="submit">Upload Survey</button>
+            </form><br>
+            <p id="uploadSurveyStatus"></p>
+
+            <h4>Launch a Survey</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Enter the name of the survey you would like to launch.</li>
+                <li>If it exists in the current list, The survey will be embedded in a separate window.</li>
+                <li>When the survey is launched, the subject ID will appear below.</li>
+                <li>Copy the subject ID below and paste it into the ID cell of the survey</li>
+            </ul><br>
+            <form id="openSurvey">
+                <label for="surveyName">Enter Survey Name:</label>
+                <input type="text" id="surveyName" name="surveyName" required>
+                <button type="submit">Open Survey</button>
+            </form><br>
+            <p id="subjectIDDisplay"></p>
+            <p id="fetchedSurveyStatus"></p>
+        </div><br>
+        
         <button class="toggle">Subject Encryption</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Encrypt Subject Name and Email</h4>
@@ -402,12 +484,15 @@
         </div><br>
     </div><br>
 
+    
     <h2>Shutdown</h2>
-    <button id="shutdownButton">Shutdown Server</button>
-
+    <button class="stopServer">Shutdown Server</button>
+    </div>
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
-        const launchAnalysis = document.getElementById('launchAnalysis');
+        const biometricStatusMessage = document.getElementById('biometricStatusMessage');
+        const startEmotibitButton = document.getElementById('startEmotibitButton');
+        const startIATButtons = document.querySelectorAll('IATButton');
         const comparePRS1Button = document.getElementById('comparePRS1Button');
         const comparePRS2Button = document.getElementById('comparePRS2Button');
         const compareTask1Button = document.getElementById('compareTask1Button');
@@ -416,9 +501,7 @@
         const comparePRS2status = document.getElementById('comparePRS2status');
         const compareTask1status = document.getElementById('compareTask1status');
         const compareTask2status = document.getElementById('compareTask2status');
-        const emotibitStatus = document.getElementById('emotibitStatus');
         const testAudioOutput = document.getElementById('testAudioOutput');
-        const stopEmotibitButton = document.getElementById('stopEmotibit');
         const emotibitDiv = document.getElementById('emotibitDiv');
         const encryptSubject = document.getElementById('encryptSubject');
         const decryptSubject = document.getElementById('decryptSubject');
@@ -426,23 +509,85 @@
         const decryptionStatusEmail = document.getElementById('decryptionStatusEmail');
         const encryptionStatus = document.getElementById('encryptionStatus');
         const postProcessingStatus = document.getElementById('postProcessingStatus');   
-        const completedTaskButtons = document.querySelectorAll('.endTask');
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
         const recTaskGen1 = document.getElementById('task_1_recording');
         const recTaskGen2 = document.getElementById('task_2_recording');
         const startPRSTaskButtons = document.querySelectorAll('.startPRSTask');
         const baselineButton = document.getElementById("startBiometricBaseline");
-        const startBreakButton1 = document.getElementById('startBreak1');
-        const startBreakButton2 = document.getElementById('startBreak2');
         // const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
-        const shutdownButton = document.getElementById('shutdownButton');
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
         const notification4 = document.getElementById('notification4');
         const errorNotification4 = document.getElementById('errorNotification4');
         const uploadSubjectData = document.getElementById('uploadSubjectData')
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
+        const stopServerButtons = document.querySelectorAll('.stopServer');
+        const stopEmotibitButtons = document.querySelectorAll('.stopEmotibit');
+        const emotibitStatus = document.querySelectorAll('.emotibitStatus');
+
+        document.addEventListener("DOMContentLoaded", function () {;
+            const uploadSurveyStatus = document.getElementById('uploadSurveyStatus');
+            const form = document.getElementById('surveyForm');
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch('/upload_survey', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    uploadSurveyStatus.innerText = data.message;
+                    uploadSurveyStatus.style.display = "block";
+                })
+                .catch(error => {
+                    uploadSurveyStatus.innerText = data.error;
+                    uploadSurveyStatus.style.display = "block";
+                });
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const subjectIDDisplay = document.getElementById('subjectIDDisplay');
+            const fetchedSurveyStatus = document.getElementById('fetchedSurveyStatus');
+            const form = document.getElementById('openSurvey');
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                const surveyName = formData.get('surveyName');
+                fetch(`/survey/${surveyName}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Survey not found');
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        // Open the survey page in a new window if it's valid
+                        const newWindow = window.open('', '_blank', 'width=800,height=600');
+                        newWindow.document.write(html); // Write the HTML content into the new window
+                        newWindow.document.close(); // Close the document to render the page
+                        getSubjectID();
+                    })
+                    .catch(error => {
+                        alert('An error occurred: ' + error.message);
+                    }); 
+            });
+
+            function getSubjectID() {
+                fetch('/get_subject_id')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('subjectIDDisplay').innerText = `Subject ID: ${data.subject_id}`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching subject ID:', error);
+                    });
+            }
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
             comparePRS1Button.addEventListener("click", function(){
@@ -536,12 +681,6 @@
                 });
             });
         });
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            launchAnalysis.addEventListener('click', function() {
-            
-            });
-        });
 
         document.addEventListener('DOMContentLoaded', function() {
             launchSubjectGUI.addEventListener('click', function() {
@@ -550,10 +689,20 @@
         });
         
         document.addEventListener('DOMContentLoaded', function(){
+            startEmotibitButton.addEventListener('click', function() {
+                if (startEmotibitButton.innerText == "Start Emotibit") {
+                    startEmotibitButton.innerText = "Stop Emotibit";
+                    startEmotibit();
+                } else {
+                    startEmotibitButton.innerText = "Start Emotibit";
+                    stopEmotibit();
+                }
+            });
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     setEventMarker('biometric_baseline');
                     startBaseline();
+                    
                     baselineButton.innerText = "Stop Collecting Baseline";
                 } else {
                     setEventMarker('subject_idle')
@@ -568,14 +717,14 @@
             //     });
             // });
 
-            completedTaskButtons.forEach(button => {
-                setEventMarker('subject_idle'); // This will be redundant for a few tasks
-            });
-
             roomObservationButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     window.open('/room_observation', '_blank', 'width=800, height=600');
                 });
+            });
+
+            startIATButtons.forEach(button => {
+                setEventMarker('IAT_task')
             });
 
             startPRSTaskButtons.forEach(button => {
@@ -589,7 +738,6 @@
             console.log('Fetching audio devices...');
             fetchAudioDevices();
             audioDevicesDropdown.addEventListener('change', setDevice);
-            shutdownButton.addEventListener('click', shutdownServer);
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -639,26 +787,6 @@
                 } else {
                     recTaskGen2.innerText = "Start Recording";
                     recordTask(recTaskGen2, 'stop');
-                }
-            });
-
-            startBreakButton1.addEventListener('click', function(){
-                if(startBreakButton1.innerText == "Start Break"){
-                    setEventMarker('break_1');
-                    startBreakButton1.innerText = "End Break";
-                } else {
-                    setEventMarker('subject_idle');
-                    startBreakButton1.innerText = "Start Break";
-                }
-            });
-
-            startBreakButton2.addEventListener('click', function(){
-                if(startBreakButton2.innerText == "Start Break"){
-                    setEventMarker('break_2');
-                    startBreakButton2.innerText = "End Break";
-                } else {
-                    setEventMarker('subject_idle');
-                    startBreakButton1.innerText = "Start Break";
                 }
             });
 
@@ -737,13 +865,13 @@
             }
 
             const uploadCSVstatus = document.getElementById('uploadCSVstatus');
-            function handleFileSelect(event){
+            function selectCSVFile(event){
                 const file = event.target.files[0];
                 if(file){
                     console.log("Selected File: ", file.name);
                     const formData = new FormData();
                     formData.append('csv_file', file);
-                    fetch('/upload_survey_file', {
+                    fetch('/upload_surveys_csv', {
                         method: 'POST',
                         body: formData
                     })
@@ -771,24 +899,51 @@
                 });
             });
 
-            stopEmotibitButton.addEventListener('click', function() {
-                fetch('/stop_emotibit', {
-                    method: 'POST'
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    emotibitDiv.style.display = 'block';
-                    emotibitStatus.innerText = data.message;
-                    console.log(data.message);
-                })
-                .catch(error => {
-                    emotibitStatus.innerText = error.message || "An error occurred.";
-                    console.error('Error:', error);
+            stopServerButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    fetch('/shutdown', {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data.message);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+
+            stopEmotibitButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    fetch('/stop_emotibit', {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        emotibitDiv.style.display = 'block';
+                        emotibitStatus.forEach(status => {
+                            status.innerText = data.message;
+                        });
+                        console.log(data.message);
+                    })
+                    .catch(error => {
+                        emotibitDiv.style.display = 'block';
+                        emotibitStatus.forEach(status => {
+                            status.innerText = error.message || "An error occurred.";
+                        });
+                        console.error('Error:', error);
+                    });
                 });
             });
         });

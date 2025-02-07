@@ -9,7 +9,6 @@ class FormManager:
         self._surveys_file = "surveys/surveys.json"
         self._surveys = self.load_surveys()
         self._formatted_surveys = []
-        self._survey_links = []
         print("Form Manager initialized...")
         print("Form Manager's surveys file set to 'surveys/surveys.json'")
 
@@ -41,93 +40,55 @@ class FormManager:
     def formatted_surveys(self) -> None:
         self._formatted_surveys = []
 
-    def add_survey(self, survey_name, survey_url, folder) -> None:
+    def add_survey(self, survey_name, survey_url) -> None:
         """
         Adds a survey to the list of surveys.
         Current functionality is a modification of the original function to store survey links in a JSON file.
         If the old functionality is needed, comment out the blocks of code that are marked with a comment and
         uncomment everything else.  
         """
-        # url = self.customize_form_url(survey_url, subject_id)
+        survey_data = self.load_surveys()
+        if survey_data is None:
+            print("Survey file missing.")
+            return("Survey file missing.")
 
-        # COMMENT NEXT BLOCK IF OLD FUNCTIONALITY IS NEEDED
-        survey_links_file = os.path.join(folder, "survey_links.json")
-        if not os.path.exists(survey_links_file):
-            with open(survey_links_file, "w") as file:
-                json.dump({"surveys": []}, file)
-
+        surveys = survey_data.get("surveys", [])
         survey = {
             "name": survey_name,
             "url": survey_url
         }
 
-        if self._surveys and survey not in self._surveys:
-            # self._surveys.append(survey)
-            # with open(self._surveys_file, "w") as file:
-            #     json.dump({"surveys": self._surveys}, file, indent=4)
+        if survey not in surveys:
+            surveys.append(survey)
+            print("Survey added.")
 
-            # COMMENT NEXT BLOCK IF OLD FUNCTIONALITY IS NEEDED
-            self._survey_links.append(survey)
-            with open(survey_links_file, "w") as file:
-                json.dump({"surveys: ": self._survey_links}, file, indent=4)
-            
-        else:
-            print("Survey already exists.")
+            if self._surveys_file:
+                with open(self._surveys_file, "w") as file:
+                    json.dump({"surveys": surveys}, file, indent=4)
+                return "Success"
+            else:
+                print("Survey already exists.")
+                return "Survey already exists."
 
     def clean_string(self, value) -> str:
         outstring = value.lower().replace(' ', '_').strip()
         outstring = re.sub(r"[^a-zA-Z0-9_\-]", "", outstring)
         return outstring
     
-    def find_survey(self, infile, subject_manager) -> bool:
+    def get_survey_url(self, name):
         """
-        Searches for a survey entry that matches the subject's details and writes the filtered data to a new CSV file.
+        Retrieve the URL of a survey by its name.
         Args:
-            infile (file-like object): The input CSV file containing survey data.
-            subject_manager (object): An object containing subject details such as first name, last name, email, ID, and data folder.
+            name (str): The name of the survey to find.
         Returns:
-            bool: True if the subject is found in the survey data and the filtered data is written to a new CSV file, False otherwise.
-        Raises:
-            ValueError: If the required columns ("First Name", "Last Name", "Email") are not found in the CSV headers.
-        Notes:
-            - The method assumes that the input CSV file has headers and that the headers include "First Name", "Last Name", and "Email".
-            - The method writes the filtered data to a new CSV file named with the subject's ID and the original filename in the subject's data folder.
+            str: The URL of the survey if found, otherwise "Survey not found".
         """
-
-        filename = infile.filename
-        subject_first_name = subject_manager.subject_first_name
-        subject_last_name = subject_manager.subject_last_name
-        subject_email = subject_manager.subject_email
-        subject_id = subject_manager.subject_id
-        subject_data_folder = subject_manager.subject_folder
-
-        with open(infile, 'r', newline='', encoding='utf-8') as infile:
-            reader = csv.reader(infile)
-            headers = next(reader)
-            timestamp_idx = 0
-            first_name_idx = headers.index("First Name")
-            last_name_idx = headers.index("Last Name")
-            email_idx = headers.index("Email")
-
-            new_headers = ["Timestamp"] + [col for i, col in enumerate(headers) if i not in (first_name_idx, last_name_idx, email_idx)]
-            output_csv = os.path.join(f"{subject_data_folder}", f"{subject_id}_{filename}")
-
-            with open(output_csv, mode='w', newline='', encoding='utf-8') as outfile:
-                writer = csv.writer(outfile)
-                writer.writerow(new_headers)
-
-                for row in reader:
-                    csv_first_name = self.clean_string(row[first_name_idx])
-                    csv_last_name = self.clean_string(row[last_name_idx])
-                    csv_email = row[email_idx].lower().strip().replace(" ", "_")    
-
-                    if(csv_first_name == subject_first_name and csv_last_name == subject_last_name and csv_email == subject_email):
-                        filtered_row = [row[timestamp_idx]] + [row[i] for i in range(len(row)) if i not in (first_name_idx, last_name_idx, email_idx)]
-                        writer.writerow(filtered_row)
-                        return True
-                    else:
-                        print("Subject not found in survey data.")
-                        return False
+        surveys = self.load_surveys()
+        survey = next((s for s in surveys if s["name"] == name), None)
+        if not survey:
+            return "Survey not found"
+        else:
+            return survey["url"]
 
     def remove_survey(self, survey_name) -> None:
         for survey in self._surveys:
@@ -185,8 +146,10 @@ class FormManager:
         surveys = self.load_surveys()
         for survey in surveys:
             if survey["name"] == survey_name:
+                print(f"Survey found: {survey_name}")
                 return survey["url"]
-        return f"Survey with name '{survey_name}' not found."
+            
+        return "not found"
     
     def get_custom_url(self, survey_name: str, subject_id: str) -> str:
         """

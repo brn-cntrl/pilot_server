@@ -27,14 +27,9 @@ emotibit_thread = None
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
-#TODO: Add h5 close to shutdown
-#TODO: break between select and start under PRS
-#TODO: Add implicit task instruction before the PRS
-#TODO: Add demographic survey
-#TODO: Rearrange text and reword on subject panel
-#TODO: Add PID label
-#TODO: Add 20 sec time limit to PRS page
-#TODO: Fix number typo on test-page
+#TODO: Debug h5 close to shutdown 
+#TODO: Add demographic survey link
+#TODO: Debug 20 sec time limit to PRS page
 
 # Class instances stored in global scope 
 # NOTE: These could be moved to Flask g instance to further reduce global access
@@ -50,6 +45,57 @@ timestamp_manager = TimestampManager()
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/upload_survey', methods=['POST'])
+def upload_survey() -> Response:
+    """
+    Route for adding surveys to the form manager.
+    Args:
+        survey_name (str): The name of the survey.
+        url (str): The URL of the survey.
+    Returns:
+        Response: A JSON response indicating the status of the survey
+    """
+    global subject_manager, form_manager
+    try:
+        survey_name = request.form.get('survey_name')
+        survey_name = form_manager.clean_string(survey_name)
+        url = request.form.get('survey_url')
+
+        message = form_manager.add_survey(survey_name, url)
+        
+        if message == "Survey already exists.":
+            return jsonify({'message': f'{message}'}), 400
+        elif message == "surveys.json is missing.":
+            return jsonify({'message': f'{message}'}), 400
+        
+        return jsonify({'message': 'Survey added successfully.'}), 200
+  
+    except Exception as e:
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 400
+
+@app.route("/survey/<name>")
+def survey(name):
+    """Retrieve the survey URL by name and return an HTML page."""
+    global form_manager
+    name = form_manager.clean_string(name)
+    url = form_manager.get_survey_url(name)
+
+    if url == "not found":
+        return jsonify({'message': 'No survey found with that name.'})
+    
+    print(f"Sending survey: {url}")
+    return render_template("survey.html", survey_url=url)
+
+@app.route("/get_subject_id", methods=['GET'])
+def get_subject_id():
+    global subject_manager
+    
+    subject_id = subject_manager.subject_id
+    if not subject_id:
+        subject_id = "No Subject ID available"
+
+    return jsonify({'subject_id': f"{subject_id}"})
+
 @app.route('/set_event_marker', methods=['POST'])
 def set_event_marker():
     global emotibit_streamer
@@ -86,10 +132,12 @@ def reset_ser_question_index() -> Response:
 def start_biometric_baseline() -> Response:
     global emotibit_streamer
     try:
-        emotibit_streamer.start()
-        emotibit_streamer.start_baseline_collection()
-        return jsonify({'status': 'Collecting baseline data.'})
-    
+        if emotibit_streamer.is_streaming:
+            emotibit_streamer.start_baseline_collection()
+            return jsonify({'status': 'Collecting baseline data.'})
+        else:
+            return jsonify({'status': 'EmotiBit not connected.'}), 400
+
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400 
     
@@ -98,7 +146,7 @@ def stop_biometric_baseline() -> Response:
     global emotibit_streamer
     try:
         emotibit_streamer.stop_baseline_collection()
-        return jsonify({'message': 'Baseline data collection stopped.'}), 200
+        return jsonify({'status': 'Baseline data collection stopped.'}), 200
     
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -309,8 +357,8 @@ def submit_experiment() -> Response:
 
     return jsonify({'message': 'Experiment and trial names submitted.'}), 200
 
-@app.route('/upload_survey_file', methods=['POST'])
-def upload_survey_csv() -> Response:
+@app.route('/upload_surveys_csv', methods=['POST'])
+def upload_surveys_csv() -> Response:
     global subject_manager, form_manager
 
     if subject_manager.subject_folder is None:
@@ -387,13 +435,14 @@ def submit() -> Response:
             subject_PID = form_manager.clean_string(request.form.get('PID')) 
             subject_class = form_manager.clean_string(request.form.get('class'))
             subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
-            audio_file_manager.set_audio_folder(subject_manager.subject_folder, trial_name, subject_id)
-            emotibit_streamer.set_data_folder(subject_manager.subject_folder, trial_name, subject_id)
+            audio_file_manager.set_audio_folder(subject_manager.subject_folder)
+            emotibit_streamer.set_data_folder(subject_manager.subject_folder)
             emotibit_streamer.initialize_hdf5_file(subject_id)
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
+            demographics = form_manager.get_custom_url("demographics", subject_manager.subject_id)
 
-            return jsonify({'message': 'User information submitted.', 'pss4': pss4, 'exit_survey': exit_survey}), 200
+            return jsonify({'message': 'User information submitted.', 'pss4': pss4, 'demographics': demographics, 'exit_survey': exit_survey}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
@@ -657,26 +706,6 @@ def start_recording() -> Response:
 ##################################################################
 ## Views 
 ##################################################################
-@app.route('/notebook')
-def notebook():
-    import subprocess
-    """
-    Renders the Jupyter Notebook interface for the experiment.
-    Returns:
-        Response: A Flask response object containing the rendered HTML template for the Jupyter Notebook.
-    """
-    notebook = 'analysis.ipynb'
-
-    notebook_path = os.getcwd()
-
-    command = ['jupyter', 'notebook', '--notebook-dir', notebook_path, '--port=8888']
-
-    notebook_url = f'http://localhost:8888/notebooks/{os.path.relpath(notebook, notebook_path)}'
-
-    subprocess.Popen(command)
-
-    return f'Jupyter Notebook is running. Open it <a href="{notebook_url}">here</a>.'
-    
 @app.route('/prs')
 def prs():
     """
@@ -714,8 +743,6 @@ def prs():
             <li>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</li> 
             <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</li>
             <li>Please provide a brief explanation for your answer after each question.</li>
-            <li>IMPORTANT: Click "Record Answer" and wait until you see the message, "Recording started" before you begin speaking your answer.</li>
-            <li> Click "Stop Recording" when you are finished with your answer and explanation.</li>
         </ul><br><br>
         <div id="intro">
             <h3>Introduction</h3>
@@ -737,36 +764,71 @@ def prs():
         </div>
         {% endfor %}
         <script>
-            const eventMarker = localStorage.getItem('currentEventMarker');
-            const recordButtons = document.querySelectorAll(".record-button");   
-            recordButtons.forEach((button) => {
-                button.addEventListener("click", async function () {
-                    const audioElement = button.closest("div").querySelector("audio");
-                    const statusElement = button.previousElementSibling;
-                    
-                    if (audioElement) {
-                        const audioSrc = audioElement.querySelector("source").getAttribute("src"); 
-                        const fileName = audioSrc.split('/').pop(); 
-                        const baseName = fileName.replace(/\.[^/.]+$/, ""); 
-            
-                        if (button.innerText === 'Record Answer') {
-                            statusElement.innerText = "Starting recording...";
-                            try {
-                                await startRecording();  // Wait for recording to start before updating UI
-                                button.innerText = 'Stop Recording';
-                                playBeep();
-                            } catch (error) {
-                                console.error("Recording failed:", error);
+            document.addEventListener("DOMContentLoaded", function () {
+            const introAudio = document.getElementById("intro-audio-player");
+            const audioElements = document.querySelectorAll("audio[id^='audio']");
+            let currentIndex = 0;
+            setEventMarker('prs_task');
+            // Function to start recording
+            async function startRecordingForSegment(audioElement, baseName) {
+                const statusElement = audioElement.nextElementSibling;
+                statusElement.innerText = "Starting recording...";
+                try {
+                    await startRecording();  
+                    playBeep();
+                    console.log(`Recording started for ${baseName}`);
+                    setTimeout(() => {
+                        let beepCount = 0;
+                        const interval = setInterval(function() {
+                            playBeep();
+                            beepCount++;
+                            if (beepCount === 2) {
+                                clearInterval(interval);
                             }
-                        } else {
-                            console.log(eventMarker);
-                            recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
-                            button.innerText = 'Record Answer';
-                            setEventMarker('subject_idle');
-                        }
-                    }
-                });
-            });
+                        }, 500); 
+                    }, 15000)
+                    setTimeout(() => {
+                        stopRecordingForSegment(audioElement, baseName);
+                    }, 20000);  
+                } catch (error) {
+                    console.error("Recording failed:", error);
+                }
+            }
+
+            function stopRecordingForSegment(audioElement, baseName) {
+                const statusElement = audioElement.nextElementSibling;
+                console.log(`Stopping recording for ${baseName}`);
+                recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
+                statusElement.innerText = "Recording stopped.";
+                playNextAudio();  
+            }
+
+            function playNextAudio() {
+                if (currentIndex < audioElements.length) {
+                    let audio = audioElements[currentIndex];
+                    let audioSrc = audio.querySelector("source").getAttribute("src");
+                    let baseName = audioSrc.split('/').pop().replace(/\.[^/.]+$/, "");
+
+                    audio.play();
+                    console.log(`Playing audio: ${baseName}`);
+
+                    audio.onended = function () {
+                        console.log(`Finished audio: ${baseName}`);
+                        startRecordingForSegment(audio, baseName);
+                    };
+
+                    currentIndex++;
+                } else {
+                    console.log("All audio segments completed.");
+                }
+            }
+
+            // Start the first audio after the intro ends
+            introAudio.onended = function () {
+                console.log("Intro finished, starting first randomized audio...");
+                playNextAudio();
+            };
+        });
         </script>
     </body>
     </html>
@@ -808,6 +870,7 @@ def start_emotibit() -> None:
     try:
         emotibit_streamer.start()
         print("OSC server is streaming data.")
+        return jsonify({'message': 'EmotiBit stream started.'}), 200
 
     except Exception as e:
         print(f"An error occurred while trying to start OSC stream: {str(e)}")
@@ -816,9 +879,13 @@ def start_emotibit() -> None:
 def stop_emotibit() -> None:
     global emotibit_streamer
     try:
-        emotibit_streamer.stop()
-        return jsonify({'message': 'EmotiBit stream stopped.'}), 200
-    
+        if emotibit_streamer.is_streaming:
+            emotibit_streamer.stop()
+            print("OSC server stopped.")
+            return jsonify({'message': 'EmotiBit stream stopped.'}), 200
+        else:
+            return jsonify({'message': 'EmotiBit stream is not active.'}), 400
+        
     except Exception as e:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
         return jsonify({'error': 'Error stopping EmotiBit stream.'}), 400
@@ -891,6 +958,8 @@ def check_answer(transcription, correct_answers) -> bool:
     return any(word in correct_answers for word in transcription.split())
 
 def shutdown_server() -> None:
+    if emotibit_streamer.hdf5_file:
+                emotibit_streamer.hdf5_file.close()
     time.sleep(1)
     pid = os.getpid()
     os.kill(pid, signal.SIGINT)

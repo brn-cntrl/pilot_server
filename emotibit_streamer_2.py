@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from collections import deque
 from timestamp_manager import TimestampManager
 
+# TODO: Look into Neurokit 2 and EmotiBit tools for analysis
 """
 This class manages the OSC server that receives data from the EmotiBit.
 All OSC addresses must be included in the oscOutputSettings.xml file. Some
@@ -85,8 +86,8 @@ class EmotiBitStreamer:
     def event_marker(self, value: str) -> None:
         self._event_marker = value
 
-    def set_data_folder(self, experiment_name, trial_name, subject_folder):
-        self.data_folder = os.path.join("subject_data", experiment_name, trial_name, subject_folder, "emotibit_data")
+    def set_data_folder(self, subject_folder):
+        self.data_folder = os.path.join(subject_folder, "emotibit_data")
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
@@ -168,6 +169,7 @@ class EmotiBitStreamer:
 
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
+        self.is_streaming = True
         
     def stop(self) -> None:
         if self.server_thread:
@@ -181,6 +183,7 @@ class EmotiBitStreamer:
             if self.hdf5_file:
                 self.hdf5_file.close()
 
+            self.is_streaming = False
             print("Server stopped successfully.")
         else:
             print("Server is not running.")
@@ -249,7 +252,7 @@ class EmotiBitStreamer:
         bi_values = np.array(self.data_window["BI"])
         cleaned_bi_values = self.remove_outliers(bi_values)
 
-        if len(cleaned_bi_values) < 10: # 10 beat interval values
+        if len(cleaned_bi_values) < 50: # 50 beat interval values
             return None  
 
         differences = np.diff(bi_values) / 1000.0  
@@ -330,7 +333,7 @@ class EmotiBitStreamer:
         for obj in self.baseline_buffer:
             if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
                 baseline_avgs.append(np.mean(obj[stream_type]))
-                
+
         for obj in self.data_buffer:
             if obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
                 test_avgs.append(np.mean(obj[stream_type]))

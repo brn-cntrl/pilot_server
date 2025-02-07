@@ -298,18 +298,29 @@ function compareToBaseline(divID) {
 }
 
 async function startEmotibit(){
-    try{
-        const response = await fetch('/start_emotibit_stream', {
+    fetch('/start_emotibit', {
             method: 'POST'
+        })
+        .then (response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data.message);
+            emotibitStatus.forEach(status => {  
+                status.style.display = 'block';
+                status.innerText = data.message;
+            });
+        })
+        .catch(error => {
+            console.error('Error starting EmotiBit stream:', error);
+            divId.style.display = 'block';
+            divId.innerText = "Error starting EmotiBit stream.";
         });
-        const data = await response.json();
-        console.log(data.status);
-        return data.status;
-    } catch (error) {
-        console.error('Error starting EmotiBit stream:', error);
-        return 'error';
-    }
 }
+
 function startBaseline() {
     fetch('/start_biometric_baseline', {
         method: 'POST'
@@ -322,6 +333,8 @@ function startBaseline() {
     })
     .then(data => {
         console.log(data.status);
+        biometricStatusMessage.style.display = 'block';
+        biometricStatusMessage.innerText = data.status;
     })
     .catch(error => {
         console.error('Error:', error);
@@ -339,6 +352,8 @@ function stopBaseline() {
     })
     .then(data => {
         console.log(data.status);
+        biometricStatusMessage.style.display = 'block';
+        biometricStatusMessage.innerText = data.status;
     })
     .catch(error => {
         console.error('Error:', error);

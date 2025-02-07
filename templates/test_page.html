@@ -50,7 +50,7 @@
             <li>Speak each answer aloud, and then press the "Submit" button to check your answer.</li>
             <li>Say your answer in number form (e.g. "One thousand ninety-six").</li>
             <li>Try to be as accurate and fast as possible while completing the task.</li>
-            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,022.</li>
+            <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,009.</li>
             <li>Continue subtracting 13 and submitting your answers until the screen prompts you to stop.</li>
             <li>PLEASE NOTE: Answers might take a few seconds to process.</li>
         </ul>`
@@ -230,7 +230,6 @@
                     submitAnswerButton.style.display = 'none';
                     result.style.display = "none";
                     testStarted = false;
-                    // Omitting testEnded here to prevent chance of any further processing.
                     stopClock();
                     eventMarker = 'subject_idle';
                     setEventMarker(eventMarker);
@@ -249,7 +248,7 @@
                     isProcessing = false;
                 }
                 else if (data.result === 'incorrect') {
-                    const restartNumber = testNumber === 1 ? "1,022" : "1,059";
+                    const restartNumber = testNumber === 1 ? "1,009" : "1,059";
                     result.innerText = `Incorrect. Please start again from ${restartNumber}.`;
                     statusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                     submitAnswerButton.disabled = false;
