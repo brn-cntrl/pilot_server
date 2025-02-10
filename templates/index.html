@@ -77,7 +77,7 @@
             <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul><br>
         <button id="startEmotibitButton">Start EmotiBit</button><br>
-        <p id="emotibitStatus"></p>
+        <p class="emotibitStatus"></p>
     </div><br>
 
     <button class="toggle">Demographics Survey</button><br>
@@ -570,7 +570,7 @@
                 uploadCSVstatus.innerText = 'No file selected.';
             }
         }
-        
+
         function selectEmotibitFile(event) {
             const file = event.target.files[0];
             const formData = new FormData();
@@ -770,14 +770,9 @@
         
         document.addEventListener('DOMContentLoaded', function(){
             startEmotibitButton.addEventListener('click', function() {
-                if (startEmotibitButton.innerText == "Start Emotibit") {
-                    startEmotibitButton.innerText = "Stop Emotibit";
-                    startEmotibit();
-                } else {
-                    startEmotibitButton.innerText = "Start Emotibit";
-                    stopEmotibit();
-                }
+                startEmotibit();
             });
+
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     setEventMarker('biometric_baseline');

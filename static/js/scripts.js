@@ -282,13 +282,13 @@ function compareToBaseline(divID) {
         });
         if (baselineElevatedCount > liveElevatedCount) {
             restTime = 3;
-            divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} seconds.`;
+            divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} minutes.`;
         } else if (liveElevatedCount > baselineElevatedCount) {
             restTime = 8;
-            divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} seconds.`;
+            divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} minutes.`;
         } else {
             restTime = 3;
-            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} seconds.`;
+            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minuts.`;
         }
     })
     .catch(error => {
@@ -316,8 +316,10 @@ async function startEmotibit(){
         })
         .catch(error => {
             console.error('Error starting EmotiBit stream:', error);
-            divId.style.display = 'block';
-            divId.innerText = "Error starting EmotiBit stream.";
+            emotibitStatus.forEach(status => {
+                status.style.display = 'block';
+                status.innerText = "Error starting EmotiBit stream.";
+            });
         });
 }
 

@@ -37,6 +37,7 @@ class TimestampManager:
     def get_timestamp(self, type: str="raw") -> str:
         """
         Updates the timestamp if possible, otherwise waits for the latest timestamp.
+        The discrepancies between timestamps range betwee ~60 microseconds to ~1 ms.
         Args:
             type (str): The type of timestamp to return ("iso" or "raw").
         """
@@ -44,7 +45,6 @@ class TimestampManager:
             try:
                 self.timestamp_event.clear()  # Reset event for future updates
                 self.current_timestamp = datetime.now()
-                print("Timestamp updated ", self.current_timestamp)
                 self.timestamp_event.set()  # Signal that an update occurred
                 
             finally:

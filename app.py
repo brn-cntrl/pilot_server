@@ -940,6 +940,7 @@ def test_page() -> Response:
     return render_template('test_page.html')
 
 # Emotibit #######################################################
+@app.route('/start_emotibit', methods=['POST'])
 def start_emotibit() -> None:
     global emotibit_streamer
     try:

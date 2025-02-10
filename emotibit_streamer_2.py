@@ -31,7 +31,7 @@ class EmotiBitStreamer:
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
         self.baseline_buffer = []
         self.data_buffer = deque(maxlen=8000)
-        self._event_marker = 'subject_idle'
+        self._event_marker = 'startup'
         self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
@@ -49,10 +49,18 @@ class EmotiBitStreamer:
         self.dataset = None
         self._baseline_collected = False
         self._processing_baseline = False
-
+        self._time_started = None
         atexit.register(self.stop)
         print("Emotibit Initialized... ")
         print("EmotiBit data folder, .hdf5 and .csv files will be set when experiment/trial and subject information is submitted.")
+
+    @property
+    def time_started(self):
+        return self._time_started
+    
+    @time_started.setter
+    def time_started(self, value):
+        self._time_started = value
 
     @property
     def baseline_collected(self) -> bool:
@@ -151,12 +159,13 @@ class EmotiBitStreamer:
         self.collecting_baseline = False
         self.baseline_collected = True
         print("Stopping Baseline Collection... ")
-        print(f"Baseline Values: {self.baseline_buffer}")
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
             print("Server is already running.")
             return
+
+        self.time_started = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
         # Debug statement
         print(f"Starting server at {self._ip}:{self._port}")
@@ -236,11 +245,11 @@ class EmotiBitStreamer:
             if self.event_marker == "biometric_baseline" and not self.baseline_collected:
                 self.baseline_buffer.append(self.current_row)
                 # Debug
-                print(f"Baseline Buffer: {self.baseline_buffer[-1]}")
-            elif self.event_marker != "biometric_baseline" and not self.processing_baseline:
+                # print(f"Baseline Buffer: {self.baseline_buffer[-1]}")
+            elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
                 self.data_buffer.append(self.current_row)
                 # Debug
-                print(f"Data Buffer: {self.data_buffer[-1]}")
+                # print(f"Data Buffer: {self.data_buffer[-1]}")
 
             self.write_to_hdf5(self.current_row)
 
