@@ -40,7 +40,7 @@ class FormManager:
     def formatted_surveys(self) -> None:
         self._formatted_surveys = []
 
-    def add_survey(self, survey_name, survey_url) -> None:
+    def add_survey(self, survey_name, survey_url) -> str:
         """
         Adds a survey to the list of surveys.
         Current functionality is a modification of the original function to store survey links in a JSON file.
@@ -52,19 +52,18 @@ class FormManager:
             print("Survey file missing.")
             return("Survey file missing.")
 
-        surveys = survey_data.get("surveys", [])
         survey = {
             "name": survey_name,
             "url": survey_url
         }
 
-        if survey not in surveys:
-            surveys.append(survey)
+        if survey not in survey_data:
+            survey_data.append(survey)
             print("Survey added.")
 
             if self._surveys_file:
                 with open(self._surveys_file, "w") as file:
-                    json.dump({"surveys": surveys}, file, indent=4)
+                    json.dump({"surveys": survey_data}, file, indent=4)
                 return "Success"
             else:
                 print("Survey already exists.")
