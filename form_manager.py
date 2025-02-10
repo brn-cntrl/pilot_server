@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import csv
 
 class FormManager:
     def __init__(self) -> None:
@@ -68,7 +69,49 @@ class FormManager:
             else:
                 print("Survey already exists.")
                 return "Survey already exists."
+    
+    def find_survey_response(self, input_file, output_file, search_email) -> bool:
+        print(input_file)
+        with open(input_file, mode="r", newline="", encoding="utf-8") as infile:
+            reader = csv.reader(infile)
+            headers = next(reader)
+            print(headers)
+            try:
+                email_index = headers.index("Email")
+            except ValueError:
+                print("Email column not found.")
+                return False
+            
+            matching_row = None
+            for row in reader:
+                email_value = row[email_index].strip().lower()
+                print("Email value:", email_value)
+                if self.is_valid_email(email_value) and email_value == search_email:
+                    matching_row = row
+                    break
+            
+            if matching_row is None:
+                print(f"Survey response for {search_email} not found.")
+                return False
+            else:
+                with open(output_file, mode="w", newline="", encoding="utf-8") as outfile:
+                    writer = csv.writer(outfile)
+                    writer.writerow(headers)
+                    writer.writerow(matching_row)
+                    print(f"Survey response for {search_email} found. Writing to {output_file}")
+                    return True
+            
+    def is_valid_email(self, email):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        return re.match(pattern, email) is not None
 
+    def survey_exists(self, survey_name) -> bool:
+        surveys = self.load_surveys()
+        for survey in surveys:
+            if survey["name"] == survey_name:
+                return True
+        return False
+    
     def clean_string(self, value) -> str:
         outstring = value.lower().replace(' ', '_').strip()
         outstring = re.sub(r"[^a-zA-Z0-9_\-]", "", outstring)
@@ -147,7 +190,7 @@ class FormManager:
             if survey["name"] == survey_name:
                 print(f"Survey found: {survey_name}")
                 return survey["url"]
-            
+    
         return "not found"
     
     def get_custom_url(self, survey_name: str, subject_id: str) -> str:
@@ -167,3 +210,50 @@ class FormManager:
             return f"Survey with name '{survey_name}' not found."  
         
         return self.customize_form_url(survey_url, subject_id)
+    
+    def get_subject_name(self, email: str) -> str:
+        with open('subject_data/subjects.json', 'r') as file:
+            subject_objs = json.load(file)
+            for key, value in subject_objs['subjects'].items():
+                if key == email:  # Email is now the key, no need to check inside the value
+                    return value['first_name'], value['last_name']
+                
+        return None, None
+      
+    def add_to_subject_ids(self, subject_id, first_name, last_name, email) -> None:
+        """
+        Add the subject's ID, first name, last name, and email to the subject IDs file.
+        Args:
+            subject_id (str): The subject's unique ID.
+            first_name (str): The subject's first name.
+            last_name (str): The subject's last name.
+            email (str): The subject's email address.
+        """
+        print(f"Adding {subject_id}")
+        print(f"Adding {first_name}")
+        print(f"Adding {last_name}")
+
+        if not os.path.exists('subject_data/subjects.json'):
+            print("subject_data/subjects.json does not exist.")
+            raise FileNotFoundError("subject_data/subjects.json does not exist.")
+        else:
+            with open('subject_data/subjects.json', 'r') as file:
+                subject_objs = json.load(file)
+                print(f"Loading: {subject_objs}")
+
+        if "subjects" not in subject_objs:
+            subject_objs["subjects"] = {}
+            print("Subjects key not found. Creating new key.")
+
+        if email in subject_objs["subjects"]:
+            return
+
+        subject_objs["subjects"][email] = {
+            "subject_id": subject_id,
+            "first_name": first_name,
+            "last_name": last_name
+        }
+
+        with open('subject_data/subjects.json', 'w') as file:
+            json.dump(subject_objs, file, indent=4)
+            return 

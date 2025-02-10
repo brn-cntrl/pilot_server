@@ -367,23 +367,29 @@
             <ul>
                 <li>Instruct the subject to fill out the exit survey before completing the experiment.</li>
             </ul>
+        </div><br>
+        <button class="toggle stopEmotibit">Stop Emotibit</button><br>
+        <div class="innerModule" id="emotibitDiv" style="display:none;">
+            <p class="emotibitStatus"></p>
+        </div><br>
 
-            <button class="toggle stopEmotibit">Stop Emotibit</button><br>
-            <div id="emotibitDiv" style="display:none;">
-                <p class="emotibitStatus"></p>
-            </div><br>
-
-            <button class="toggle">Post Processing</button>
-            <div class="innerModule" style="display:none;">
-                <h4>EmotiBit Post Processing</h4>
-                <p>Instructions</p>
-                <ul>
-                    <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
-                </ul><br>
-                <button id="uploadSubjectData">Convert EmotiBit Data</button><br><br>
-                <p id="postProcessingStatus"></p>
-            </div><br>
-        </div>
+        <button class="toggle">Post Processing</button>
+        <div class="innerModule" style="display:none;">
+            <h4>EmotiBit Post Processing</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
+                <li>To import the ground truth data from the EmotiBit, first transfer the csv file from the EmotiBit SD card.</li>
+                <li>Click "Import EmotiBit Data" and select the file from the location in which it was stored.</li>
+                <li>Once imported, the csv file will be renamed to indicate the subject ID and copied into the subject data folder.</li>
+            </ul><br>
+            <button id="convertEmotibitData">Convert EmotiBit Data</button><br>
+            <p id="postProcessingStatus"></p>
+            <button id="openEmotibitDialog">Import EmotiBit Data</button><br>
+            <input type="file" id="emotibitFileInput" style="display: none;" onchange="selectEmotibitFile(event)" /><br>
+            <p id="uploadEmotibitStatus"></p>
+            <p id="emotibitFilePath"></p>
+        </div><br>
     </div><br>
 
     <h2>More Tools</h2>
@@ -398,9 +404,10 @@
                 <li>Click "Upload File", navigate to the destination folder and select the CSV.</li>
                 <li>If the subject's ID or name and email are found, their survey responses will be stored in the data folder for the current ID.</li>
             </ul><br>
-            <button onclick="openFileDialog()">Upload File</button><br><br>
+            <button id="openFileDialog">Upload File</button><br><br>
             <input type="file" id="fileInput" style="display: none;" onchange="selectCSVFile(event)" />
             <p id="uploadCSVstatus"></p>
+            <p id="csvFilePath"></p>
         </div><br>
 
         <button class="toggle">Additional Surveys</button><br>
@@ -446,14 +453,10 @@
             <ul>
                 <li>Use this to derive the obfuscated ID for a subject if you need to search the subject data files for a match.</li>
                 <li>Otherwise, this algorithm runs automatically when subjects enter their information on the subject dashboard.</li>
-                <li>Enter the subject's first name, last name, and email address below.</li>
+                <li>Enter the subject's email address below.</li>
                 <li>Click "Encrypt Subject" to generate a unique subject ID.</li>
             </ul>
             <form id="encryptSubject" action="/encrypt_subject" method="POST">
-                <label for="first_name">First Name:</label>
-                <input type="text" id="first_name" name="first_name" required><br><br>
-                <label for="last_name">Last Name:</label>
-                <input type="text" id="last_name" name="last_name" required><br><br>
                 <label for="email">Email:</label>
                 <input type="text" id="email" name="email" required><br><br>
                 <button type="submit">Encrypt Subject</button>
@@ -490,6 +493,9 @@
     </div>
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
+        const openFileDialog = document.getElementById('openFileDialog');
+        const emotibitFilePath = document.getElementById('emotibitFilePath');
+        const uploadEmotibitStatus = document.getElementById('uploadEmotibitStatus');
         const biometricStatusMessage = document.getElementById('biometricStatusMessage');
         const startEmotibitButton = document.getElementById('startEmotibitButton');
         const startIATButtons = document.querySelectorAll('IATButton');
@@ -520,11 +526,76 @@
         const errorNotification3 = document.getElementById('errorNotification3');
         const notification4 = document.getElementById('notification4');
         const errorNotification4 = document.getElementById('errorNotification4');
-        const uploadSubjectData = document.getElementById('uploadSubjectData')
+        const convertEmotibitData = document.getElementById('convertEmotibitData')
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
         const stopServerButtons = document.querySelectorAll('.stopServer');
         const stopEmotibitButtons = document.querySelectorAll('.stopEmotibit');
         const emotibitStatus = document.querySelectorAll('.emotibitStatus');
+        const openEmotibitDialog = document.getElementById('openEmotibitDialog');
+
+        openEmotibitDialog.addEventListener('click', function() {
+            document.getElementById('emotibitFileInput').click();
+        });
+
+        openFileDialog.addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        const uploadCSVstatus = document.getElementById('uploadCSVstatus');
+        const csvFilePath = document.getElementById('csvFilePath');
+        function selectCSVFile(event){
+            const file = event.target.files[0];
+            if(file){
+                console.log("Selected File: ", file.name);
+                const formData = new FormData();
+                formData.append('csv_file', file);
+                fetch('/upload_surveys_csv', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Invalid file type. Only CSV files are allowed." || 
+                        data.message === "Subject information is not set." ||
+                        data.message === "Survey response or email column not found.") {
+                        uploadCSVstatus.innerText = data.message;
+                        return;
+                    } else {
+                        uploadCSVstatus.innerText = data.message;
+                        csvFilePath.innerText = `File Path: ${data.file_path}`;
+                    }
+                })
+                .catch(error => uploadCSVstatus.innerText = "An error occurred.");
+            } else {
+                uploadCSVstatus.innerText = 'No file selected.';
+            }
+        }
+        
+        function selectEmotibitFile(event) {
+            const file = event.target.files[0];
+            const formData = new FormData();
+            formData.append('emotibit_file', file);
+            fetch('/import_emotibit_csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.message) {
+                    uploadEmotibitStatus.innerText = data.message;
+                    uploadEmotibitStatus.style.display = "block";
+                    if (data.file_path) {
+                        emotibitFilePath.innerText = `File Path: ${data.file_path}`;
+                    }
+                } else {
+                    throw new Error('Invalid response structure');
+                }
+            })
+            .catch(error => {
+                uploadEmotibitStatus.innerText = "error uploading";
+                uploadEmotibitStatus.style.display = "block";
+            });
+        }
 
         document.addEventListener("DOMContentLoaded", function () {;
             const uploadSurveyStatus = document.getElementById('uploadSurveyStatus');
@@ -640,6 +711,15 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    if(data.message === 'Subject not found.'){
+                        decryptionStatusName.style.display = "none";
+                        decryptionStatusEmail.style.display = "none";
+                        notification4.style.display = "none";
+                        errorNotification4.style.display = "block";
+                        errorNotification4.innerText = data.message;
+                        return;
+                    }
+
                     decryptionStatusName.innerText = `Full Name: ${data.full_name}`;
                     decryptionStatusName.style.display = "block";
                     decryptionStatusEmail.innerText = `Email: ${data.email}`;
@@ -860,32 +940,8 @@
                 }
             }
             
-            function openFileDialog(){
-                document.getElementById('fileInput').click();
-            }
-
-            const uploadCSVstatus = document.getElementById('uploadCSVstatus');
-            function selectCSVFile(event){
-                const file = event.target.files[0];
-                if(file){
-                    console.log("Selected File: ", file.name);
-                    const formData = new FormData();
-                    formData.append('csv_file', file);
-                    fetch('/upload_surveys_csv', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        uploadCSVstatus.innerText = data.message;
-                    })
-                    .catch(error => uploadCSVstatus.innerText = data.error);
-                } else {
-                    uploadCSVstatus.innerText = 'No file selected.';
-                }
-            }
-            uploadSubjectData.addEventListener('click', function() {
-                fetch('/upload_subject_data', {
+            convertEmotibitData.addEventListener('click', function() {
+                fetch('/convert_emotibit_data', {
                     method: 'POST'
                 })
                 .then(response => response.json())

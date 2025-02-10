@@ -7,11 +7,12 @@ import os, sys
 import datetime
 import time
 import pyaudio
-import librosa
 import signal 
 import re
 import string
 import speech_recognition as sr
+import random
+import base64
 from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
@@ -20,6 +21,7 @@ from ser_manager3 import SERManager
 from audio_file_manager import AudioFileManager
 from form_manager import FormManager
 from timestamp_manager import TimestampManager
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 emotibit_thread = None
@@ -27,8 +29,7 @@ emotibit_thread = None
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
-#TODO: Debug h5 close to shutdown 
-#TODO: Add demographic survey link
+#TODO: Debug h5 close to shutdown.
 #TODO: Debug 20 sec time limit to PRS page
 
 # Class instances stored in global scope 
@@ -45,6 +46,42 @@ timestamp_manager = TimestampManager()
 ##################################################################
 ## Routes 
 ##################################################################
+@app.route('/process_audio_files', methods=['POST'])
+def process_audio_files() -> Response:
+    """
+    Processes audio files in the current subject's audio folder, transcribes them, 
+    predicts emotion and confidence scores, and writes the results to a CSV file.
+    Returns:
+        Response: A JSON response indicating the success of the operation with a message.
+    """
+    import csv
+    global subject_manager, audio_file_manager, ser_manager
+   
+    data_rows = []
+    subject_id = subject_manager.subject_id
+    audio_folder = audio_file_manager.audio_folder
+
+    for file in os.listdir(audio_folder):
+        if file.endswith(".wav"):
+            parts = file.split("_")
+            if parts[0] == subject_id and len(parts) > 2:
+                transcription = transcribe_audio(os.path.join(audio_folder, file))
+                emotion, confidence = ser_manager.predict_emotion(os.path.join(audio_folder, file))
+                timestamp = parts[1]
+                data_rows.append(timestamp, file, transcription, emotion, confidence)
+
+    data_rows.sort(key=lambda x: x[0])
+    csv_path = os.path.join(audio_folder, f"{subject_id}_transcriptions_SER.csv")
+
+    with open(csv_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Timestamp", "Transcription", "SER_Emotion", "SER_Confidence"])
+        for row in data_rows:
+            writer.writerow(row)   
+
+    print(f"CSV file created: {csv_path}")
+    return jsonify({'message': 'Audio files processed.'}), 200
+
 @app.route('/upload_survey', methods=['POST'])
 def upload_survey() -> Response:
     """
@@ -89,7 +126,7 @@ def survey(name):
 @app.route("/get_subject_id", methods=['GET'])
 def get_subject_id():
     global subject_manager
-    
+
     subject_id = subject_manager.subject_id
     if not subject_id:
         subject_id = "No Subject ID available"
@@ -360,28 +397,63 @@ def submit_experiment() -> Response:
 @app.route('/upload_surveys_csv', methods=['POST'])
 def upload_surveys_csv() -> Response:
     global subject_manager, form_manager
-
     if subject_manager.subject_folder is None:
         return jsonify({'message': 'Subject information is not set.'}), 400
    
     try:
-        if 'file' not in request.files:
+        if 'csv_file' not in request.files:
             return jsonify({'message': 'No file part.'}), 400
         
-        file = request.files['file']
+        file = request.files['csv_file']
+
         if not file.filename or not file.filename.lower().endswith(".csv"):
-            return jsonify({"success": False, "error": "Invalid file type. Only CSV files are allowed."}), 400
+            return jsonify({"message": "Invalid file type. Only CSV files are allowed."}), 400
         
-        survey_found = form_manager.find_survey(file, subject_manager)
-        if survey_found:
-            return jsonify({'message': 'Survey data processed.'}), 200
+        filename = secure_filename(file.filename)
+        temp_file_path = os.path.join("tmp", filename)
+        file.save(temp_file_path)  
+
+        base_name = os.path.splitext(file.filename)[0]
+        survey_name = base_name.split(" (")[0]
+        survey_name = form_manager.clean_string(survey_name)
+        survey_name = f"{subject_manager.subject_id}_{survey_name}_response.csv"
+
+        file_path = os.path.join(subject_manager.subject_folder, survey_name)
+
+        response_found = form_manager.find_survey_response(temp_file_path, file_path, subject_manager.subject_email)
+        if not response_found:
+            return jsonify({'message': 'Survey response or email column not found.'}), 400
         else:
-            return jsonify({'message': 'Subject not found in survey data.'}), 400
-    
+            return jsonify({'message': 'Survey response found.', 'file_path': file_path}), 200
+        
     except Exception as e:
         return jsonify({'error': 'Error uploading file.'}), 400
 
-@app.route('/upload_subject_data', methods=['POST'])
+@app.route('/import_emotibit_csv', methods=['POST'])
+def import_emotibit_csv() -> Response:
+    global emotibit_streamer
+    if emotibit_streamer.data_folder is None:
+        print("EmotiBit data folder not set.")
+        return jsonify({'message': 'Subject information is not set.'}), 400
+    
+    if 'emotibit_file' not in request.files:
+            return jsonify({'message': 'No file part.'}), 400
+
+    file = request.files['emotibit_file']
+    print("File received: ", file.filename)
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        return jsonify({"success": False, "error": "Invalid file type. Only CSV files are allowed."}), 400
+    
+    
+    new_filename = f"{emotibit_streamer.time_started}_{subject_manager.subject_id}_emotibit_ground_truth.csv"
+    file_path = os.path.join(emotibit_streamer.data_folder, new_filename)
+    
+    file.save(file_path)
+    
+    return jsonify({"success": True, "message": "File uploaded successfully.", "file_path": file_path}), 200
+    
+    
+@app.route('/convert_emotibit_data', methods=['POST'])
 def upload_subject_data() -> Response:
     global subject_manager, emotibit_streamer
     try:
@@ -402,14 +474,15 @@ def submit() -> Response:
     1. Validates that the experiment and trial names are set.
     2. Cleans and retrieves the subject's first name, last name, and email from the form data.
     3. Validates the email address format.
-    4. Encrypts the subject's name and email to generate a unique subject ID.
+    4. Encrypts the subject's email to generate a unique subject ID.
     5. Cleans and retrieves the subject's PID and class name from the form data.
     6. Sets the subject information in the subject manager.
-    7. Configures the audio file manager and emotibit streamer with the experiment, trial, and subject information.
-    8. Generates custom URLs for the PSS4 and exit surveys.
+    7. Configures the audio file manager and emotibit streamer with the subject's folder.
+    8. Initializes the HDF5 file for the EmotiBit streamer.
+    9. Generates custom URLs for the PSS4, exit, and demographics surveys.
     Returns:
         Response: A JSON response indicating the success or failure of the operation.
-        - On success: Returns a JSON object with a success message and URLs for the PSS4 and exit surveys, with a 200 status code.
+        - On success: Returns a JSON object with a success message and URLs for the PSS4, exit, and demographics surveys, with a 200 status code.
         - On failure: Returns a JSON object with an error message, with a 400 status code.
     """
     global subject_manager, form_manager, audio_file_manager, emotibit_streamer
@@ -422,16 +495,18 @@ def submit() -> Response:
         
         else:
             subject_first_name = form_manager.clean_string(request.form.get('first_name'))
-            subject_manager.subject_first_name = subject_first_name
             subject_last_name = form_manager.clean_string(request.form.get('last_name'))
-            subject_manager.subject_last_name = subject_last_name
             subject_email = request.form.get('email').lower().strip().replace(" ", "_")
 
             if not is_valid_email(subject_email):
                 return jsonify({'message': 'Invalid email address.'}), 400
             
-            subject_manager.subject_email = subject_email
-            subject_id = encrypt_name(subject_first_name, subject_last_name, subject_email)
+            subject_id = encrypt_id(subject_email)
+            form_manager.add_to_subject_ids(subject_id, subject_first_name, subject_last_name, subject_email)
+
+            subject_manager.subject_first_name = subject_first_name
+            subject_manager.subject_last_name = subject_last_name
+            subject_manager.subject_email = subject_email 
             subject_PID = form_manager.clean_string(request.form.get('PID')) 
             subject_class = form_manager.clean_string(request.form.get('class'))
             subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
@@ -451,24 +526,27 @@ def submit() -> Response:
 def encrypt_subject() -> Response:
     global form_manager
 
-    first_name = form_manager.clean_string(request.form.get('first_name'))
-    last_name = form_manager.clean_string(request.form.get('last_name'))
-    email = request.form.get('email')
+    email = request.form.get('email').lower().strip().replace(" ", "_")
 
     if not is_valid_email(email):
         return jsonify({'error': 'Invalid email address.'}), 400
     
-    subject_id = encrypt_name(first_name, last_name, email)
+    subject_id = encrypt_id(email)
 
     return jsonify({'message': subject_id})
 
 @app.route('/decrypt_subject', methods=['POST'])
 def decrypt_subject() -> Response:
     try:
-        firstname, lastname, email = decrypt_name(request.form.get('id_string'))
+        email = decrypt_id(request.form.get('id_string'))
+
+        firstname, lastname = form_manager.get_subject_name(email)
+        if firstname is None:
+            return jsonify({'message': 'Subject not found.'}), 400
+        
         fullname = f"{firstname} {lastname}"
 
-        return jsonify({'full_name': fullname, 'email': email})
+        return jsonify({'full_name': fullname, 'email': email, 'message': 'Subject found.'}), 200
     
     except Exception as e:
         return jsonify({'error': str(e)}), 400
@@ -503,7 +581,6 @@ def test_audio() -> Response:
     """
     global recording_manager
     try:
-        # stop_recording()
         recording_manager.stop_recording()
         transcription = transcribe_audio(recording_manager.recording_file)
         
@@ -718,8 +795,6 @@ def prs():
     Returns:
         str: Rendered HTML template with the introductory audio file and shuffled PRS audio files.
     """
-    
-    import random
     AUDIO_DIR = 'static/prs_audio'
     intro = "1-PRS-Intro.mp3"
     prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro]
@@ -905,46 +980,23 @@ def is_valid_email(email):
         return True
     else:
         return False
-
-def encrypt_name(firstname: str, lastname: str, email: str) -> str:
+      
+def encrypt_id(email: str) -> str:
     """Encrypts the subject's name and email into a reversible string."""
-    import base64
-
-    # Replace spaces with safe characters
-    firstname = firstname.lower().replace(" ", "_")
-    lastname = lastname.lower().replace(" ", "_")
     email = email.lower().replace(" ", "_")
-    
-    # Combine the data (name and email) into a single string
-    fullname = f"{firstname}_{lastname}"
-    combined = f"{fullname}#{email}"
-    
-    # Encode the combined string into bytes
-    combined_bytes = combined.encode('utf-8')
-    
-    # Obfuscate by base64 encoding the string, using only safe characters
-    obfuscated = base64.urlsafe_b64encode(combined_bytes).decode('utf-8')
+    bytes = email.encode('utf-8')
+    obfuscated = base64.urlsafe_b64encode(bytes).decode('utf-8')
+    print(f"Obfuscated: {obfuscated}")
     
     return obfuscated
 
 
-def decrypt_name(obfuscated: str) -> tuple:
+def decrypt_id(obfuscated: str) -> tuple:
     """Decrypts the obfuscated string back into the original name and email."""
-    import base64
-    # Decode the base64 encoded string
     decoded_bytes = base64.urlsafe_b64decode(obfuscated)
+    email = decoded_bytes.decode('utf-8')
     
-    # Decode bytes back to a string
-    combined_safe = decoded_bytes.decode('utf-8')
-    
-    # Split the combined string into name and email
-    name, email = combined_safe.split("#", 1)
-    
-    # Split the name into first and last names
-    firstname, lastname = name.split("_", 1)
-    
-    return firstname, lastname, email
-
+    return email
 
 def preprocess_text(text) -> str:
     text = text.lower()
