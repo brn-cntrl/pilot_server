@@ -37,7 +37,7 @@ class TimestampManager:
     def get_timestamp(self, type: str="raw") -> str:
         """
         Updates the timestamp if possible, otherwise waits for the latest timestamp.
-        The discrepancies between timestamps range betwee ~60 microseconds to ~1 ms.
+        The discrepancies between timestamps range between ~60 microseconds to ~1 ms.
         Args:
             type (str): The type of timestamp to return ("iso" or "raw").
         """

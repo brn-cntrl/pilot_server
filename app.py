@@ -95,9 +95,10 @@ def upload_survey() -> Response:
     global subject_manager, form_manager
     try:
         survey_name = request.form.get('survey_name')
+        print(f"Survey name: {survey_name}")
         survey_name = form_manager.clean_string(survey_name)
         url = request.form.get('survey_url')
-
+        print(f"Survey URL: {url}")
         message = form_manager.add_survey(survey_name, url)
         
         if message == "Survey already exists.":
@@ -657,7 +658,7 @@ def record_task_audio():
     action = data.get('action')
     question = data.get('question')
     event_marker = data.get('event_marker')
-    event_marker = f"{event_marker}_question_{question}"
+    event_marker = f"{event_marker}_{question}"
 
     try:
         if action == 'start':
@@ -811,14 +812,15 @@ def prs():
     </head>
     <body>
         <h1>PRS Task</h1>
-        <h2> Instruction Text</h2>
+        <h2>Instruction Text</h2>
         <ul>
             <li>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</li> 
             <li>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</li> 
             <li>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</li> 
-            <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “completely”.</li>
+            <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “Completely”.</li>
             <li>Please provide a brief explanation for your answer after each question.</li>
         </ul><br><br>
+
         <div id="intro">
             <h3>Introduction</h3>
             <audio id="intro-audio-player" controls>
@@ -828,85 +830,103 @@ def prs():
             <button onclick="startMonitoring()">Start Monitoring</button><br><br>
             <div class="meter"><div class="level"></div></div>
         </div><br>
-        {% for audio in audio_files %}
-        <div>
-            <audio controls id="audio{{ loop.index }}-player">
-                <source src="{{ url_for('static', filename='prs_audio/' + audio) }}" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-            <div id="audio{{ loop.index }}-recording-status"></div>
-            <button id="audio{{ loop.index }}-record-button" class="record-button">Record Answer</button><br><br>
+        <div id="container">
+            {% for audio in audio_files %}
+            <div class="audio-container">
+                <audio controls data-audio-index="{{ loop.index }}">
+                    <source src="{{ url_for('static', filename='prs_audio/' + audio) }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                <div class="recording-status" id="audio{{ loop.index }}-recording-status"></div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-            const introAudio = document.getElementById("intro-audio-player");
-            const audioElements = document.querySelectorAll("audio[id^='audio']");
-            let currentIndex = 0;
-            setEventMarker('prs_task');
-            // Function to start recording
-            async function startRecordingForSegment(audioElement, baseName) {
-                const statusElement = audioElement.nextElementSibling;
-                statusElement.innerText = "Starting recording...";
-                try {
-                    await startRecording();  
-                    playBeep();
-                    console.log(`Recording started for ${baseName}`);
-                    setTimeout(() => {
-                        let beepCount = 0;
-                        const interval = setInterval(function() {
+                const introAudio = document.getElementById("intro-audio-player");
+                const acontainer = document.getElementById("container");
+                let audioElements = Array.from(document.querySelectorAll("audio[data-audio-index]"));
+                let currentIndex = 0;
+
+                // Randomize order of question audio files
+                function shuffleArray(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                }
+                shuffleArray(audioElements);
+                audioElements.forEach(container => {
+                    container.style.display = "block";
+                    acontainer.append(container);
+                });
+                
+                const eventMarker = localStorage.getItem('currentEventMarker');
+                setEventMarker(eventMarker);
+
+                function startRecordingForSegment(audioElement, baseName) {
+                    const statusElement = audioElement.parentElement.querySelector(".recording-status");
+                    statusElement.innerText = "Recording started...";
+                    try {
+                        emarker = eventMarker + "_" + baseName;
+                        setEventMarker(emarker);
+                        startRecording();
+                        playBeep(); // Play initial beep
+                    
+                        console.log(`Recording started for ${baseName}`);
+
+                        setTimeout(() => {
                             playBeep();
-                            beepCount++;
-                            if (beepCount === 2) {
-                                clearInterval(interval);
-                            }
-                        }, 500); 
-                    }, 15000)
-                    setTimeout(() => {
-                        stopRecordingForSegment(audioElement, baseName);
-                    }, 20000);  
-                } catch (error) {
-                    console.error("Recording failed:", error);
+                            setTimeout(playBeep, 500); // Two beeps at 15 seconds
+                        }, 15000);
+
+                        setTimeout(() => {
+                            stopRecordingForSegment(audioElement, baseName);
+                        }, 20000);
+                    } catch (error) {
+                        console.error("Recording failed:", error);
+                    }
                 }
-            }
 
-            function stopRecordingForSegment(audioElement, baseName) {
-                const statusElement = audioElement.nextElementSibling;
-                console.log(`Stopping recording for ${baseName}`);
-                recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
-                statusElement.innerText = "Recording stopped.";
-                playNextAudio();  
-            }
-
-            function playNextAudio() {
-                if (currentIndex < audioElements.length) {
-                    let audio = audioElements[currentIndex];
-                    let audioSrc = audio.querySelector("source").getAttribute("src");
-                    let baseName = audioSrc.split('/').pop().replace(/\.[^/.]+$/, "");
-
-                    audio.play();
-                    console.log(`Playing audio: ${baseName}`);
-
-                    audio.onended = function () {
-                        console.log(`Finished audio: ${baseName}`);
-                        startRecordingForSegment(audio, baseName);
-                    };
-
-                    currentIndex++;
-                } else {
-                    console.log("All audio segments completed.");
+                function stopRecordingForSegment(audioElement, baseName) {
+                    const statusElement = audioElement.parentElement.querySelector(".recording-status");
+                    console.log(`Stopping recording for ${baseName}`);
+                    recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
+                    statusElement.innerText = "Recording stopped.";
+                    playNextAudio();
                 }
-            }
 
-            // Start the first audio after the intro ends
-            introAudio.onended = function () {
-                console.log("Intro finished, starting first randomized audio...");
-                playNextAudio();
-            };
-        });
+                function playNextAudio() {
+                    if (currentIndex < audioElements.length) {
+                        let audio = audioElements[currentIndex];
+                        let audioSrc = audio.querySelector("source").getAttribute("src");
+                        let baseName = audioSrc.split('/').pop().replace(/\.[^/.]+$/, "");
+
+                        audio.play();
+                        console.log(`Playing audio: ${baseName}`);
+
+                        audio.onended = function () {
+                            console.log(`Finished audio: ${baseName}`);
+                            startRecordingForSegment(audio, baseName);
+                        };
+
+                        currentIndex++;
+                    } else {
+                        console.log("All audio segments completed.");
+                    }
+                }
+
+                // Start the first audio after the intro ends
+                introAudio.onended = function () {
+                    console.log("Intro finished, starting first randomized audio...");
+                    playNextAudio();
+                };
+            });
         </script>
     </body>
     </html>
+
     """
     return render_template_string(html_template, intro=intro, audio_files=prs_audio_files)
 

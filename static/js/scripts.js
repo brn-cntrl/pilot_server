@@ -284,11 +284,11 @@ function compareToBaseline(divID) {
             restTime = 3;
             divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} minutes.`;
         } else if (liveElevatedCount > baselineElevatedCount) {
-            restTime = 8;
+            restTime = 5;
             divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} minutes.`;
         } else {
             restTime = 3;
-            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minuts.`;
+            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minutes.`;
         }
     })
     .catch(error => {

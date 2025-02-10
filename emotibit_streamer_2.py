@@ -49,7 +49,7 @@ class EmotiBitStreamer:
         self.dataset = None
         self._baseline_collected = False
         self._processing_baseline = False
-        self._time_started = None
+        self._time_started = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         atexit.register(self.stop)
         print("Emotibit Initialized... ")
         print("EmotiBit data folder, .hdf5 and .csv files will be set when experiment/trial and subject information is submitted.")
