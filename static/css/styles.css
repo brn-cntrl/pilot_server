@@ -18,7 +18,7 @@ body h1, body h2, h3, h4 {
     margin-bottom: 20px;
 }  
 
-.meter {
+/* .meter {
     width: 110px;
     height: 30px;
     background:black;
@@ -31,7 +31,7 @@ body h1, body h2, h3, h4 {
     width: 0%;
     background: green;
     transition: width 0.05s;
-}
+} */
 
 .buttonRow button {
     margin-right: 10px;
