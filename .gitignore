@@ -25,6 +25,7 @@
 /subject_data/*
 /audio_files/*
 /SER_MODEL/*
+/surveys/added_surveys.json
 /templates/background.html
 /templates/demographic_survey.html
 /templates/exit_survey.html
