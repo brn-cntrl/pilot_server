@@ -30,7 +30,11 @@ PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
 #TODO: Debug h5 close to shutdown.
-#TODO: Debug 20 sec time limit to PRS page
+#TODO: Place timer on break videos
+#TODO: Retrieve name from encryption form
+#TODO: Check json creation existence check and add json files to gitignore
+#TODO: Check pyaudio docs for volume and pause
+#TODO: Delete monitoring functions and buttons
 
 # Class instances stored in global scope 
 # NOTE: These could be moved to Flask g instance to further reduce global access
@@ -60,7 +64,7 @@ def process_audio_files() -> Response:
     data_rows = []
     subject_id = subject_manager.subject_id
     audio_folder = audio_file_manager.audio_folder
-
+    
     for file in os.listdir(audio_folder):
         if file.endswith(".wav"):
             parts = file.split("_")
@@ -71,7 +75,7 @@ def process_audio_files() -> Response:
                 data_rows.append(timestamp, file, transcription, emotion, confidence)
 
     data_rows.sort(key=lambda x: x[0])
-    csv_path = os.path.join(audio_folder, f"{subject_id}_transcriptions_SER.csv")
+    csv_path = os.path.join(subject_manager.subject_folder, f"{subject_id}_transcriptions_SER.csv")
 
     with open(csv_path, mode='w', newline='') as file:
         writer = csv.writer(file)
@@ -80,7 +84,7 @@ def process_audio_files() -> Response:
             writer.writerow(row)   
 
     print(f"CSV file created: {csv_path}")
-    return jsonify({'message': 'Audio files processed.'}), 200
+    return jsonify({'message': 'Audio files processed successfully.', 'path': csv_path}), 200
 
 @app.route('/upload_survey', methods=['POST'])
 def upload_survey() -> Response:
@@ -819,16 +823,13 @@ def prs():
             <li>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</li> 
             <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “Completely”.</li>
             <li>Please provide a brief explanation for your answer after each question.</li>
-        </ul><br><br>
-
+        </ul><br>
         <div id="intro">
             <h3>Introduction</h3>
             <audio id="intro-audio-player" controls>
                 <source src="{{ url_for('static', filename='prs_audio/' + intro) }}" type="audio/mpeg">
                 Your browser does not support the audio element.
-            </audio><br><br>
-            <button onclick="startMonitoring()">Start Monitoring</button><br><br>
-            <div class="meter"><div class="level"></div></div>
+            </audio><br>
         </div><br>
         <div id="container">
             {% for audio in audio_files %}
@@ -841,7 +842,6 @@ def prs():
             </div>
             {% endfor %}
         </div>
-
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const introAudio = document.getElementById("intro-audio-player");
@@ -849,7 +849,6 @@ def prs():
                 let audioElements = Array.from(document.querySelectorAll("audio[data-audio-index]"));
                 let currentIndex = 0;
 
-                // Randomize order of question audio files
                 function shuffleArray(array) {
                     for (let i = array.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
@@ -878,7 +877,7 @@ def prs():
 
                         setTimeout(() => {
                             playBeep();
-                            setTimeout(playBeep, 500); // Two beeps at 15 seconds
+                            setTimeout(playBeep, 500); 
                         }, 15000);
 
                         setTimeout(() => {
@@ -917,7 +916,6 @@ def prs():
                     }
                 }
 
-                // Start the first audio after the intro ends
                 introAudio.onended = function () {
                     console.log("Intro finished, starting first randomized audio...");
                     playNextAudio();
@@ -995,7 +993,6 @@ def is_valid_email(email):
     Returns:
         bool: True if the email address is valid, False otherwise.
     """
-
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if re.match(pattern, email):
         return True
@@ -1010,7 +1007,6 @@ def encrypt_id(email: str) -> str:
     print(f"Obfuscated: {obfuscated}")
     
     return obfuscated
-
 
 def decrypt_id(obfuscated: str) -> tuple:
     """Decrypts the obfuscated string back into the original name and email."""
@@ -1049,8 +1045,6 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
         - List of start timestamps in ISO 8601 format for each segment.
     """
     print("Generating timestamps...")
-    
-    # segment_files = sorted([f for f in os.listdir(output_folder) if f.endswith('.wav')])
 
     segment_files = sorted(
         [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],

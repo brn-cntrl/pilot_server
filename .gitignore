@@ -23,7 +23,6 @@
 /EmotiBitSoftware-MacOS/
 /tmp/*
 /subject_data/*
-!/subject_data/subjects.json
 /audio_files/*
 /SER_MODEL/*
 /templates/background.html

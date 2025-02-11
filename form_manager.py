@@ -232,11 +232,19 @@ class FormManager:
         print(f"Adding {first_name}")
         print(f"Adding {last_name}")
 
-        if not os.path.exists('subject_data/subjects.json'):
-            print("subject_data/subjects.json does not exist.")
-            raise FileNotFoundError("subject_data/subjects.json does not exist.")
+        file_path = 'subject_data/subjects.json'
+
+        if not os.path.exists(file_path):
+            print("subject_data/subjects.json does not exist. Creating new file...")
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w') as file:
+                json.dump({"subjects": {}}, file, indent=4)
+
+            with open(file_path, 'r') as file:
+                subject_objs = json.load(file)
+                print(f"Loading: {subject_objs}")
         else:
-            with open('subject_data/subjects.json', 'r') as file:
+            with open(file_path, 'r') as file:
                 subject_objs = json.load(file)
                 print(f"Loading: {subject_objs}")
 
@@ -253,6 +261,6 @@ class FormManager:
             "last_name": last_name
         }
 
-        with open('subject_data/subjects.json', 'w') as file:
+        with open(file_path, 'w') as file:
             json.dump(subject_objs, file, indent=4)
             return 

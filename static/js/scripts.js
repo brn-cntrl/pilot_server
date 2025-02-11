@@ -15,6 +15,33 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// function processAudioFiles(statusElement, pathElement){
+//     fetch('/process_audio_files', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         }
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log(data.message);
+//         statusElement.style.display = 'block';
+//         statusElement.innerText = data.message;
+//         pathElement.style.display = 'block';
+//         pathElement.innerText = `Transcription/SER CSV location: ${data.path}`;
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+//         statusElement.style.display = 'block';
+//         statusElement.innerText = "Error processing audio files.";
+//     });
+// }
+
 function setNextTest(){
     fetch('/set_next_test', {
         method: 'POST',
@@ -376,40 +403,4 @@ function playBeep() {
         oscillator.stop();
         // audioContext.close();
     }, 300); 
-}
-
-async function startMonitoring() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(stream);
-        
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256; // Resolution
-        source.connect(analyser);
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const levelBars = document.querySelectorAll(".level");
-
-        function updateMeter() {
-            analyser.getByteFrequencyData(dataArray);
-            
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i];
-            }
-            let volume = sum / dataArray.length;
-            let widthValue = (volume / 256) * 100 + "%";
-
-            levelBars.forEach(levelBar => {
-                levelBar.style.width = widthValue; 
-            });
-
-            requestAnimationFrame(updateMeter);
-        }
-
-        updateMeter();
-    } catch (err) {
-        console.error("Error accessing microphone:", err);
-    }
 }

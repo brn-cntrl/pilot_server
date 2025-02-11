@@ -122,17 +122,15 @@
             <li>Fit subject with microphone and headphones</li>
             <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
             <li>Test headphones: When subject is fitted with headphones, click "Test Audio Output" below.</li>
-            <li>Test microphont: When subject is fitted with microphone, click "Start Monitoring" to monitor audio.</li>
-            <li>Monitor the signal below and adjust microphone as needed.</li>
+            <li>Test microphone: When subject is fitted with microphone, monitor the audio signal in system audio settings.</li>
+            <li>Monitor the signal and adjust microphone as needed.</li>
             <li>The subject must click "Task Completed" when the task is finished.</li>
         </ul><br>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
 
         <label for="audioDevices">Select Audio Input Device:</label><br><br>
-        <select id="audioDevices" onchange="setDevice()"></select><br><br>
+        <select id="audioDevices" onchange="setDevice()"></select><br>
 
-        <button onclick="startMonitoring()">Start Monitoring</button><br><br>
-        <div class="meter"><div class="level"></div></div>
     </div><br>
 
     <button class="toggle">Speech Emotion Baseline (SER)</button>
@@ -188,7 +186,6 @@
             </select><br><br>
 
             <button id="task_1_recording">Start Recording</button><br><br>
-            <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
             <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="compareTask1status"></p>
@@ -288,7 +285,6 @@
             </select><br><br>
 
             <button id="task_2_recording">Start Recording</button><br><br>
-            <div class="meter"><div class="level"></div></div><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
             <button id="compareTask2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
             <p id="compareTask2status"></p>
@@ -373,7 +369,7 @@
             <p class="emotibitStatus"></p>
         </div><br>
 
-        <button class="toggle">Post Processing</button>
+        <button class="toggle">Post Processing</button><br>
         <div class="innerModule" style="display:none;">
             <h4>EmotiBit Post Processing</h4>
             <p>Instructions</p>
@@ -390,6 +386,18 @@
             <p id="uploadEmotibitStatus"></p>
             <p id="emotibitFilePath"></p>
         </div><br>
+        <button class="toggle">Transcription and SER</button>
+        <div class="innerModule" style="display:none;">
+            <h4>Transcription and SER</h4>
+            <p>Instructions</p>
+            <ul>
+                <li>Click "Process Audio" to transcribe and perform SER on all audio files for the current subject.</li>
+                <li><span class="required">NOTE: </span>This process may take several minutes to complete.</li>
+            </ul><br>
+            <button id="processAudio">Process Audio</button><br>
+            <p id="audioProcessingStatus"></p>
+            <p id="audioProcessingPath"></p>
+        </div>
     </div><br>
 
     <h2>More Tools</h2>
@@ -493,6 +501,9 @@
     </div>
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
+        const audioProcessingStatus = document.getElementById('audioProcessingStatus');
+        const audioProcessingPath = document.getElementById('audioProcessingPath');
+        const processAudio = document.getElementById('processAudio');
         const openFileDialog = document.getElementById('openFileDialog');
         const emotibitFilePath = document.getElementById('emotibitFilePath');
         const uploadEmotibitStatus = document.getElementById('uploadEmotibitStatus');
@@ -585,7 +596,7 @@
                     uploadEmotibitStatus.innerText = data.message;
                     uploadEmotibitStatus.style.display = "block";
                     if (data.file_path) {
-                        emotibitFilePath.innerText = `File Path: ${data.file_path}`;
+                        emotibitFilePath.innerText = `EmotiBit CSV Location: ${data.file_path}`;
                     }
                 } else {
                     throw new Error('Invalid response structure');
@@ -596,6 +607,10 @@
                 uploadEmotibitStatus.style.display = "block";
             });
         }
+
+        // processAudio.addEventListener('click', function() {
+        //     processAudioFiles(audioProcessingStatus, audioProcessingPath);
+        // });
 
         document.addEventListener("DOMContentLoaded", function () {;
             const uploadSurveyStatus = document.getElementById('uploadSurveyStatus');
@@ -743,12 +758,21 @@
 
             form.addEventListener("submit", function(event){
                 event.preventDefault();
+                console.log("Form submission intercepted!");
                 const formData = new FormData(form);
                 fetch("/submit_experiment", {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'  // Ensure Flask treats this as an AJAX request
+                    }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw err; });  // Manually throw error for catch block
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     notification.style.display = "block";
                     errorNotification.style.display = "none";
