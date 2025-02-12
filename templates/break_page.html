@@ -13,35 +13,57 @@
     <h1>Break</h1>
     <button id="break1">Break 1</button><br>
     <div class="testModule" id="break1Div" style="display:none" disabled>
-        <p id="restMessage1">Please wait...</p><br><br>
-        <video width="640" height="360" controls>
+        <video id="video1" width="640" height="360" controls>
             <source src="{{ url_for('video', filename='Video1.mp4') }}" type="video/mp4">
-        </video>
+        </video><br>
+        <p id="restMessage1"></p>
     </div><br>
 
     <button id="break2">Break 2</button><br>
     <div class="testModule" id="break2Div" style="display:none" disabled>
-        <p id="restMessage2">Please wait...</p><br><br>
-        <video width="640" height="360" controls>
+        <video id="video2" width="640" height="360" controls>
             <source src="{{ url_for('video', filename='Video2.mp4') }}" type="video/mp4">
-        </video>
+        </video><br>
+        <p id="restMessage2"></p>
     </div>
 
     <script>
+        var restTimeMillis = restTime * 60 * 1000;
+
         document.addEventListener("DOMContentLoaded", function(){
-            restText = `Please watch the following video for ${restTime} minutes.`
-            document.getElementById("restMessage1").innerHTML = restText;
-            document.getElementById("restMessage2").innerHTML = restText;
 
-        });
-        
-        document.getElementById("break1").addEventListener("click", function() {
-            toggleVis("break1Div");
+            var video1 = document.getElementById("video1");
+            var video2 = document.getElementById("video2");
+            var timeout1, timeout2;
+
+            function stopVideo(video, messageId, timeoutVar) {
+                clearTimeout(timeoutVar); 
+                return setTimeout(function() {
+                    video.pause();
+                    setEventMarker('subject_idle');
+                    document.getElementById(messageId).innerHTML = "Your break has ended. Please return to the Subject Dashboard and press 'Task Complete' to continue.";
+                }, restTimeMillis);
+            }
+
+            video1.addEventListener("play", function() {
+                setEventMarker('break_1');
+                timeout1 = stopVideo(video1, "restMessage1", timeout1);
+            });
+
+            video2.addEventListener("play", function() {
+                setEventMarker('break_2');
+                timeout2 = stopVideo(video2, "restMessage2", timeout2);
+            });
+
+            document.getElementById("break1").addEventListener("click", function() {
+                toggleVis("break1Div");
+            });
+
+            document.getElementById("break2").addEventListener("click", function() {
+                toggleVis("break2Div");
+            }); 
         });
 
-        document.getElementById("break2").addEventListener("click", function() {
-            toggleVis("break2Div");
-        }); 
     </script>
 </body>
 </html>

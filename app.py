@@ -29,13 +29,6 @@ emotibit_thread = None
 PORT_NUMBER = 8000
 EMOTIBIT_PORT_NUMBER = 9005
 
-#TODO: Debug h5 close to shutdown.
-#TODO: Place timer on break videos
-#TODO: Retrieve name from encryption form
-#TODO: Check json creation existence check and add json files to gitignore
-#TODO: Check pyaudio docs for volume and pause
-#TODO: Delete monitoring functions and buttons
-
 # Class instances stored in global scope 
 # NOTE: These could be moved to Flask g instance to further reduce global access
 subject_manager = SubjectManager() 
@@ -862,7 +855,6 @@ def prs():
                 });
                 
                 const eventMarker = localStorage.getItem('currentEventMarker');
-                setEventMarker(eventMarker);
 
                 function startRecordingForSegment(audioElement, baseName) {
                     const statusElement = audioElement.parentElement.querySelector(".recording-status");

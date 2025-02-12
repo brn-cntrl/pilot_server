@@ -64,10 +64,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const eventMarker = localStorage.getItem('currentEventMarker');
+            
             if(!eventMarker || eventMarker === 'null' || eventMarker === 'undefined') {
                 alert('No condition found for task. Please go back to the main interface and select a condition.');
             } 
-            
             const player1 = document.getElementById('audioPlayer1');
             const player2 = document.getElementById('audioPlayer2');
             const player3 = document.getElementById('audioPlayer3');
@@ -79,6 +79,7 @@
             const status4 = document.getElementById('audio4-status');
 
             player1.addEventListener('play', function() {
+                
                 status1.innerHTML = 'Introduction is now playing...';
             });
 

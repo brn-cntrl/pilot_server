@@ -79,11 +79,10 @@ class FormManager:
                 return "Survey already exists."
     
     def find_survey_response(self, input_file, output_file, search_email) -> bool:
-        print(input_file)
         with open(input_file, mode="r", newline="", encoding="utf-8") as infile:
             reader = csv.reader(infile)
             headers = next(reader)
-            print(headers)
+            
             try:
                 email_index = headers.index("Email")
             except ValueError:
@@ -93,7 +92,6 @@ class FormManager:
             matching_row = None
             for row in reader:
                 email_value = row[email_index].strip().lower()
-                print("Email value:", email_value)
                 if self.is_valid_email(email_value) and email_value == search_email:
                     matching_row = row
                     break
@@ -167,7 +165,6 @@ class FormManager:
 
     def autofill_forms(self, subject_id) -> None:
         formatted_surveys = []
-        print(f"Autofilling forms for ID: {subject_id}")
         if self.surveys:
             for survey in self.surveys:
                 url = self.customize_form_url(survey["url"], subject_id)
@@ -175,7 +172,6 @@ class FormManager:
                     "name": survey["name"],
                     "url": url
                 }
-                print(url)
                 formatted_surveys.append(formatted_survey)
 
             self.surveys = formatted_surveys
@@ -212,14 +208,9 @@ class FormManager:
             
     def get_survey_url(self, survey_name: str) -> str:
         surveys = self.load_surveys()
-        print("Surveys: ", surveys)
         added_surveys = self.load_added_surveys()
-        print("Added Surveys: ", added_surveys)
-        print("Combined: ", surveys + added_surveys)
-        
         for survey in surveys + added_surveys:
             if survey["name"] == survey_name:
-                print(f"Survey found: {survey_name}")
                 return survey["url"]
     
         return "not found"
@@ -260,9 +251,6 @@ class FormManager:
             last_name (str): The subject's last name.
             email (str): The subject's email address.
         """
-        print(f"Adding {subject_id}")
-        print(f"Adding {first_name}")
-        print(f"Adding {last_name}")
 
         file_path = 'subject_data/subjects.json'
 
@@ -274,11 +262,9 @@ class FormManager:
 
             with open(file_path, 'r') as file:
                 subject_objs = json.load(file)
-                print(f"Loading: {subject_objs}")
         else:
             with open(file_path, 'r') as file:
                 subject_objs = json.load(file)
-                print(f"Loading: {subject_objs}")
 
         if "subjects" not in subject_objs:
             subject_objs["subjects"] = {}

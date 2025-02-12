@@ -215,8 +215,9 @@
             <ul>
                 <li>Direct the subject to the IAT task.</li>
                 <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
+                <li>Click "Stop Task" when the task is complete. The event marker will be set to "subject_idle".</li>
             </ul><br>
-            <button class="IATButton">Start Task</button><br><br>
+            <button id="iat1" class="IATButton">Start Task</button><br><br>
         </div><br>
 
         <button class="toggle">PRS Task 1</button><br>
@@ -315,8 +316,9 @@
             <ul>
                 <li>Direct the subject to the IAT task.</li>
                 <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
+                <li>Click "Stop Task" when the task is complete. The event marker will be set to "subject_idle".</li>
             </ul><br>
-            <button class="IATButton">Start Task</button><br><br>
+            <button id="iat2" class="IATButton">Start Task</button><br><br>
         </div><br>
 
         <button class="toggle">PRS Task 2</button><br>
@@ -509,7 +511,7 @@
         const uploadEmotibitStatus = document.getElementById('uploadEmotibitStatus');
         const biometricStatusMessage = document.getElementById('biometricStatusMessage');
         const startEmotibitButton = document.getElementById('startEmotibitButton');
-        const startIATButtons = document.querySelectorAll('IATButton');
+        const startIATButtons = document.querySelectorAll('.IATButton');
         const comparePRS1Button = document.getElementById('comparePRS1Button');
         const comparePRS2Button = document.getElementById('comparePRS2Button');
         const compareTask1Button = document.getElementById('compareTask1Button');
@@ -823,9 +825,21 @@
             });
 
             startIATButtons.forEach(button => {
-                setEventMarker('IAT_task')
+                button.addEventListener('click', function() {
+                    if (this.innerText === 'Start Task') {
+                        if (this.id === 'iat1') {
+                            setEventMarker('iat_task_1');
+                        } else if (this.id === 'iat2') {
+                            setEventMarker('iat_task_2');
+                        }
+                        this.innerText = 'Stop Task';
+                    } else {
+                        setEventMarker('subject_idle');
+                        this.innerText = 'Start Task';
+                    }
+                });
             });
-
+      
             startPRSTaskButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     window.open('/prs', '_blank', 'width=800, height=600');
