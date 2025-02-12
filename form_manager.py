@@ -7,10 +7,20 @@ import csv
 class FormManager:
     def __init__(self) -> None:
         self._surveys_file = "surveys/surveys.json"
+        self._added_surveys_file = "surveys/added_surveys.json"
         self._surveys = self.load_surveys()
         self._formatted_surveys = []
+        self._added_surveys = []
         print("Form Manager initialized...")
         print("Form Manager's surveys file set to 'surveys/surveys.json'")
+
+    @property
+    def added_surveys(self) -> list:
+        return self._added_surveys
+    
+    @added_surveys.setter
+    def added_surveys(self, added_surveys) -> None:
+        self._added_surveys = added_surveys
 
     @property
     def embed_codes(self) -> list:
@@ -47,7 +57,7 @@ class FormManager:
         If the old functionality is needed, comment out the blocks of code that are marked with a comment and
         uncomment everything else.  
         """
-        survey_data = self.load_surveys()
+        survey_data = self.load_added_surveys()
         if survey_data is None:
             print("Survey file missing.")
             return("Survey file missing.")
@@ -59,10 +69,9 @@ class FormManager:
 
         if survey not in survey_data:
             survey_data.append(survey)
-            print("Survey added.")
 
-            if self._surveys_file:
-                with open(self._surveys_file, "w") as file:
+            if self._added_surveys_file:
+                with open(self._added_surveys_file, "w") as file:
                     json.dump({"surveys": survey_data}, file, indent=4)
                 return "Success"
             else:
@@ -174,9 +183,27 @@ class FormManager:
         else:
             raise ValueError("No surveys to autofill.")
     
+    def load_added_surveys(self) -> list:
+        if not os.path.exists(self._added_surveys_file):
+            print("surveys/added_surveys.json does not exist. Adding new file...")
+            with open(self._added_surveys_file, "w") as file:
+                json.dump({"added_surveys": []}, file)
+    
+            with open(self._added_surveys_file, "r") as file:
+                added_surveys = json.load(file)
+                surveys = added_surveys.get("added_surveys", [])
+                return surveys
+        else:
+            with open(self._added_surveys_file, "r") as file:
+                print("Loading added surveys...")
+                added_surveys = json.load(file)
+                surveys = added_surveys.get("added_surveys", [])
+                return surveys
+            
     def load_surveys(self) -> list:
         if not os.path.exists(self._surveys_file):
-            raise FileNotFoundError(f"{self._surveys_file} does not exist.")
+            print("surveys/surveys.json does not exist.")
+            return []
         else:
             with open(self._surveys_file, "r") as file:
                 survey_data = json.load(file)
@@ -185,7 +212,12 @@ class FormManager:
             
     def get_survey_url(self, survey_name: str) -> str:
         surveys = self.load_surveys()
-        for survey in surveys:
+        print("Surveys: ", surveys)
+        added_surveys = self.load_added_surveys()
+        print("Added Surveys: ", added_surveys)
+        print("Combined: ", surveys + added_surveys)
+        
+        for survey in surveys + added_surveys:
             if survey["name"] == survey_name:
                 print(f"Survey found: {survey_name}")
                 return survey["url"]
