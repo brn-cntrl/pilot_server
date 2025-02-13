@@ -12,7 +12,8 @@ class SERManager:
         self._model = Wav2Vec2ForSequenceClassification.from_pretrained("SER_MODEL").to(self.device)
         self._processor = Wav2Vec2Processor.from_pretrained("SER_MODEL")
         self.max_length = 32000
-        
+        self._audio_folder = None
+
         try:
             with open('label_maps/label_map.json', 'r') as f:
                 self.label_map = json.load(f)
@@ -55,3 +56,4 @@ class SERManager:
         confidence = softmax_probs[0, predicted_id].item()
 
         return self.inverse_label_map[str(predicted_id)], confidence
+    
