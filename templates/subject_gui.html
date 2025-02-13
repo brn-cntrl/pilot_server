@@ -80,8 +80,8 @@
                 <li>The experimenter will then direct you to press "Record" to test your microphone</li>
                 <li>After you press "Record", please read out loud the statement that appears below.</li>
             </ul><br>
-            <button id="testAudio">Record</button><br>
             <p id="audioStatusMessage"></p>
+            <button id="testAudio">Record</button><br><br>
             <button class="taskComplete">Task Complete</button>
         </div><br>
 
@@ -384,12 +384,16 @@
                 audioStatusMessage.innerText = "Please wait...";
                 startRecording()
                 .then(() => {
+                    playBeep();
+                })
+                .then(() => {
                     audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
                     testAudio.innerText = 'Stop';      
                 })
             }
             else if (testAudio.innerText === 'Stop') {
                 try {
+                    audioStatusMessage.innerText = "Processing response...";
                     const response = await fetch('/test_audio', { method: 'POST' });
                     const data = await response.json();
                     audioStatusMessage.innerText = `I got: ${data.result}`;

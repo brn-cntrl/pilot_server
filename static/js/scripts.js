@@ -15,32 +15,32 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// function processAudioFiles(statusElement, pathElement){
-//     fetch('/process_audio_files', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         }
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log(data.message);
-//         statusElement.style.display = 'block';
-//         statusElement.innerText = data.message;
-//         pathElement.style.display = 'block';
-//         pathElement.innerText = `Transcription/SER CSV location: ${data.path}`;
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//         statusElement.style.display = 'block';
-//         statusElement.innerText = "Error processing audio files.";
-//     });
-// }
+function processAudioFiles(statusElement, pathElement){
+    fetch('/process_audio_files', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        statusElement.style.display = 'block';
+        statusElement.innerText = data.message;
+        pathElement.style.display = 'block';
+        pathElement.innerText = `Transcription/SER CSV location: ${data.path}`;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusElement.style.display = 'block';
+        statusElement.innerText = "Error processing audio files.";
+    });
+}
 
 function setNextTest(){
     fetch('/set_next_test', {

@@ -610,9 +610,10 @@
             });
         }
 
-        // processAudio.addEventListener('click', function() {
-        //     processAudioFiles(audioProcessingStatus, audioProcessingPath);
-        // });
+        processAudio.addEventListener('click', function() {
+            audioProcessingStatus.innerText = "Processing audio files, this might take a while...";
+            processAudioFiles(audioProcessingStatus, audioProcessingPath);
+        });
 
         document.addEventListener("DOMContentLoaded", function () {;
             const uploadSurveyStatus = document.getElementById('uploadSurveyStatus');
@@ -812,12 +813,6 @@
                 }
             });
 
-            // compareBaselineButtons.forEach(button => {
-            //     button.addEventListener('click', function() {
-            //         compareToBaseline();
-            //     });
-            // });
-
             roomObservationButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     window.open('/room_observation', '_blank', 'width=800, height=600');
@@ -871,7 +866,7 @@
                 const gainNode = audioContext.createGain();
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 oscillator.start();

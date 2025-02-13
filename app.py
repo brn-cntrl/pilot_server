@@ -65,14 +65,14 @@ def process_audio_files() -> Response:
                 transcription = transcribe_audio(os.path.join(audio_folder, file))
                 emotion, confidence = ser_manager.predict_emotion(os.path.join(audio_folder, file))
                 timestamp = parts[1]
-                data_rows.append(timestamp, file, transcription, emotion, confidence)
+                data_rows.append([timestamp, file, transcription, emotion, confidence])
 
     data_rows.sort(key=lambda x: x[0])
     csv_path = os.path.join(subject_manager.subject_folder, f"{subject_id}_transcriptions_SER.csv")
 
     with open(csv_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Timestamp", "Transcription", "SER_Emotion", "SER_Confidence"])
+        writer.writerow(["Timestamp", "File_Name", "Transcription", "SER_Emotion", "SER_Confidence"])
         for row in data_rows:
             writer.writerow(row)   
 
