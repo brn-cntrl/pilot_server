@@ -459,7 +459,7 @@ def upload_subject_data() -> Response:
 
         # TODO: Add code for uploading to MySQL
 
-        return jsonify({'message': 'Subject biometric data processed.'}), 200
+        return jsonify({'message': 'Finished. H5 converted to CSV.'}), 200
 
     except Exception as e:
         return jsonify({'error': 'Error processing subject data.'}), 400

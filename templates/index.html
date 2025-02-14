@@ -1006,6 +1006,7 @@
             }
             
             convertEmotibitData.addEventListener('click', function() {
+                postProcessingStatus.innerText = "Converting EmotiBit data to CSV...";
                 fetch('/convert_emotibit_data', {
                     method: 'POST'
                 })
