@@ -179,7 +179,15 @@ class EmotiBitStreamer:
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
         self.is_streaming = True
-        
+
+    def close_h5_file(self):
+        if self.hdf5_file:
+            self.hdf5_file.flush()
+            self.hdf5_file.close()
+            return "HDF5 file closed."
+        else:
+            return "No HDF5 file to close."
+
     def stop(self) -> None:
         if self.server_thread:
             print(f"Stopping server at {self._ip}:{self._port}")
@@ -188,9 +196,6 @@ class EmotiBitStreamer:
             self.server.server_close()
             self.server_thread.join()
             self.server_thread = None
-
-            if self.hdf5_file:
-                self.hdf5_file.close()
 
             self.is_streaming = False
             print("Server stopped successfully.")

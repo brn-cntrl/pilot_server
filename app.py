@@ -976,6 +976,13 @@ def stop_emotibit() -> None:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
         return jsonify({'error': 'Error stopping EmotiBit stream.'}), 400
 
+@app.route('/closeh5', methods=['POST'])
+def closeh5():
+    global emotibit_streamer
+
+    file_closed = emotibit_streamer.close_h5_file()
+    return jsonify({'message': file_closed}), 200
+
 # File and System Ops ############################################
 def is_valid_email(email):
     """
@@ -1019,8 +1026,9 @@ def check_answer(transcription, correct_answers) -> bool:
     return any(word in correct_answers for word in transcription.split())
 
 def shutdown_server() -> None:
-    if emotibit_streamer.hdf5_file:
-                emotibit_streamer.hdf5_file.close()
+    if emotibit_streamer.server_thread is not None:
+        emotibit_streamer.stop()
+
     time.sleep(1)
     pid = os.getpid()
     os.kill(pid, signal.SIGINT)
@@ -1085,6 +1093,7 @@ if __name__ == '__main__':
 
     # TODO: For now, debug must be set to false when Emotibit streaming code is active.
     # This is because the port used by the EmotiBit will report as in use when in debug mode.
+    print(app.url_map)
     app.run(port=PORT_NUMBER,debug=False)
     
     # Uncomment when switching to pywebview
