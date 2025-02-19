@@ -112,7 +112,7 @@
                     return;
                 } else {
                     setEventMarker(eventMarker);
-
+                    setCondition('None');
                     submitAnswerButton.disabled = true;
                     loadingMessage.style.display = 'block';
                     statusContainer.innerText = 'Please wait...';
@@ -184,9 +184,7 @@
 
             // This will simply return if isProcessing is true.
             processAnswer(testEnded);
-
-            eventMarker = 'subject_idle';
-            setEventMarker(eventMarker);
+            setEventMarker('subject_idle');
             if (testNumber === 1){
                 statusContainer.innerText = 'Time is up! Please move on to the next task.';
                 
