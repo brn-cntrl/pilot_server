@@ -840,6 +840,7 @@
             baselineButton.addEventListener("click", function() {
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     setEventMarker('biometric_baseline');
+                    setCondition('None');
                     startBaseline();
                     
                     baselineButton.innerText = "Stop Collecting Baseline";
@@ -861,8 +862,10 @@
                     if (this.innerText === 'Start Task') {
                         if (this.id === 'iat1') {
                             setEventMarker('iat_task_1');
+                            setCondition('None');
                         } else if (this.id === 'iat2') {
                             setEventMarker('iat_task_2');
+                            setCondition('None');
                         }
                         this.innerText = 'Stop Task';
                     } else {
@@ -943,7 +946,8 @@
 
                 const parentDiv = button.closest('div');
                 const selectedCondition = parentDiv.querySelector('select').value;
-                let eventMarker = `${buttonId}_${selectedCondition}`;
+                let eventMarker = buttonId;
+                let condition = selectedCondition;
 
                 if(action === 'start') {
                     if (buttonId == 'task_1_recording'){
@@ -972,6 +976,7 @@
                     },
                     body: JSON.stringify({
                         event_marker: eventMarker,
+                        condition: condition,
                         action: action
                     })
                 })

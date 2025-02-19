@@ -35,7 +35,8 @@
             var video1 = document.getElementById("video1");
             var video2 = document.getElementById("video2");
             var timeout1, timeout2;
-
+            setCondition('None');
+            
             function stopVideo(video, messageId, timeoutVar) {
                 clearTimeout(timeoutVar); 
                 return setTimeout(function() {

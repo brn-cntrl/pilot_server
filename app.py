@@ -17,11 +17,16 @@ from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
 from emotibit_streamer_2 import EmotiBitStreamer
+from vernier_manager import VernierManager
 from ser_manager3 import SERManager
 from audio_file_manager import AudioFileManager
 from form_manager import FormManager
 from timestamp_manager import TimestampManager
 from werkzeug.utils import secure_filename
+
+# TODO: add code for creating tmp if not found
+# TODO: Debug h5 to csv
+# TODO: Separate conditions and event markers
 
 app = Flask(__name__)
 emotibit_thread = None
@@ -39,6 +44,7 @@ audio_file_manager = AudioFileManager('tmp/recording.wav', 'tmp') # tmp folder i
 ser_manager = SERManager()
 form_manager = FormManager()
 timestamp_manager = TimestampManager()
+vernier_manager = VernierManager()
 
 ##################################################################
 ## Routes 
@@ -131,12 +137,31 @@ def get_subject_id():
 
     return jsonify({'subject_id': f"{subject_id}"})
 
+@app.route('/set_condition', methods=['POST'])
+def set_condition() -> Response:
+    global emotibit_streamer, vernier_manager
+    data = request.get_json()
+    condition = data.get('condition')
+    try:
+        emotibit_streamer.condition = condition
+        vernier_manager.condition = condition
+
+        print("Condition set to: ", emotibit_streamer.condition)
+
+        return jsonify({'status': 'Condition set.'})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    
 @app.route('/set_event_marker', methods=['POST'])
 def set_event_marker():
-    global emotibit_streamer
+    global emotibit_streamer, vernier_manager
     data = request.get_json()
+    event_marker = data.get('event_marker')
     try:
-        emotibit_streamer.event_marker = data.get('event_marker')
+        emotibit_streamer.event_marker = event_marker
+        vernier_manager.event_marker = event_marker
+
         print("Event marker set to: ", emotibit_streamer.event_marker)
 
         return jsonify({'status': 'Event marker set.'})
@@ -251,7 +276,7 @@ def process_ser_answer() -> Response:
         print(f"Audio File Name: {file_name}")
 
         # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Condition': 'None', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
         audio_file_manager.save_audio_file(file_name)
 
         return jsonify({'status': 'Answer processed successfully.'})
@@ -650,17 +675,20 @@ def record_task_audio():
         - If action is 'stop':  {"message": "Recording stopped."}, 200
         - If action is invalid: {"message": "Invalid action."}, 400
     """
-    global recording_manager, timestamp_manager, subject_manager
+    global recording_manager, timestamp_manager, subject_manager, vernier_manager
     data = request.get_json()
     action = data.get('action')
     question = data.get('question')
     event_marker = data.get('event_marker')
+    condition = data.get('condition')
     event_marker = f"{event_marker}_{question}"
 
     try:
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
+            vernier_manager.event_marker = event_marker
+
             start_time = 10 # seconds
             while not recording_manager.stream_is_active:
                 if time.time() - start_time > 10:
@@ -677,7 +705,7 @@ def record_task_audio():
             file_name = f"{id}_{ts}_{event_marker}.wav"
 
             # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': file_name})
             audio_file_manager.save_audio_file(file_name)
 
             return jsonify({'message': 'Recording stopped.'}), 200
@@ -703,19 +731,28 @@ def record_task() -> Response:
                    with a 400 HTTP status code.
     """
     global recording_manager, subject_manager, audio_file_manager
-    global timestamp_manager, emotibit_streamer
+    global timestamp_manager, emotibit_streamer, vernier_manager
 
     try:
         data = request.get_json()
         event_marker = data.get('event_marker')
+        condition = data.get('condition')
         action = data.get('action')
         current_time_unix = timestamp_manager.get_timestamp()
         print(f"Current time in unix: {current_time_unix}")
         if action == 'start':
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
+            emotibit_streamer.condition = condition
+            vernier_manager.event_marker = event_marker
+            vernier_manager.condition = condition
+
              # DEBUG
             print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
+            print(f"EmbotiBit Condition: {emotibit_streamer.condition}")
+            print(f"Vernier Event Marker: {vernier_manager.event_marker}")
+            print(f"Vernier Condition: {vernier_manager.condition}")
+
             # timeout = 10 # seconds
             # start_time = time.time()
            
@@ -729,8 +766,13 @@ def record_task() -> Response:
         elif action == 'stop':
             recording_manager.stop_recording()
             emotibit_streamer.event_marker = 'subject_idle'
+            emotibit_streamer.condition = 'None'
+            vernier_manager.event_marker = 'subject_idle'
+            vernier_manager.condition = 'None'
+            
             # DEBUG
             print(f"EmbotiBit Event Marker: {emotibit_streamer.event_marker}")
+            print(f"EmbotiBit Condition: {emotibit_streamer.condition}")
 
             id = subject_manager.subject_id
             audio_segments = audio_file_manager.split_wav_to_segments(id, event_marker, audio_file_manager.recording_file, 60, "tmp/")
@@ -744,7 +786,7 @@ def record_task() -> Response:
 
             timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
 
-            task_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Audio_File': fn, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None} 
+            task_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': fn} 
                     for ts, fn, in zip(timestamps, audio_segments)]
             
             for data in task_data:
@@ -855,6 +897,10 @@ def prs():
                 });
                 
                 const eventMarker = localStorage.getItem('currentEventMarker');
+                const condition = localStorage.getItem('currentCondition');
+
+                setEventMarker(eventMarker);
+                setCondition(condition);
 
                 function startRecordingForSegment(audioElement, baseName) {
                     const statusElement = audioElement.parentElement.querySelector(".recording-status");
@@ -883,7 +929,7 @@ def prs():
                 function stopRecordingForSegment(audioElement, baseName) {
                     const statusElement = audioElement.parentElement.querySelector(".recording-status");
                     console.log(`Stopping recording for ${baseName}`);
-                    recordTaskAudio(eventMarker, 'stop', baseName, statusElement);
+                    recordTaskAudio(eventMarker, condition, 'stop', baseName, statusElement);
                     statusElement.innerText = "Recording stopped.";
                     playNextAudio();
                 }
@@ -904,6 +950,8 @@ def prs():
 
                         currentIndex++;
                     } else {
+                        setEventMaker('subject_idle');
+                        setCondition('None');
                         console.log("All audio segments completed.");
                     }
                 }
@@ -1045,7 +1093,9 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
         - List of start timestamps in ISO 8601 format for each segment.
     """
     print("Generating timestamps...")
-
+    if isinstance(start_time_unix, datetime.datetime):
+        start_time_unix = int(start_time_unix.timestamp())
+        
     segment_files = sorted(
         [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],
         key=lambda x: int(x.split('_')[-1].split('.')[0]) if x.split('_')[-1].split('.')[0].isdigit() else float('inf')
@@ -1053,7 +1103,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     print(segment_files)
 
     segment_timestamps = []
-    start_time_unix = datetime.datetime.fromisoformat(start_time_unix)
+    start_time_unix = datetime.datetime.fromtimestamp(start_time_unix, tz=datetime.timezone.utc)
     for i in range(len(segment_files)):
         timestamp = start_time_unix + datetime.timedelta(seconds=i * segment_duration)
         print(f"i: {i}, start_time_unix: {start_time_unix}, segment_duration: {segment_duration}, timestamp: {timestamp}")

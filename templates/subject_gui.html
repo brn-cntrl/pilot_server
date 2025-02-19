@@ -315,6 +315,7 @@
             
             status.innerText = "Please wait before responding...";
             setEventMarker('ser_baseline');
+            setCondition('None');
             startRecording()
                 .then(() => {
                     submitAnswer.disabled = false;

@@ -26,12 +26,13 @@ class EmotiBitStreamer:
         self._port = port
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
-        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
+        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
         # self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
         self.baseline_buffer = []
-        self.data_buffer = deque(maxlen=8000)
+        self.data_buffer = deque(maxlen=3000)
         self._event_marker = 'startup'
+        self._condition = 'None'
         self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
@@ -86,6 +87,14 @@ class EmotiBitStreamer:
     def data_folder(self, data_folder: str) -> None:
         self._data_folder = data_folder
     
+    @property
+    def condition(self) -> str:
+        return self._condition
+    
+    @condition.setter
+    def condition(self, value: str) -> None:
+        self._condition = value
+
     @property 
     def event_marker(self) -> str:
         return self._event_marker
@@ -122,7 +131,9 @@ class EmotiBitStreamer:
                     ('HRV', 'f4'),
                     ('PG', 'f4'),
                     ('RR', 'f4'),
-                    ('event_marker', h5py.string_dtype(encoding='utf-8'))
+                    ('event_marker', h5py.string_dtype(encoding='utf-8')),
+                    ('condition', h5py.string_dtype(encoding='utf-8'))
+                    
                 ])
                 self.dataset = self.hdf5_file.create_dataset(
                     'data', shape=(0,), maxshape=(None,), dtype=dtype
@@ -172,9 +183,9 @@ class EmotiBitStreamer:
 
         self.shutdown_event.clear()
 
-        self.csv_file = open(self.csv_filename, mode="w", newline="")
-        self.csv_writer = csv.writer(self.csv_file)
-        self.csv_writer.writerow(["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "baseline_status"])
+        # self.csv_file = open(self.csv_filename, mode="w", newline="")
+        # self.csv_writer = csv.writer(self.csv_file)
+        # self.csv_writer.writerow(["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"])
 
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
@@ -211,7 +222,7 @@ class EmotiBitStreamer:
             self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
-            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker"]}
+            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
         
         stream_type = address.split('/')[-1]
         timestamp = self.current_timestamp
@@ -321,7 +332,8 @@ class EmotiBitStreamer:
             new_data[0]['HRV'] = row.get('HRV', np.nan)
             new_data[0]['PG'] = row.get('PG', np.nan)
             new_data[0]['RR'] = row.get('RR', np.nan)
-            new_data[0]['event_marker'] = row.get('event_marker', '')
+            new_data[0]['event_marker'] = row.get('event_marker', ''),
+            new_data[0]['condition'] = row.get('condition', '')
 
             new_size = self.dataset.shape[0] + 1
             self._resize_dataset(new_size)  

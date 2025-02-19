@@ -1,11 +1,8 @@
 import threading
-import datetime
 import pyaudio
 import wave
 import speech_recognition as sr
 from timestamp_manager import TimestampManager
-import time
-import os
 
 class RecordingManager():
     """

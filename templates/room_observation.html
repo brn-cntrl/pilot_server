@@ -64,8 +64,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const eventMarker = localStorage.getItem('currentEventMarker');
-            
-            if(!eventMarker || eventMarker === 'null' || eventMarker === 'undefined') {
+            const condition = localStorage.getItem('currentCondition');
+
+            setEventMarker(eventMarker);
+            setCondition(condition);
+
+            if(!eventMarker || eventMarker === 'null' || eventMarker === 'undefined' || !condition || condition === 'null' || condition === 'undefined') {
                 alert('No condition found for task. Please go back to the main interface and select a condition.');
             } 
             const player1 = document.getElementById('audioPlayer1');
@@ -79,7 +83,6 @@
             const status4 = document.getElementById('audio4-status');
 
             player1.addEventListener('play', function() {
-                
                 status1.innerHTML = 'Introduction is now playing...';
             });
 
@@ -106,18 +109,9 @@
                 status3.innerHTML = 'Question 1 is now playing...';
             });
 
-            // let secondsBeforeEnd = 1; 
-            // player3.addEventListener('timeupdate', function() {
-            //     if (player3.duration - player3.currentTime <= secondsBeforeEnd && !player3.dataset.recordingStarted) {
-            //         player3.dataset.recordingStarted = "true"; 
-            //         recordTaskAudio(eventMarker, 'start', 1, status3); 
-            //         playBeep();
-            //     }
-            // });
-
             player3.addEventListener('ended', function() {
                 status3.innerHTML = 'Recording started... 3 minute timer started.';
-                recordTaskAudio(eventMarker, 'start', 1, status3); 
+                recordTaskAudio(eventMarker, condition, 'start', 1, status3); 
                 playBeep();
                 setTimeout(function() {
                     let beepCount = 0;
@@ -131,7 +125,7 @@
                 }, 165000); 
 
                 setTimeout(() => {
-                    recordTaskAudio(eventMarker, 'stop', 1, status3);
+                    recordTaskAudio(eventMarker, condition, 'stop', 1, status3);
                     player4.play();  
                 }, 180000);  
             });
@@ -139,18 +133,10 @@
             player4.addEventListener('play', function() {
                 status4.innerHTML = 'Question 2 is now playing...';
             });
-            
-            // player4.addEventListener('timeupdate', function() {
-            //     if (player4.duration - player4.currentTime <= secondsBeforeEnd && !player4.dataset.recordingStarted) {
-            //         player4.dataset.recordingStarted = "true"; 
-            //         recordTaskAudio(eventMarker, 'start', 2, status4); 
-            //         playBeep();
-            //     }
-            // });
 
             player4.addEventListener('ended', function() {
                 status4.innerHTML = 'Recording started... 3 minute timer started.';
-                recordTaskAudio(eventMarker, 'start', 2, status4); 
+                recordTaskAudio(eventMarker, condition, 'start', 2, status4); 
                 playBeep();
                 setTimeout(function() {
                     let beepCount = 0;
@@ -164,7 +150,9 @@
                 }, 175000); 
 
                 setTimeout(() => {
-                    recordTaskAudio(eventMarker, 'stop', 2, status4);
+                    recordTaskAudio(eventMarker, condition, 'stop', 2, status4);
+                    setCondition('None');
+                    setEventMarker('subject_idle');
                     status4.innerText = "Recording has stopped. Task is complete.";
                 }, 180000);  
             });
