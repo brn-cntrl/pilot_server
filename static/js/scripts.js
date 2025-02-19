@@ -66,9 +66,28 @@ function setNextTest(){
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;
-    let currentEventMarker = `${event}_${selectedCondition}`
-    localStorage.setItem('currentEventMarker', currentEventMarker);
-    console.log(currentEventMarker);
+    // let currentEventMarker = `${event}_${selectedCondition}`
+    localStorage.setItem('currentEventMarker', event);
+    localStorage.setItem('currentCondition', selectedCondition);
+    console.log(selectedCondition);
+    console.log(event);
+}
+
+function setCondition(condition){
+    fetch('/set_condition', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'condition': condition
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+    })
+    .catch(error => console.error('status:', error));
 }
 
 function setEventMarker(eventMarker){
@@ -88,13 +107,14 @@ function setEventMarker(eventMarker){
     .catch(error => console.error('status:', error));
 }
 
-function recordTaskAudio(eventMarker, action, question, divID){
+function recordTaskAudio(eventMarker, condition, action, question, divID){
     fetch('/record_task_audio', { method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             'event_marker': eventMarker,
+            'condition': condition,
             'action': action,
             'question': question
         })
