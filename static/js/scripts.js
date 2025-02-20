@@ -414,7 +414,7 @@ function playBeep() {
     const oscillator = beepContext.createOscillator();
     const gainNode = beepContext.createGain();
     oscillator.type = 'sine'; 
-    oscillator.frequency.setValueAtTime(440, beepContext.currentTime);
+    oscillator.frequency.setValueAtTime(500, beepContext.currentTime);
     gainNode.gain.setValueAtTime(0.07, beepContext.currentTime);
     oscillator.connect(gainNode);
     gainNode.connect(beepContext.destination);

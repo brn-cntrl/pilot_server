@@ -480,11 +480,11 @@ def import_emotibit_csv() -> Response:
 def upload_subject_data() -> Response:
     global subject_manager, emotibit_streamer
     try:
-        emotibit_streamer.hdf5_to_csv()
+        message = emotibit_streamer.hdf5_to_csv()
 
-        # TODO: Add code for uploading to MySQL
+        # TODO: Add code for uploading to postgres
 
-        return jsonify({'message': 'Finished. H5 converted to CSV.'}), 200
+        return jsonify({'message': message}), 200
 
     except Exception as e:
         return jsonify({'error': 'Error processing subject data.'}), 400
@@ -1095,7 +1095,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     print("Generating timestamps...")
     if isinstance(start_time_unix, datetime.datetime):
         start_time_unix = int(start_time_unix.timestamp())
-        
+
     segment_files = sorted(
         [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],
         key=lambda x: int(x.split('_')[-1].split('.')[0]) if x.split('_')[-1].split('.')[0].isdigit() else float('inf')
@@ -1143,7 +1143,11 @@ if __name__ == '__main__':
 
     # TODO: For now, debug must be set to false when Emotibit streaming code is active.
     # This is because the port used by the EmotiBit will report as in use when in debug mode.
-    print(app.url_map)
+    # print(app.url_map)
+
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+        
     app.run(port=PORT_NUMBER,debug=False)
     
     # Uncomment when switching to pywebview

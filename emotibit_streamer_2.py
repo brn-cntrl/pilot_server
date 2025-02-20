@@ -11,6 +11,7 @@ import atexit
 from datetime import datetime, timedelta
 from collections import deque
 from timestamp_manager import TimestampManager
+import pandas as pd
 
 # TODO: Look into Neurokit 2 and EmotiBit tools for analysis
 """
@@ -128,9 +129,7 @@ class EmotiBitStreamer:
                     ('EDA', 'f4'),
                     ('HR', 'f4'),
                     ('BI', 'f4'),
-                    ('HRV', 'f4'),
                     ('PG', 'f4'),
-                    ('RR', 'f4'),
                     ('event_marker', h5py.string_dtype(encoding='utf-8')),
                     ('condition', h5py.string_dtype(encoding='utf-8'))
                     
@@ -141,11 +140,11 @@ class EmotiBitStreamer:
             else:
                 self.dataset = self.hdf5_file['data']  
 
-            with h5py.File(self.hdf5_filename, "r") as f:
-                if "data" in f:
-                    dt = f["data"]
-                else:
-                    print("Dataset 'data' not found in the HDF5 file.")
+            if "data" in self.hdf5_file:
+                print("Dataset 'data' found in the HDF5 file.")
+            else:
+                print("Dataset 'data' not found in the HDF5 file.")
+
 
             # DEBUG
             print("HDF5 file created for emotibit data: ", self.hdf5_filename)
@@ -183,10 +182,6 @@ class EmotiBitStreamer:
 
         self.shutdown_event.clear()
 
-        # self.csv_file = open(self.csv_filename, mode="w", newline="")
-        # self.csv_writer = csv.writer(self.csv_file)
-        # self.csv_writer.writerow(["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"])
-
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.start()
         self.is_streaming = True
@@ -222,31 +217,15 @@ class EmotiBitStreamer:
             self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
-            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
+            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "PG", "event_marker", "condition"]}
         
         stream_type = address.split('/')[-1]
         timestamp = self.current_timestamp
         value = args[0]
-        # self.last_received[stream_type] = time.time()
-        # derived_value = None
-
-        # DEBUG
-        # print(self.event_marker)
 
         self.current_row["timestamp"] = timestamp
         self.current_row["event_marker"] = self.event_marker
-
-        # if stream_type in self.data_window:
-        #     if value is not None:
-        #         self.data_window[stream_type].append(value)
-                
-        #         if stream_type == "BI" and len(self.data_window["BI"]) > 10:  
-        #             derived_value = self.calculate_hrv()
-        #             self.current_row['HRV'] = derived_value if derived_value is not None else None
-        #             print(f"HRV: {derived_value}")
-        #         elif stream_type == "PPG:GRN" and len(self.data_window["PPG:GRN"]) > 200:  
-        #             derived_value = self.calculate_rr()
-        #             self.current_row['RR'] = derived_value if derived_value is not None else None
+        self.current_row["condition"] = self.condition
 
         if stream_type == "EDA":
             self.current_row["EDA"] = value
@@ -260,12 +239,9 @@ class EmotiBitStreamer:
         if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "PG"]):
             if self.event_marker == "biometric_baseline" and not self.baseline_collected:
                 self.baseline_buffer.append(self.current_row)
-                # Debug
-                # print(f"Baseline Buffer: {self.baseline_buffer[-1]}")
+        
             elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
                 self.data_buffer.append(self.current_row)
-                # Debug
-                # print(f"Data Buffer: {self.data_buffer[-1]}")
 
             self.write_to_hdf5(self.current_row)
 
@@ -329,10 +305,8 @@ class EmotiBitStreamer:
             new_data[0]['EDA'] = row.get('EDA', np.nan)
             new_data[0]['HR'] = row.get('HR', np.nan)
             new_data[0]['BI'] = row.get('BI', np.nan)
-            new_data[0]['HRV'] = row.get('HRV', np.nan)
             new_data[0]['PG'] = row.get('PG', np.nan)
-            new_data[0]['RR'] = row.get('RR', np.nan)
-            new_data[0]['event_marker'] = row.get('event_marker', ''),
+            new_data[0]['event_marker'] = row.get('event_marker', '')
             new_data[0]['condition'] = row.get('condition', '')
 
             new_size = self.dataset.shape[0] + 1
@@ -409,7 +383,7 @@ class EmotiBitStreamer:
         return comparisons 
 
     # NOTE: If derived values are add to the h5 file as a second dataset, this method will need to be altered.
-    def hdf5_to_csv(self) -> None:
+    def hdf5_to_csv(self) -> str:
         """
         Convert an HDF5 file to a CSV file.
         Dependencies:
@@ -417,33 +391,52 @@ class EmotiBitStreamer:
             csv_filename (str): The path to the CSV file to be created.
         """
         try:
-            # Open the HDF5 file in read mode
+            chunk_size = 1000
             with h5py.File(self.hdf5_filename, 'r') as h5_file:
-                # Check if the 'data' dataset exists
                 if 'data' not in h5_file:
                     print(f"Dataset 'data' not found in the file {self.hdf5_filename}.")
                     return
                 
                 dataset = h5_file['data']
-                
-                # Get the field names (column names) from the dataset
                 field_names = dataset.dtype.names
-                
-                with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csv_file:
-                    writer = csv.DictWriter(csv_file, fieldnames=field_names)
-                    writer.writeheader()
+                first_chunk = True
+
+                for start in range(0, dataset.shape[0], chunk_size):
+                    end = min(start + chunk_size, dataset.shape[0])
+                    chunk = dataset[start:end]
+
+                    chunk_dict = {
+                        field: chunk[field] if chunk[field].dtype.kind != 'S' 
+                            else np.char.decode(chunk[field], 'utf-8')
+                        for field in field_names
+                    }
+
+                    chunk_df = pd.DataFrame(chunk_dict)
+
+                    if first_chunk:
+                        chunk_df.to_csv(self.csv_filename, mode='w', index=False, header=True)
+                        first_chunk = False
+                    else:
+                        chunk_df.to_csv(self.csv_filename, mode='a', header=False, index=False)
+
+                # with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csv_file:
+                #     writer = csv.DictWriter(csv_file, fieldnames=field_names)
+                #     writer.writeheader()
                     
-                    for idx in range(dataset.shape[0]):
-                        row = {
-                            field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' 
-                                else dataset[field][idx]
-                            for field in field_names
-                        }
-                        writer.writerow(row)
+                #     for idx in range(dataset.shape[0]):
+                #         row = {
+                #             field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' 
+                #                 else dataset[field][idx]
+                #             for field in field_names
+                #         }
+                #         writer.writerow(row)
             
             print(f"HDF5 file '{self.hdf5_filename}' successfully converted to CSV file '{self.csv_filename}'.")
-
+            return "Conversion successful."
+        
         except FileNotFoundError:
             print(f"Error: The HDF5 file '{self.hdf5_filename}' was not found.")
+            return "HDF5 file not found"
         except Exception as e:
             print(f"Error converting HDF5 to CSV: {e}")
+            return "Conversion failed."
