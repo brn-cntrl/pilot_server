@@ -11,8 +11,10 @@
     <h1>Experiment Dashboard</h1>
     <span class="buttonRow">
         <button class="stopEmotibit">Stop Emotibit</button>
-        <button class="stopServer">Stop Server</button><br>
+        <button class="stopServer">Stop Server</button>
+        <button class="stopVernier">Stop Respiratory Belt</button><br>
         <p class="emotibitStatus"></p>
+        <p class="vernierStatus"></p>
     </span>
 
     <h2>Pre-Test</h2>
@@ -74,10 +76,14 @@
             <li><span class="required">IMPORTANT:</span> Once you see the graphs detecting data, check "Record" on the Oscilloscope interface.</li>
             <li>From the "Output List" on the Oscilloscope interface, check "OSC" to stream data to the server.</li>
             <li>Start the EmotiBit stream by pressing the button below.</li>
-            <li>The subject must click "Task Completed" when the task is finished.</li>
+            <li>Ensure the Vernier Belt is fitted to the subject.</li>
+            <li>Ensure the Vernier Belt is switched on and that the BlueTooth light is active.</li>
+            <li>Click "Start Respiratory Belt" to begin streaming the Vernier Belt data.</li>
         </ul><br>
         <button id="startEmotibitButton">Start EmotiBit</button><br>
         <p class="emotibitStatus"></p>
+        <button id="startVernierButton">Start Respiratory Belt</button><br>
+        <p class="vernierStatus"></p>
     </div><br>
 
     <button class="toggle">Demographics Survey</button><br>
@@ -366,9 +372,13 @@
                 <li>Instruct the subject to fill out the exit survey before completing the experiment.</li>
             </ul>
         </div><br>
-        <button class="toggle stopEmotibit">Stop Emotibit</button><br>
-        <div class="innerModule" id="emotibitDiv" style="display:none;">
+
+        <button class="toggle">Stop Devices</button><br>
+        <div class="innerModule" style="display:none;">
+            <button class="stopEmotibit">Stop Emotibit</button><br>
             <p class="emotibitStatus"></p>
+            <button class="stopVernier">Stop Respiratory Belt</button><br>
+            <p class="vernierStatus"></p>
         </div><br>
 
         <button class="toggle">Post Processing</button><br>
@@ -516,6 +526,9 @@
         const uploadEmotibitStatus = document.getElementById('uploadEmotibitStatus');
         const biometricStatusMessage = document.getElementById('biometricStatusMessage');
         const startEmotibitButton = document.getElementById('startEmotibitButton');
+        const startVernierButton = document.getElementById('startVernierButton');
+        const stopVernierButtons = document.querySelectorAll('.stopVernier');
+        const vernierStatus = document.querySelectorAll('.vernierStatus');
         const startIATButtons = document.querySelectorAll('.IATButton');
         const comparePRS1Button = document.getElementById('comparePRS1Button');
         const comparePRS2Button = document.getElementById('comparePRS2Button');
@@ -526,7 +539,6 @@
         const compareTask1status = document.getElementById('compareTask1status');
         const compareTask2status = document.getElementById('compareTask2status');
         const testAudioOutput = document.getElementById('testAudioOutput');
-        const emotibitDiv = document.getElementById('emotibitDiv');
         const encryptSubject = document.getElementById('encryptSubject');
         const decryptSubject = document.getElementById('decryptSubject');
         const decryptionStatusName = document.getElementById('decryptionStatusName');
@@ -550,6 +562,65 @@
         const stopEmotibitButtons = document.querySelectorAll('.stopEmotibit');
         const emotibitStatus = document.querySelectorAll('.emotibitStatus');
         const openEmotibitDialog = document.getElementById('openEmotibitDialog');
+
+        document.addEventListener('DOMContentLoaded', function(){
+            startVernierButton.addEventListener('click', function(){
+                vernierStatus.forEach(status => {
+                    status.innerText = "Starting respiratory belt, please wait...";
+                });
+                fetch('/start_vernier', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    vernierStatus.forEach(status => {
+                        status.innerText = data.message;
+                    });
+                })
+                .catch(error => {
+                    vernierStatus.forEach(status => {
+                        status.innerText = "An error occurred.";
+                    });
+                });
+            });
+
+            stopVernierButtons.forEach(button => {
+                button.addEventListener('click', function(){
+                    fetch('/stop_vernier', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        vernierStatus.forEach(status => {
+                            status.innerText = data.message;
+                        });
+                    })
+                    .catch(error => {
+                        vernierStatus.forEach(status => {
+                            status.innerText = "An error occurred while stopping the respiratory belt streamer.";
+                        });
+                    });
+                });
+            });
+        });
 
         document.addEventListener('DOMContentLoaded', function(){
             console.log("Script running, DOM loaded.");
@@ -1057,14 +1128,12 @@
                         return response.json();
                     })
                     .then(data => {
-                        emotibitDiv.style.display = 'block';
                         emotibitStatus.forEach(status => {
                             status.innerText = data.message;
                         });
                         console.log(data.message);
                     })
                     .catch(error => {
-                        emotibitDiv.style.display = 'block';
                         emotibitStatus.forEach(status => {
                             status.innerText = error.message || "An error occurred.";
                         });

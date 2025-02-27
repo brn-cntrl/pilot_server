@@ -12,25 +12,24 @@ Installation of the godirect package is required using 'pip3 install godirect'
 """
 
 from godirect import GoDirect
+import asyncio
 import logging
 from timestamp_manager import TimestampManager
 from threading import Thread
 from collections import deque
 import os
 import csv
-import datetime
+from datetime import datetime
 import time
 import h5py
 import numpy as np
+import scipy.signal as signal
 
 class VernierManager:
     def __init__(self):
         self._device = None
         self._sensors = None
         self.timestamp_manager = TimestampManager()
-        self._data_window = deque(maxlen=30)
-        self._collecting_baseline = False
-        self._baseline_data = []
         self._event_marker = "start_up"
         self._condition = 'None'
         self.hdf5_file = None
@@ -39,8 +38,12 @@ class VernierManager:
         self.data_folder = None
         self.thread = None
         self._running = False
-        self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
+        self._current_row = {"timestamp": None, "force": None, "event_marker": self._event_marker, "condition": self._condition}
         self._device_started = False
+
+        # self._fs = 10
+        # self._window_seconds = 30   
+        # self._force_values = deque(maxlen=self._fs * self._window_seconds)
 
     @property 
     def running(self):
@@ -98,21 +101,55 @@ class VernierManager:
             print(f"Error initializing HDF5 file: {e}")
 
     def start(self):
+        asyncio.set_event_loop(asyncio.new_event_loop())
         self._godirect = GoDirect(use_ble=True, use_usb=True)
         print("GoDirect v"+str(self._godirect.get_version()))
         print("\nSearching...", flush=True, end ="")
         self._device = self._godirect.get_device(threshold=-100)
 
         if self._device != None and self._device.open(auto_start=False):
-            self._device.start(period=1000) 
+            self._device.start(period=100) 
             print("Connecting to Vernier device...")
-            print("Connected to "+self._device.name)
+            print("Connected to " + self._device.name)
             self._sensors = self._device.get_enabled_sensors()
             self._device_started = True
 
+    # def calculate_respiratory_rate(self, force_values, fs=10, window_seconds=30):
+    #     """
+    #     Calculate the respiratory rate from force values.
+    #     This function calculates the respiratory rate based on the provided force values.
+    #     It uses peak detection to count the number of breaths within a specified window of time.
+    #     Parameters:
+    #         force_values (list or array-like): The force values from which to calculate the respiratory rate.
+    #         fs (int, optional): The sampling frequency of the force values in Hz. Default is 10 Hz.
+    #         window_seconds (int, optional): The time window in seconds over which to calculate the respiratory rate. Default is 30 seconds.
+    #         NOTE: A moving average can be applied to the force values before peak detection to smooth the signal. This has been added and commented
+    #         out for future use.
+    #     Returns:
+    #         float or None: The calculated respiratory rate in breaths per minute, or None if there are not enough data points.
+    #     """
+    #     if len(force_values) < fs * window_seconds:
+    #         return None  
+        
+    #     force_array = np.array(force_values)
+
+        # Apply a moving average to the force values
+        # window_size = fs * 3 # 3-second window
+        # baseline = np.convolve(force_array, np.ones(window_size)/window_size, mode='same')
+        # Subtract baseline to normalize signal
+        # corrected_signal = force_array - baseline
+
+        # replace force_array with corrected_signal if moving average is applied
+        # peaks, _ = signal.find_peaks(force_array, distance = fs/2)
+
+        # num_breaths = len(peaks)
+        # respiratory_rate = (num_breaths / window_seconds) * 60 
+
+        # return respiratory_rate
+    
     def collect_data(self):
         if not self.running:
-            print("Go Direct device not started.")
+            print("Go Direct device stopped.")
             return
         
         while self.running:
@@ -120,58 +157,71 @@ class VernierManager:
                 for sensor in self._sensors:
                     if sensor.sensor_description == "Force":
                         ts = self.timestamp_manager.get_timestamp("iso")
-                        self._data_window.append(sensor.values[0])
-                        
-                        if len(self._data_window) == self._data_window.maxlen:
-                            # Perform RR calculation and add to the current row
-                            pass
+                        force_value = sensor.values[0] if sensor.values else None
+                        # self._force_values.append(sensor.values[0])
+                        # rr_values = self.calculate_respiratory_rate(self._force_values, self._fs, self._window_seconds)
 
-                        self._current_row["timestamp"] = ts
-                        self._current_row["force"] = sensor.values[0]
-                        self._current_row["RR"] = None 
-                        self._current_row["event_marker"] = self.event_marker
-                        self._current_row["condition"] = self.condition
-                        
-                        # TODO: Add RR calculation
+                        if force_value is not None:
+                            self._current_row["timestamp"] = ts
+                            self._current_row["force"] = force_value
+                            # self._current_row["RR"] = rr_values
+                            self._current_row["event_marker"] = self.event_marker
+                            self._current_row["condition"] = self.condition
 
-                        if self._collecting_baseline:
-                            self._baseline_data.append(self._current_row)
-                            sensor.clear()
+                            self.write_to_hdf5(self._current_row)
                         else:
-                            self._data_window.append(sensor.values[0])
-                        # TODO: Add functionality for writing to h5 and calculating RR
-                    
-            time.sleep(1)
+                            print("Error reading force sensor.")
+
+                    sensor.clear()
+            else:
+                print("Error reading from sensor.")
+                break
+
+            time.sleep(.11)
 
     def run(self):
-        if not hasattr(self, 'thread') or not self.thread.is_alive():
+        if self.thread is None or not self.thread.is_alive():
             if self._device_started:
+                self.running = True
                 self.thread = Thread(target=self.collect_data, daemon=True)
                 self.thread.start()
-                self.running = True
+                print("Vernier manager running...")
+            else:
+                print("Device has not started yet.")
         else:
             print("Thread is already running.")
             
     def stop(self):
-        if hasattr(self, 'thread') and self.thread.is_alive():
-            self.thread.join()
-            print("Thread stopped.")
+        try:
+            if hasattr(self, 'thread') and self.thread.is_alive():
+                self.running = False
+                self.thread.join()
+                print("Thread stopped.")
 
-        self._device.stop()
-        self._device.close()
-        self.running = False
-        self._device_started = False
-        print("\nDisconnected from "+self._device.name)   
+            if self._device_started:
+                self._device.stop()
+                self._device.close()
+                self._device_started = False
+
+                print("\nDisconnected from "+self._device.name)
+                print("Quitting GoDirect...")
+                self.quit()
+                
+                print("Closing HDF5 file...")
+                self.close_h5_file()
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def quit(self):
         self._godirect.quit()
 
-    def collect_baseline(self):
-        if self._collecting_baseline:
-            print("Already collecting baseline data.")
-        else:
-            self.event_marker = "respiratory_baseline"
-            self._collecting_baseline = True
+    # def collect_baseline(self):
+    #     if self._collecting_baseline:
+    #         print("Already collecting baseline data.")
+    #     else:
+    #         self.event_marker = "respiratory_baseline"
+    #         self._collecting_baseline = True
 
     def _resize_dataset(self, new_size):
         """Resize the HDF5 dataset while ensuring thread synchronization."""
@@ -193,7 +243,7 @@ class VernierManager:
             new_data = np.zeros(1, dtype=self.dataset.dtype)  
             new_data[0]['timestamp'] = row.get('timestamp', '')  
             new_data[0]['force'] = row.get('force', np.nan)
-            new_data[0]['RR'] = row.get('RR', np.nan)
+            # new_data[0]['RR'] = row.get('RR', np.nan)
             new_data[0]['event_marker'] = row.get('event_marker', '')
             new_data[0]['condition'] = row.get('condition', '')
 

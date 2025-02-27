@@ -508,7 +508,7 @@ def submit() -> Response:
         - On success: Returns a JSON object with a success message and URLs for the PSS4, exit, and demographics surveys, with a 200 status code.
         - On failure: Returns a JSON object with an error message, with a 400 status code.
     """
-    global subject_manager, form_manager, audio_file_manager, emotibit_streamer
+    global subject_manager, form_manager, audio_file_manager, emotibit_streamer, vernier_manager
 
     experiment_name = subject_manager.experiment_name
     trial_name = subject_manager.trial_name
@@ -533,9 +533,13 @@ def submit() -> Response:
             subject_PID = form_manager.clean_string(request.form.get('PID')) 
             subject_class = form_manager.clean_string(request.form.get('class'))
             subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
+
             audio_file_manager.set_audio_folder(subject_manager.subject_folder)
             emotibit_streamer.set_data_folder(subject_manager.subject_folder)
             emotibit_streamer.initialize_hdf5_file(subject_id)
+            vernier_manager.set_data_folder(subject_manager.subject_folder) 
+            vernier_manager.initialize_hdf5_file(subject_id)
+
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
             demographics = form_manager.get_custom_url("demographics", subject_manager.subject_id)
@@ -997,6 +1001,39 @@ def test_page() -> Response:
     print(f"Current test index: {test_manager.current_test_index}")
     return render_template('test_page.html')
 
+# Vernier ########################################################
+@app.route('/start_vernier', methods=['POST'])
+def start_vernier() -> None:
+    global vernier_manager
+    try:
+        if vernier_manager.running:
+            return jsonify({'message': 'Vernier belt is already running'})
+
+        vernier_manager.start()
+        print("Vernier belt has started.")
+        time.sleep(1)
+        vernier_manager.run()
+
+        return jsonify({'message': 'Vernier stream started.'}), 200
+
+    except Exception as e:
+        print(f"An error occurred while trying to start Vernier stream: {str(e)}")
+
+@app.route('/stop_vernier', methods=['POST'])
+def stop_vernier() -> None:
+    global vernier_manager
+    try:
+        if vernier_manager.running:
+            vernier_manager.stop()
+            print("Vernier server stopped.")
+            return jsonify({'message': 'Respiratory belt stopped.'}), 200
+        else:
+            return jsonify({'message': 'Respiratory belt is not active.'}), 400
+        
+    except Exception as e:
+        print(f"An error occurred while trying to stop Vernier stream: {str(e)}")
+        return jsonify({'error': 'Error stopping Vernier stream.'}), 400
+    
 # Emotibit #######################################################
 @app.route('/start_emotibit', methods=['POST'])
 def start_emotibit() -> None:
@@ -1030,6 +1067,16 @@ def closeh5():
 
     file_closed = emotibit_streamer.close_h5_file()
     return jsonify({'message': file_closed}), 200
+
+@app.route('/submit_pwd', methods=['POST'])
+def submit_pwd() -> Response:
+    password = "ucsdxrlab"
+    guess = request.form.get('password')
+
+    if guess == password:
+        return jsonify({'message': 'Correct password.'}), 200
+    else:
+        return jsonify({'message': 'Incorrect password.'}), 400
 
 # File and System Ops ############################################
 def is_valid_email(email):
@@ -1147,7 +1194,7 @@ if __name__ == '__main__':
 
     if not os.path.exists('tmp'):
         os.makedirs('tmp')
-        
+
     app.run(port=PORT_NUMBER,debug=False)
     
     # Uncomment when switching to pywebview
