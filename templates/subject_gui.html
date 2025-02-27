@@ -29,51 +29,64 @@
                     <input type="text" id="last_name" name="last_name" required><br><br>
                     <label for="email">Email:</label>
                     <input type="email" id="email" name="email" required><br><br>
-                    <p>Please fill out the following information. If not applicable, please write "N/A" in each field:</p>
+                    <label for="emailReenter">Re-enter Email:</label>
+                    <input type="email" id="emailReenter" name="emailReenter" required><br><br>
+                    <span id="noMatch" style="color: red; display: none;">Emails do not match.</span><br>
+                    <!-- <p>Please fill out the following information. If not applicable, please write "N/A" in each field:</p> -->
                     <label for="PID">PID:<span class="required">*</span></label>
                     <input type="text" id="PID" name="PID"><br><br>
                     <label for="class">Class you will assigning SONA credit to:<span class="required">*</span></label>
                     <input type="text" id="class" name="class"><br><br>
                     <button type="submit" id="submitButton">Submit Information</button>
                 </form><br>
-                <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div>
-                <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div><br>
+                <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div><br>
+                <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
+                <div id="deviceSetupDiv" style="display:none;">The experimenter will now help you with two devices needed to collect data for the session.</div>
+            </div><br>
+
+            <!-- <button class="toggle nextButton" style="display:none;">Device Setup</button> -->
+            <!-- <div class="testModule" id="deviceSetupDiv" style="display:none;">
+                <ul>
+                    <li>The experimenter will now help you with two devices needed to collect data for the session.</li>
+                </ul>
                 <button class="taskComplete">Task Complete</button>
-            </div>
-        </div><br>
+            </div><br> -->
 
-        <button class="toggle nextButton" style="display:none;">Device Setup</button>
-        <div class="testModule nextDiv" style="display:none;">
-            <ul>
-                <li>The experimenter will now help you with two devices needed to collect data for the session.</li>
-            </ul>
-            <button class="taskComplete">Task Complete</button>
-        </div><br>
-
-        <button class="toggle nextButton" style="display:none;">Demographics</button>
-        <div class="testModule nextDiv" style="display:none;">
+        <button class="toggle" id="survey1Button" style="display:none;">Survey 1</button>
+        <div class="innerModule" id="survey1Div" style="display:none;">
             <p>Please fill out this form.</p>
             <div id="demographicsDiv" style="display:block;"></div><br>
             <button class="taskComplete">Task Complete</button>
         </div><br>
 
-        <button class="toggle nextButton" style="display:none;">Data Collection</button>
+        <!-- <button class="toggle nextButton" style="display:none;">Data Collection</button>
         <div class="testModule nextDiv" style="display:none;">
             <ul>
                 <li>The experimenter will now begin collecting baseline data for the session.</li>
             </ul>
             <button class="taskComplete">Task Complete</button>
-        </div><br>
+        </div><br> -->
 
-        <button class="toggle nextButton" style="display:none;">Survey</button>
-        <div class="testModule nextDiv" style="display:none;">
+        <button class="toggle nextButton" style="display:none;">Survey 2</button>
+        <div class="innerModule nextDiv" style="display:none;">
             <p>Please fill out this form.</p>
             <div id="pss4Div" style="display:none;"></div><br>
             <button class="taskComplete">Task Complete</button>
         </div><br>
 
+        <button class="toggle nextButton" style="display:none;">Password</button>
+        <div class="innerModule nextDiv" style="display:none;">
+            <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
+            <form action="/submit_pwd" method="POST" id="experimenterPwd1">
+                <label for="password">Password:</label>
+                <input type="text" name="password" id="password"><br><br>
+                <button type="submit" id="submitPassword">Submit Password</button>
+            </form>
+            <div id="pwdErrorNotification1" style="display:none; color: red;">Incorrect Password.</div><br>
+        </div><br>
+        
         <button class="toggle nextButton" style="display:none;">Test Audio</button>
-        <div class="testModule nextDiv" style="display:none;">
+        <div class="innerModule nextDiv" style="display:none;">
             <ul>
                 <li>The experimenter will now place your headphones and attach a microphone to record audio for the session.</li>
                 <li>The experimenter will then play three short tones to test your headphones</li>
@@ -86,7 +99,7 @@
         </div><br>
 
         <button class="toggle nextButton" style="display:none;">Mood Q&A</button>
-        <div class="testModule nextDiv" style="display:none;">
+        <div class="innerModule nextDiv" style="display:none;">
             <ul>
                 <li>Press "Begin"</li>
                 <li>Read the first question when it appears</li>
@@ -99,7 +112,7 @@
             <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button><br><br>
             <button class="taskComplete">Task Complete</button>
         </div><br>
-    </div>
+    </div><br>
 
     <button class="toggle nextButton" style="display:none;">Experimental Tasks</button>
     <div class="nextDiv" style="display:none;">
@@ -199,6 +212,10 @@
     </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
+        const survey1Button = document.getElementById('survey1Button');
+        const survey1Div = document.getElementById('survey1Div');
+        const pwdErrorNotification1 = document.getElementById('pwdErrorNotification1');
+        const experimenterPwd1 = document.getElementById('experimenterPwd1');
         const nameForm = document.getElementById('nameForm')
         const submitButton = document.getElementById('submitButton');
         const notification1 = document.getElementById('notification1');
@@ -235,6 +252,20 @@
                     window.open('/test_page', '_blank', 'width=800, height=600');
                 });
             }
+
+            document.getElementById('email').addEventListener('input', checkEmailsMatch);
+            document.getElementById('emailReenter').addEventListener('input', checkEmailsMatch);
+
+            function checkEmailsMatch() {
+                var email = document.getElementById('email').value;
+                var emailReenter = document.getElementById('emailReenter').value;
+
+                if (email !== emailReenter) {
+                    document.getElementById('noMatch').style.display = 'block';  // Show error message
+                } else {
+                    document.getElementById('noMatch').style.display = 'none';  // Hide error message
+                }
+            }
         });
         
         // Resets emotion baseline question index to 0 when page is loaded
@@ -263,10 +294,40 @@
 
                 if (nextButton) nextButton.style.display = 'block';
                 if (nextDiv) nextDiv.style.display = 'block';
+                button.disabled = true; // Prevents multiple clicks
             });
         });
 
         document.addEventListener('DOMContentLoaded', function() {
+            experimenterPwd1.addEventListener('submit', function(event){
+                event.preventDefault();
+                const formData = new FormData(experimenterPwd1);
+                fetch('/submit_pwd', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(formData).toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Incorrect password.') {
+                        pwdErrorNotification1.style.display = 'block';
+                    } else {
+                        pwdErrorNotification1.style.display = 'none';
+                        let nextButton = document.querySelector('.nextButton:not([style*="display: block"])');
+                        let nextDiv = document.querySelector('.nextDiv:not([style*="display: block"])');
+
+                        if (nextButton) nextButton.style.display = 'block';
+                        if (nextDiv) nextDiv.style.display = 'block';
+                    }
+                })
+                .catch((error) => {
+                    pwdErrorNotification1.style.display = 'block';
+                    console.error('Error:', error);
+                });
+            });
+
             nameForm.addEventListener('submit', function(event){
                 event.preventDefault();
                 const formData = new FormData(nameForm);
@@ -284,10 +345,15 @@
                         errorNotification1.style.display = "block";
                         errorNotification1.innerHTML = data.message;
                         alert(data.message);
-                    
                     } else {
+                        let deviceSetupDiv = document.getElementById('deviceSetupDiv');
+                        deviceSetupDiv.style.display = 'block';
+                        
+                        survey1Button.style.display = 'block';
+                        survey1Div.style.display = 'block';
                         notification1.style.display = 'block';
                         errorNotification1.style.display = 'none';
+
                         pss4 = data.pss4;
                         demographics = data.demographics;
                         exitSurvey = data.exit_survey;
