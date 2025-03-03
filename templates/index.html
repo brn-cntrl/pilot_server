@@ -193,8 +193,8 @@
 
             <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-            <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
-            <p id="compareTask1status"></p>
+            <!-- <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="compareTask1status"></p> -->
         </div><br>
 
         <button class="toggle">Task 1</button><br>
@@ -234,7 +234,7 @@
                 <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
                 <li>Press "Start Task" to open the PRS task window</li>
                 <li>Continue with the instructions at the top of the PRS page.</li>
-                <li>After the task is completed, return here and click "Calculate Rest Time."</li>
+                <!-- <li>After the task is completed, return here and click "Calculate Rest Time."</li> -->
                 <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
             <select onchange="updateCondition('prsDiv1', 'prs_1')">
@@ -244,9 +244,9 @@
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
-            <button class="startPRSTask">Start Task</button><br><br>
-            <button id="comparePRS1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
-            <p id="comparePRS1status"></p>
+            <button class="startPRSTask">Start Task</button>
+            <!-- <button id="comparePRS1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="comparePRS1status"></p> -->
         </div><br>
 
         <button class="toggle">Break 1</button><br>
@@ -280,7 +280,7 @@
                 <li>Select condition from the drop menu below before beginning task.</li>
                 <li>Press "Start Recording" to begin the task.</li>
                 <li>Press "Stop Recording" when the task is completed.</li>
-                <li>After the task is completed, press "Calculate Rest Time."</li>
+                <!-- <li>After the task is completed, press "Calculate Rest Time."</li> -->
             </ul><br>
 
             <select onchange="updateCondition('taskGenDiv2', 'task_2')">
@@ -293,8 +293,8 @@
 
             <button id="task_2_recording">Start Recording</button><br><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
-            <button id="compareTask2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
-            <p id="compareTask2status"></p>
+            <!-- <button id="compareTask2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="compareTask2status"></p> -->
         </div><br>
 
         <button class="toggle" id="taskButton2">Task 2</button><br>
@@ -334,7 +334,7 @@
                 <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li>
                 <li>Press "Start Task" to open the PRS task window</li>
                 <li>Continue with the instructions there.</li>
-                <li>After the task is completed, return here and press "Calculate Rest Time."</li>
+                <!-- <li>After the task is completed, return here and press "Calculate Rest Time."</li> -->
                 <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul>
             <select onchange="updateCondition('prsDiv2', 'prs_2')">
@@ -344,9 +344,9 @@
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
-            <button class="startPRSTask">Start Task</button><br><br>
-            <button id="comparePRS2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
-            <p id="comparePRS2status"></p>
+            <button class="startPRSTask">Start Task</button>
+            <!-- <button id="comparePRS2Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
+            <p id="comparePRS2status"></p> -->
         </div><br>
 
         <button class="toggle">Break 2</button><br>
@@ -527,17 +527,14 @@
         const biometricStatusMessage = document.getElementById('biometricStatusMessage');
         const startEmotibitButton = document.getElementById('startEmotibitButton');
         const startVernierButton = document.getElementById('startVernierButton');
-        const stopVernierButtons = document.querySelectorAll('.stopVernier');
-        const vernierStatus = document.querySelectorAll('.vernierStatus');
-        const startIATButtons = document.querySelectorAll('.IATButton');
-        const comparePRS1Button = document.getElementById('comparePRS1Button');
-        const comparePRS2Button = document.getElementById('comparePRS2Button');
-        const compareTask1Button = document.getElementById('compareTask1Button');
-        const compareTask2Button = document.getElementById('compareTask2Button');
-        const comparePRS1status = document.getElementById('comparePRS1status');
-        const comparePRS2status = document.getElementById('comparePRS2status');
-        const compareTask1status = document.getElementById('compareTask1status');
-        const compareTask2status = document.getElementById('compareTask2status');
+        // const comparePRS1Button = document.getElementById('comparePRS1Button');
+        // const comparePRS2Button = document.getElementById('comparePRS2Button');
+        // const compareTask1Button = document.getElementById('compareTask1Button');
+        // const compareTask2Button = document.getElementById('compareTask2Button');
+        // const comparePRS1status = document.getElementById('comparePRS1status');
+        // const comparePRS2status = document.getElementById('comparePRS2status');
+        // const compareTask1status = document.getElementById('compareTask1status');
+        // const compareTask2status = document.getElementById('compareTask2status');
         const testAudioOutput = document.getElementById('testAudioOutput');
         const encryptSubject = document.getElementById('encryptSubject');
         const decryptSubject = document.getElementById('decryptSubject');
@@ -548,7 +545,6 @@
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
         const recTaskGen1 = document.getElementById('task_1_recording');
         const recTaskGen2 = document.getElementById('task_2_recording');
-        const startPRSTaskButtons = document.querySelectorAll('.startPRSTask');
         const baselineButton = document.getElementById("startBiometricBaseline");
         // const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
@@ -557,12 +553,17 @@
         const notification4 = document.getElementById('notification4');
         const errorNotification4 = document.getElementById('errorNotification4');
         const convertEmotibitData = document.getElementById('convertEmotibitData')
+        const openEmotibitDialog = document.getElementById('openEmotibitDialog');
+        
+        const startPRSTaskButtons = document.querySelectorAll('.startPRSTask');
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
         const stopServerButtons = document.querySelectorAll('.stopServer');
         const stopEmotibitButtons = document.querySelectorAll('.stopEmotibit');
         const emotibitStatus = document.querySelectorAll('.emotibitStatus');
-        const openEmotibitDialog = document.getElementById('openEmotibitDialog');
-
+        const stopVernierButtons = document.querySelectorAll('.stopVernier');
+        const vernierStatus = document.querySelectorAll('.vernierStatus');
+        const startIATButtons = document.querySelectorAll('.IATButton');
+        
         document.addEventListener('DOMContentLoaded', function(){
             startVernierButton.addEventListener('click', function(){
                 vernierStatus.forEach(status => {
@@ -786,20 +787,20 @@
             }
         });
 
-        document.addEventListener("DOMContentLoaded", () => {
-            comparePRS1Button.addEventListener("click", function(){
-                compareToBaseline(comparePRS1status);
-            });
-            comparePRS2Button.addEventListener("click", function(){
-                compareToBaseline(comparePRS2status);
-            });
-            compareTask1Button.addEventListener("click", function(){
-                compareToBaseline(compareTask1status);
-            });
-            compareTask2Button.addEventListener("click", function(){
-                compareToBaseline(compareTask2status);
-            });
-        });
+        // document.addEventListener("DOMContentLoaded", () => {
+        //     comparePRS1Button.addEventListener("click", function(){
+        //         compareToBaseline(comparePRS1status);
+        //     });
+        //     comparePRS2Button.addEventListener("click", function(){
+        //         compareToBaseline(comparePRS2status);
+        //     });
+        //     compareTask1Button.addEventListener("click", function(){
+        //         compareToBaseline(compareTask1status);
+        //     });
+        //     compareTask2Button.addEventListener("click", function(){
+        //         compareToBaseline(compareTask2status);
+        //     });
+        // });
 
         document.addEventListener("DOMContentLoaded", () => {
             const form = encryptSubject;
@@ -912,12 +913,12 @@
                 if (baselineButton.innerText == "Start Collecting Baseline") {
                     setEventMarker('biometric_baseline');
                     setCondition('None');
-                    startBaseline();
+                    // startBaseline();
                     
                     baselineButton.innerText = "Stop Collecting Baseline";
                 } else {
                     setEventMarker('subject_idle')
-                    stopBaseline();
+                    // stopBaseline();
                     baselineButton.innerText = "Start Collecting Baseline";
                 }
             });

@@ -18,8 +18,8 @@ from timestamp_manager import TimestampManager
 from threading import Thread
 from collections import deque
 import os
-import csv
-from datetime import datetime
+import pandas as pd
+from datetime import datetime, timezone
 import time
 import h5py
 import numpy as np
@@ -75,7 +75,8 @@ class VernierManager:
             os.makedirs(self.data_folder)
 
     def initialize_hdf5_file(self, subject_id):
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        # current_date = datetime.now().strftime("%Y-%m-%d")
+        current_date = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.h5")
         self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.csv")
 
@@ -168,6 +169,9 @@ class VernierManager:
                             self._current_row["event_marker"] = self.event_marker
                             self._current_row["condition"] = self.condition
 
+                            #DEBUG
+                            print(self._current_row)
+
                             self.write_to_hdf5(self._current_row)
                         else:
                             print("Error reading force sensor.")
@@ -177,7 +181,7 @@ class VernierManager:
                 print("Error reading from sensor.")
                 break
 
-            time.sleep(.11)
+            # time.sleep(.11)
 
     def run(self):
         if self.thread is None or not self.thread.is_alive():
@@ -209,6 +213,10 @@ class VernierManager:
                 
                 print("Closing HDF5 file...")
                 self.close_h5_file()
+                print("HDF5 file closed.")
+                print("Converting to CSV...")
+                self.hdf5_to_csv()
+                print("HDF5 converted to CSV.")
 
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -261,3 +269,49 @@ class VernierManager:
             return "HDF5 file closed."
         else:
             return "No HDF5 file to close."  
+        
+    def hdf5_to_csv(self) -> str:
+        """
+        Convert an HDF5 file to a CSV file.
+        Dependencies:
+            h5_filename (str): The path to the HDF5 file.
+            csv_filename (str): The path to the CSV file to be created.
+        """
+        try:
+            chunk_size = 1000
+            with h5py.File(self.hdf5_filename, 'r') as h5_file:
+                if 'data' not in h5_file:
+                    print(f"Dataset 'data' not found in the file {self.hdf5_filename}.")
+                    return
+                
+                dataset = h5_file['data']
+                field_names = dataset.dtype.names
+                first_chunk = True
+
+                for start in range(0, dataset.shape[0], chunk_size):
+                    end = min(start + chunk_size, dataset.shape[0])
+                    chunk = dataset[start:end]
+
+                    chunk_dict = {
+                        field: np.char.decode(chunk[field], 'utf-8') if chunk[field].dtype.kind == 'S' 
+                            else [x.decode('utf-8') if isinstance(x, bytes) else x for x in chunk[field]]
+                        for field in field_names
+                    }
+
+                    chunk_df = pd.DataFrame(chunk_dict)
+
+                    if first_chunk:
+                        chunk_df.to_csv(self.csv_filename, mode='w', index=False, header=True)
+                        first_chunk = False
+                    else:
+                        chunk_df.to_csv(self.csv_filename, mode='a', header=False, index=False)
+            
+            print(f"HDF5 file '{self.hdf5_filename}' successfully converted to CSV file '{self.csv_filename}'.")
+            return "Conversion successful."
+        
+        except FileNotFoundError:
+            print(f"Error: The HDF5 file '{self.hdf5_filename}' was not found.")
+            return "HDF5 file not found"
+        except Exception as e:
+            print(f"Error converting HDF5 to CSV: {e}")
+            return "Conversion failed."

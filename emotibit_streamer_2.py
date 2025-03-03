@@ -30,11 +30,11 @@ class EmotiBitStreamer:
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
         # self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
         self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
-        self.baseline_buffer = []
+        # self.baseline_buffer = []
         self.data_buffer = deque(maxlen=3000)
         self._event_marker = 'startup'
         self._condition = 'None'
-        self.collecting_baseline = False
+        # self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
         self.server = osc_server.ThreadingOSCUDPServer((self._ip, self._port), self.dispatcher)
@@ -49,8 +49,8 @@ class EmotiBitStreamer:
         self.hdf5_filename = None
         self.hdf5_file = None
         self.dataset = None
-        self._baseline_collected = False
-        self._processing_baseline = False
+        # self._baseline_collected = False
+        # self._processing_baseline = False
         self._time_started = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         atexit.register(self.stop)
         print("Emotibit Initialized... ")
@@ -64,21 +64,21 @@ class EmotiBitStreamer:
     def time_started(self, value):
         self._time_started = value
 
-    @property
-    def baseline_collected(self) -> bool:
-        return self._baseline_collected
+    # @property
+    # def baseline_collected(self) -> bool:
+    #     return self._baseline_collected
     
-    @baseline_collected.setter
-    def baseline_collected(self, value: bool) -> None:
-        self._baseline_collected = value
+    # @baseline_collected.setter
+    # def baseline_collected(self, value: bool) -> None:
+    #     self._baseline_collected = value
 
-    @property
-    def processing_baseline(self) -> bool:
-        return self._processing_baseline
+    # @property
+    # def processing_baseline(self) -> bool:
+    #     return self._processing_baseline
     
-    @processing_baseline.setter
-    def processing_baseline(self, value: bool) -> None:
-        self._processing_baseline = value
+    # @processing_baseline.setter
+    # def processing_baseline(self, value: bool) -> None:
+    #     self._processing_baseline = value
 
     @property
     def data_folder(self) -> str:
@@ -153,22 +153,22 @@ class EmotiBitStreamer:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
-    def start_baseline_collection(self) -> None:
-        if self.collecting_baseline:
-            print("Already collecting baseline data.")
-            return
+    # def start_baseline_collection(self) -> None:
+    #     if self.collecting_baseline:
+    #         print("Already collecting baseline data.")
+    #         return
         
-        self.collecting_baseline = True
-        print("Collecting EmotiBit Baseline... ")
+    #     self.collecting_baseline = True
+    #     print("Collecting EmotiBit Baseline... ")
 
-    def stop_baseline_collection(self) -> None:
-        if not self.collecting_baseline:
-            print("Not currently collecting baseline data.")
-            return
+    # def stop_baseline_collection(self) -> None:
+    #     if not self.collecting_baseline:
+    #         print("Not currently collecting baseline data.")
+    #         return
         
-        self.collecting_baseline = False
-        self.baseline_collected = True
-        print("Stopping Baseline Collection... ")
+    #     self.collecting_baseline = False
+    #     self.baseline_collected = True
+    #     print("Stopping Baseline Collection... ")
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
@@ -237,12 +237,12 @@ class EmotiBitStreamer:
             self.current_row["PG"] = value
 
         if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "PG"]):
-            if self.event_marker == "biometric_baseline" and not self.baseline_collected:
-                self.baseline_buffer.append(self.current_row)
+            # if self.event_marker == "biometric_baseline" and not self.baseline_collected:
+            #     self.baseline_buffer.append(self.current_row)
         
-            elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
-                self.data_buffer.append(self.current_row)
-
+            # elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
+            #     self.data_buffer.append(self.current_row)
+            
             self.write_to_hdf5(self.current_row)
 
     ###########################################
@@ -326,61 +326,61 @@ class EmotiBitStreamer:
         except Exception as e:
             print(f"Error resizing dataset: {e}")
 
-    def get_averages(self, stream_type) -> float:
-        baseline_avgs = []
-        test_avgs = []
+    # def get_averages(self, stream_type) -> float:
+    #     baseline_avgs = []
+    #     test_avgs = []
 
-        for obj in self.baseline_buffer:
-            if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
-                baseline_avgs.append(np.mean(obj[stream_type]))
+    #     for obj in self.baseline_buffer:
+    #         if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
+    #             baseline_avgs.append(np.mean(obj[stream_type]))
 
-        for obj in self.data_buffer:
-            if obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
-                test_avgs.append(np.mean(obj[stream_type]))
+    #     for obj in self.data_buffer:
+    #         if obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
+    #             test_avgs.append(np.mean(obj[stream_type]))
 
-        return(baseline_avgs, test_avgs)   
+    #     return(baseline_avgs, test_avgs)   
         
-    def compare_baseline(self) -> dict:
-        """
-        Compare the averages of the baseline data with a specified window of live data.
-        Returns a dictionary with the comparison results.
-        """
-        if not self.baseline_collected:
-            print("Baseline not collected yet.")
-            return {}
+    # def compare_baseline(self) -> dict:
+    #     """
+    #     Compare the averages of the baseline data with a specified window of live data.
+    #     Returns a dictionary with the comparison results.
+    #     """
+    #     if not self.baseline_collected:
+    #         print("Baseline not collected yet.")
+    #         return {}
         
-        comparisons = {}
-        ppg_bl_avgs, ppg_tst_avgs = self.get_averages("PG")
-        bi_bl_avgs, bi_tst_avgs = self.get_averages("BI")
-        hr_bl_avgs, hr_tst_avgs = self.get_averages("HR")
-        eda_bl_avgs, eda_tst_avgs = self.get_averages("EDA")
+    #     comparisons = {}
+    #     ppg_bl_avgs, ppg_tst_avgs = self.get_averages("PG")
+    #     bi_bl_avgs, bi_tst_avgs = self.get_averages("BI")
+    #     hr_bl_avgs, hr_tst_avgs = self.get_averages("HR")
+    #     eda_bl_avgs, eda_tst_avgs = self.get_averages("EDA")
 
-        def evaluate_elevation(baseline_list, test_list):
-            """Compares baseline and test lists and determines elevation status."""
-            if not baseline_list:
-                return {"status": "No baseline data", "baseline_avg": None, "test_avg": np.mean(test_list) if test_list else None}
-            if not test_list:
-                return {"status": "No test data", "baseline_avg": np.mean(baseline_list), "test_avg": None}
+    #     def evaluate_elevation(baseline_list, test_list):
+    #         """Compares baseline and test lists and determines elevation status."""
+    #         if not baseline_list:
+    #             return {"status": "No baseline data", "baseline_avg": None, "test_avg": np.mean(test_list) if test_list else None}
+    #         if not test_list:
+    #             return {"status": "No test data", "baseline_avg": np.mean(baseline_list), "test_avg": None}
             
-            baseline_avg = np.mean(baseline_list)
-            test_avg = np.mean(test_list)
+    #         baseline_avg = np.mean(baseline_list)
+    #         test_avg = np.mean(test_list)
             
-            if test_avg > baseline_avg:
-                status = "Elevated"
-            elif test_avg < baseline_avg:
-                status = "Lowered"
-            else:
-                status = "Equal"
+    #         if test_avg > baseline_avg:
+    #             status = "Elevated"
+    #         elif test_avg < baseline_avg:
+    #             status = "Lowered"
+    #         else:
+    #             status = "Equal"
 
-            return {"status": status, "baseline_avg": baseline_avg, "test_avg": test_avg}
+    #         return {"status": status, "baseline_avg": baseline_avg, "test_avg": test_avg}
         
-        comparisons["PG"] = evaluate_elevation(ppg_bl_avgs, ppg_tst_avgs)
-        comparisons["BI"] = evaluate_elevation(bi_bl_avgs, bi_tst_avgs)
-        comparisons["HR"] = evaluate_elevation(hr_bl_avgs, hr_tst_avgs)
-        comparisons["EDA"] = evaluate_elevation(eda_bl_avgs, eda_tst_avgs)
+    #     comparisons["PG"] = evaluate_elevation(ppg_bl_avgs, ppg_tst_avgs)
+    #     comparisons["BI"] = evaluate_elevation(bi_bl_avgs, bi_tst_avgs)
+    #     comparisons["HR"] = evaluate_elevation(hr_bl_avgs, hr_tst_avgs)
+    #     comparisons["EDA"] = evaluate_elevation(eda_bl_avgs, eda_tst_avgs)
 
-        print("Comparison Results:", comparisons)  # Debugging Output
-        return comparisons 
+    #     print("Comparison Results:", comparisons)  # Debugging Output
+    #     return comparisons 
 
     # NOTE: If derived values are add to the h5 file as a second dataset, this method will need to be altered.
     def hdf5_to_csv(self) -> str:
@@ -406,8 +406,8 @@ class EmotiBitStreamer:
                     chunk = dataset[start:end]
 
                     chunk_dict = {
-                        field: chunk[field] if chunk[field].dtype.kind != 'S' 
-                            else np.char.decode(chunk[field], 'utf-8')
+                        field: np.char.decode(chunk[field], 'utf-8') if chunk[field].dtype.kind == 'S' 
+                            else [x.decode('utf-8') if isinstance(x, bytes) else x for x in chunk[field]]
                         for field in field_names
                     }
 

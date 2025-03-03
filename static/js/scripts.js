@@ -290,59 +290,59 @@ function handleOtherOption() {
         otherText.style.display = 'none';  
     }
 }
-var restTime = 3;
-function compareToBaseline(divID) {
-    divID.style.display = 'block';
-    divID.innerText = "Comparing to baseline... Please wait.";  
-    fetch('/baseline_comparison', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Error: ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        let baselineElevatedCount = 0;
-        let liveElevatedCount = 0;
+var restTime = 5;
+// function compareToBaseline(divID) {
+//     divID.style.display = 'block';
+//     divID.innerText = "Comparing to baseline... Please wait.";  
+//     fetch('/baseline_comparison', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         }
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error(`Error: ${response.statusText}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         let baselineElevatedCount = 0;
+//         let liveElevatedCount = 0;
 
-        Object.keys(data).forEach(key => {
-            const result = data[key];
-            // Check if result is valid and not null/undefined/NaN
-            if (!result || result.status === null || result.status === "NaN" || result.status === undefined) {
-                console.warn(`Skipping ${key} due to invalid data:`, result);
-                return;
-            }
-            if (result.status === "Elevated") {
-                liveElevatedCount++;
-            } else if (result.status === "Lowered") {
-                baselineElevatedCount++;
-            } else if (result.status === "Same") {
-                baselineElevatedCount++;
-                liveElevatedCount++;
-            }
-            console.log(data);
-        });
-        if (baselineElevatedCount > liveElevatedCount) {
-            restTime = 3;
-            divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} minutes.`;
-        } else if (liveElevatedCount > baselineElevatedCount) {
-            restTime = 5;
-            divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} minutes.`;
-        } else {
-            restTime = 3;
-            divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minutes.`;
-        }
-    })
-    .catch(error => {
-        console.error('Error comparing to baseline:', error);
-        divID.innerText = "Error comparing to baseline. Please try again.";
-    });
-}
+//         Object.keys(data).forEach(key => {
+//             const result = data[key];
+//             // Check if result is valid and not null/undefined/NaN
+//             if (!result || result.status === null || result.status === "NaN" || result.status === undefined) {
+//                 console.warn(`Skipping ${key} due to invalid data:`, result);
+//                 return;
+//             }
+//             if (result.status === "Elevated") {
+//                 liveElevatedCount++;
+//             } else if (result.status === "Lowered") {
+//                 baselineElevatedCount++;
+//             } else if (result.status === "Same") {
+//                 baselineElevatedCount++;
+//                 liveElevatedCount++;
+//             }
+//             console.log(data);
+//         });
+//         if (baselineElevatedCount > liveElevatedCount) {
+//             restTime = 3;
+//             divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} minutes.`;
+//         } else if (liveElevatedCount > baselineElevatedCount) {
+//             restTime = 5;
+//             divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} minutes.`;
+//         } else {
+//             restTime = 3;
+//             divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minutes.`;
+//         }
+//     })
+//     .catch(error => {
+//         console.error('Error comparing to baseline:', error);
+//         divID.innerText = "Error comparing to baseline. Please try again.";
+//     });
+// }
 
 async function startEmotibit(){
     fetch('/start_emotibit', {
@@ -370,44 +370,45 @@ async function startEmotibit(){
         });
 }
 
-function startBaseline() {
-    fetch('/start_biometric_baseline', {
-        method: 'POST'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.status);
-        biometricStatusMessage.style.display = 'block';
-        biometricStatusMessage.innerText = data.status;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-function stopBaseline() {
-    fetch("/stop_biometric_baseline", {
-        method: "POST",
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.status);
-        biometricStatusMessage.style.display = 'block';
-        biometricStatusMessage.innerText = data.status;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
+// function startBaseline() {
+//     fetch('/start_biometric_baseline', {
+//         method: 'POST'
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error('Network response was not ok ' + response.statusText);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log(data.status);
+//         biometricStatusMessage.style.display = 'block';
+//         biometricStatusMessage.innerText = data.status;
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+//     });
+// }
+
+// function stopBaseline() {
+//     fetch("/stop_biometric_baseline", {
+//         method: "POST",
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         console.log(data.status);
+//         biometricStatusMessage.style.display = 'block';
+//         biometricStatusMessage.innerText = data.status;
+//     })
+//     .catch(error => {
+//         console.error('Error:', error);
+//     });
+// }
 
 function playBeep() {
     const beepContext = new AudioContext();

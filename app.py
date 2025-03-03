@@ -162,6 +162,7 @@ def set_event_marker():
         emotibit_streamer.event_marker = event_marker
         vernier_manager.event_marker = event_marker
 
+        # DEBUG
         print("Event marker set to: ", emotibit_streamer.event_marker)
 
         return jsonify({'status': 'Event marker set.'})
@@ -169,16 +170,16 @@ def set_event_marker():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/baseline_comparison', methods=['POST'])
-def baseline_comparison() -> Response:
-    global emotibit_streamer
+# @app.route('/baseline_comparison', methods=['POST'])
+# def baseline_comparison() -> Response:
+#     global emotibit_streamer
 
-    try:
-        response = emotibit_streamer.compare_baseline()
-        return jsonify(response), 200
+#     try:
+#         response = emotibit_streamer.compare_baseline()
+#         return jsonify(response), 200
     
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+#     except Exception as e:
+#         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 @app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index() -> Response:
@@ -188,28 +189,28 @@ def reset_ser_question_index() -> Response:
 
     return jsonify({'status': 'SER questions reset'})
 
-@app.route('/start_biometric_baseline', methods=['POST'])
-def start_biometric_baseline() -> Response:
-    global emotibit_streamer
-    try:
-        if emotibit_streamer.is_streaming:
-            emotibit_streamer.start_baseline_collection()
-            return jsonify({'status': 'Collecting baseline data.'})
-        else:
-            return jsonify({'status': 'EmotiBit not connected.'}), 400
+# @app.route('/start_biometric_baseline', methods=['POST'])
+# def start_biometric_baseline() -> Response:
+#     global emotibit_streamer
+#     try:
+#         if emotibit_streamer.is_streaming:
+#             emotibit_streamer.start_baseline_collection()
+#             return jsonify({'status': 'Collecting baseline data.'})
+#         else:
+#             return jsonify({'status': 'EmotiBit not connected.'}), 400
 
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400 
+#     except Exception as e:
+#         return jsonify({'status': 'error', 'message': str(e)}), 400 
     
-@app.route('/stop_biometric_baseline', methods=['POST'])
-def stop_biometric_baseline() -> Response:
-    global emotibit_streamer
-    try:
-        emotibit_streamer.stop_baseline_collection()
-        return jsonify({'status': 'Baseline data collection stopped.'}), 200
+# @app.route('/stop_biometric_baseline', methods=['POST'])
+# def stop_biometric_baseline() -> Response:
+#     global emotibit_streamer
+#     try:
+#         emotibit_streamer.stop_baseline_collection()
+#         return jsonify({'status': 'Baseline data collection stopped.'}), 200
     
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+#     except Exception as e:
+#         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
@@ -467,14 +468,12 @@ def import_emotibit_csv() -> Response:
     if not file.filename or not file.filename.lower().endswith(".csv"):
         return jsonify({"success": False, "error": "Invalid file type. Only CSV files are allowed."}), 400
     
-    
     new_filename = f"{emotibit_streamer.time_started}_{subject_manager.subject_id}_emotibit_ground_truth.csv"
     file_path = os.path.join(emotibit_streamer.data_folder, new_filename)
     
     file.save(file_path)
     
     return jsonify({"success": True, "message": "File uploaded successfully.", "file_path": file_path}), 200
-    
     
 @app.route('/convert_emotibit_data', methods=['POST'])
 def upload_subject_data() -> Response:
@@ -538,7 +537,6 @@ def submit() -> Response:
             emotibit_streamer.set_data_folder(subject_manager.subject_folder)
             emotibit_streamer.initialize_hdf5_file(subject_id)
             vernier_manager.set_data_folder(subject_manager.subject_folder) 
-            vernier_manager.initialize_hdf5_file(subject_id)
 
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
@@ -1004,16 +1002,26 @@ def test_page() -> Response:
 # Vernier ########################################################
 @app.route('/start_vernier', methods=['POST'])
 def start_vernier() -> None:
-    global vernier_manager
+    global vernier_manager, subject_manager
     try:
+        if subject_manager.subject_id is None:
+            return jsonify({'message': 'Subject information is not set.'}), 400
+        
         if vernier_manager.running:
-            return jsonify({'message': 'Vernier belt is already running'})
+            return jsonify({'message': 'Vernier belt is already running'}), 200
+        
+        vernier_manager.initialize_hdf5_file(subject_manager.subject_id)
+
+        time.sleep(1)
 
         vernier_manager.start()
         print("Vernier belt has started.")
-        time.sleep(1)
-        vernier_manager.run()
 
+        time.sleep(1)
+
+        vernier_manager.run()
+        print("Vernier belt is running.")
+        
         return jsonify({'message': 'Vernier stream started.'}), 200
 
     except Exception as e:
