@@ -8,7 +8,7 @@ import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
 import time
 import atexit
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from collections import deque
 from timestamp_manager import TimestampManager
 import pandas as pd
@@ -64,22 +64,6 @@ class EmotiBitStreamer:
     def time_started(self, value):
         self._time_started = value
 
-    # @property
-    # def baseline_collected(self) -> bool:
-    #     return self._baseline_collected
-    
-    # @baseline_collected.setter
-    # def baseline_collected(self, value: bool) -> None:
-    #     self._baseline_collected = value
-
-    # @property
-    # def processing_baseline(self) -> bool:
-    #     return self._processing_baseline
-    
-    # @processing_baseline.setter
-    # def processing_baseline(self, value: bool) -> None:
-    #     self._processing_baseline = value
-
     @property
     def data_folder(self) -> str:
         return self._data_folder
@@ -112,15 +96,19 @@ class EmotiBitStreamer:
         # DEBUG
         print("Data folder set for emotibit streamer: ", self.data_folder)
 
-    def initialize_hdf5_file(self, subject_id):
+    def set_filenames(self, subject_id):
+        if self.data_folder is None:
+            raise ValueError("Data folder must be set before setting filenames.")
+        
+        current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.csv")
+
+    def initialize_hdf5_file(self):
         """
         Initializes the HDF5 file and dataset if not already created.
         Called once the test and subject information are both posted from the front end.
         """
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.h5")
-        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_biometrics.csv")
-
         try:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
             if 'data' not in self.hdf5_file:  
@@ -132,7 +120,6 @@ class EmotiBitStreamer:
                     ('PG', 'f4'),
                     ('event_marker', h5py.string_dtype(encoding='utf-8')),
                     ('condition', h5py.string_dtype(encoding='utf-8'))
-                    
                 ])
                 self.dataset = self.hdf5_file.create_dataset(
                     'data', shape=(0,), maxshape=(None,), dtype=dtype
@@ -145,30 +132,12 @@ class EmotiBitStreamer:
             else:
                 print("Dataset 'data' not found in the HDF5 file.")
 
-
             # DEBUG
             print("HDF5 file created for emotibit data: ", self.hdf5_filename)
             print("CSV file created for emotibit data: ", self.csv_filename)
 
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
-
-    # def start_baseline_collection(self) -> None:
-    #     if self.collecting_baseline:
-    #         print("Already collecting baseline data.")
-    #         return
-        
-    #     self.collecting_baseline = True
-    #     print("Collecting EmotiBit Baseline... ")
-
-    # def stop_baseline_collection(self) -> None:
-    #     if not self.collecting_baseline:
-    #         print("Not currently collecting baseline data.")
-    #         return
-        
-    #     self.collecting_baseline = False
-    #     self.baseline_collected = True
-    #     print("Stopping Baseline Collection... ")
 
     def start(self) -> None:
         if self.server_thread and self.server_thread.is_alive():
@@ -202,9 +171,15 @@ class EmotiBitStreamer:
             self.server.server_close()
             self.server_thread.join()
             self.server_thread = None
-
             self.is_streaming = False
-            print("Server stopped successfully.")
+            print("EmotiBit OSC server stopped successfully.")
+            print("Closing EmotiBit H5 file...")
+            self.close_h5_file()
+            print("EmotiBit H5 file closed.")
+            print("Converting EmotiBit H5 to CSV...")
+            self.hdf5_to_csv()
+            print("EmotiBit H5 file converted to CSV.")
+            
         else:
             print("Server is not running.")
 
@@ -239,55 +214,9 @@ class EmotiBitStreamer:
         if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "PG"]):
             # if self.event_marker == "biometric_baseline" and not self.baseline_collected:
             #     self.baseline_buffer.append(self.current_row)
-        
             # elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
             #     self.data_buffer.append(self.current_row)
-            
             self.write_to_hdf5(self.current_row)
-
-    ###########################################
-    # Derived Metrics
-    ###########################################
-    def calculate_hrv(self) -> float:
-        """Calculate HRV (RMSSD) from BI values."""
-        bi_values = np.array(self.data_window["BI"])
-        cleaned_bi_values = self.remove_outliers(bi_values)
-
-        if len(cleaned_bi_values) < 50: # 50 beat interval values
-            return None  
-
-        differences = np.diff(bi_values) / 1000.0  
-        rmssd = np.sqrt(np.mean(np.square(differences)))
-        return rmssd
-    
-    def remove_outliers(self, bi_values, threshold=2.0):
-        mean_bi = np.mean(bi_values)
-        std_bi = np.std(bi_values)
-        return [bi for bi in bi_values if abs(bi - mean_bi) < threshold * std_bi]
-
-    def calculate_rr(self) -> float:
-        """Calculate RR from PG values."""
-        ppg_values = np.array(self.data_window["PPG:GRN"])
-        if len(ppg_values) < 200:
-            return None  
-
-        # Bandpass filter
-        filtered_signal = self.bandpass_filter(ppg_values, 0.1, 0.6, 12)  # Assuming 12 Hz sampling rate
-        envelope = np.abs(hilbert(filtered_signal))
-
-        # FFT for respiratory frequency
-        fft_result = np.fft.rfft(envelope)
-        freqs = np.fft.rfftfreq(len(envelope), 1 / 12)  # 12 Hz sampling rate
-        resp_freq = freqs[np.argmax(np.abs(fft_result))]
-        return resp_freq * 60  # Convert to breaths per minute
-
-    def bandpass_filter(self, data, lowcut, highcut, fs, order=4):
-        #TODO CHECK COEFFICIENT VALUES
-        nyquist = 0.5 * fs
-        low = lowcut / nyquist
-        high = highcut / nyquist
-        b, a = butter(order, [low, high], btype="band")
-        return filtfilt(b, a, data)
 
     ###########################################
     # Utility Methods
@@ -326,64 +255,7 @@ class EmotiBitStreamer:
         except Exception as e:
             print(f"Error resizing dataset: {e}")
 
-    # def get_averages(self, stream_type) -> float:
-    #     baseline_avgs = []
-    #     test_avgs = []
-
-    #     for obj in self.baseline_buffer:
-    #         if obj['event_marker'] == 'biometric_baseline' and obj[stream_type] is not None:
-    #             baseline_avgs.append(np.mean(obj[stream_type]))
-
-    #     for obj in self.data_buffer:
-    #         if obj['event_marker'] != 'biometric_baseline' and obj[stream_type] is not None:
-    #             test_avgs.append(np.mean(obj[stream_type]))
-
-    #     return(baseline_avgs, test_avgs)   
-        
-    # def compare_baseline(self) -> dict:
-    #     """
-    #     Compare the averages of the baseline data with a specified window of live data.
-    #     Returns a dictionary with the comparison results.
-    #     """
-    #     if not self.baseline_collected:
-    #         print("Baseline not collected yet.")
-    #         return {}
-        
-    #     comparisons = {}
-    #     ppg_bl_avgs, ppg_tst_avgs = self.get_averages("PG")
-    #     bi_bl_avgs, bi_tst_avgs = self.get_averages("BI")
-    #     hr_bl_avgs, hr_tst_avgs = self.get_averages("HR")
-    #     eda_bl_avgs, eda_tst_avgs = self.get_averages("EDA")
-
-    #     def evaluate_elevation(baseline_list, test_list):
-    #         """Compares baseline and test lists and determines elevation status."""
-    #         if not baseline_list:
-    #             return {"status": "No baseline data", "baseline_avg": None, "test_avg": np.mean(test_list) if test_list else None}
-    #         if not test_list:
-    #             return {"status": "No test data", "baseline_avg": np.mean(baseline_list), "test_avg": None}
-            
-    #         baseline_avg = np.mean(baseline_list)
-    #         test_avg = np.mean(test_list)
-            
-    #         if test_avg > baseline_avg:
-    #             status = "Elevated"
-    #         elif test_avg < baseline_avg:
-    #             status = "Lowered"
-    #         else:
-    #             status = "Equal"
-
-    #         return {"status": status, "baseline_avg": baseline_avg, "test_avg": test_avg}
-        
-    #     comparisons["PG"] = evaluate_elevation(ppg_bl_avgs, ppg_tst_avgs)
-    #     comparisons["BI"] = evaluate_elevation(bi_bl_avgs, bi_tst_avgs)
-    #     comparisons["HR"] = evaluate_elevation(hr_bl_avgs, hr_tst_avgs)
-    #     comparisons["EDA"] = evaluate_elevation(eda_bl_avgs, eda_tst_avgs)
-
-    #     print("Comparison Results:", comparisons)  # Debugging Output
-    #     return comparisons 
-
-    # NOTE: If derived values are add to the h5 file as a second dataset, this method will need to be altered.
-    def hdf5_to_csv(self) -> str:
+    def hdf5_to_csv(self):
         """
         Convert an HDF5 file to a CSV file.
         Dependencies:
@@ -418,25 +290,11 @@ class EmotiBitStreamer:
                         first_chunk = False
                     else:
                         chunk_df.to_csv(self.csv_filename, mode='a', header=False, index=False)
-
-                # with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csv_file:
-                #     writer = csv.DictWriter(csv_file, fieldnames=field_names)
-                #     writer.writeheader()
-                    
-                #     for idx in range(dataset.shape[0]):
-                #         row = {
-                #             field: dataset[field][idx].decode('utf-8') if dataset[field].dtype.kind == 'S' 
-                #                 else dataset[field][idx]
-                #             for field in field_names
-                #         }
-                #         writer.writerow(row)
             
             print(f"HDF5 file '{self.hdf5_filename}' successfully converted to CSV file '{self.csv_filename}'.")
-            return "Conversion successful."
         
         except FileNotFoundError:
             print(f"Error: The HDF5 file '{self.hdf5_filename}' was not found.")
-            return "HDF5 file not found"
+            
         except Exception as e:
             print(f"Error converting HDF5 to CSV: {e}")
-            return "Conversion failed."

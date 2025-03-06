@@ -290,7 +290,7 @@ function handleOtherOption() {
         otherText.style.display = 'none';  
     }
 }
-var restTime = 5;
+var restTime = 3;
 // function compareToBaseline(divID) {
 //     divID.style.display = 'block';
 //     divID.innerText = "Comparing to baseline... Please wait.";  

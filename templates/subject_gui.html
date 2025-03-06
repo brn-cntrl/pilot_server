@@ -11,7 +11,7 @@
     <p>Please fill out each section in order. When each task is complete, a new one will appear until the experiment is completed.</p>
     <div id="pretestDiv">
         <h2>Pretest</h2>
-        <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p>
+        <!-- <p>The following is a set of pretest procedures including surveys and baseline data collection. Please complete each as instructed by the test supervisor.</p> -->
         <button class="toggle">Surveys</button><br>
         <div class="testModule" style="display:block;">
             <h2>Participant Information</h2>
@@ -41,16 +41,8 @@
                 </form><br>
                 <div id="notification1" style="display:none; color: green;">Form submitted successfully!</div><br>
                 <div id="errorNotification1" style="display:none; color: red;">Error submitting form.</div>
-                <div id="deviceSetupDiv" style="display:none;">The experimenter will now help you with two devices needed to collect data for the session.</div>
+                <div id="deviceSetupDiv" style="display:none;">The experimenter will now help you with the devices needed to collect data for the session.</div>
             </div><br>
-
-            <!-- <button class="toggle nextButton" style="display:none;">Device Setup</button> -->
-            <!-- <div class="testModule" id="deviceSetupDiv" style="display:none;">
-                <ul>
-                    <li>The experimenter will now help you with two devices needed to collect data for the session.</li>
-                </ul>
-                <button class="taskComplete">Task Complete</button>
-            </div><br> -->
 
         <button class="toggle" id="survey1Button" style="display:none;">Survey 1</button>
         <div class="innerModule" id="survey1Div" style="display:none;">
@@ -58,14 +50,6 @@
             <div id="demographicsDiv" style="display:block;"></div><br>
             <button class="taskComplete">Task Complete</button>
         </div><br>
-
-        <!-- <button class="toggle nextButton" style="display:none;">Data Collection</button>
-        <div class="testModule nextDiv" style="display:none;">
-            <ul>
-                <li>The experimenter will now begin collecting baseline data for the session.</li>
-            </ul>
-            <button class="taskComplete">Task Complete</button>
-        </div><br> -->
 
         <button class="toggle nextButton" style="display:none;">Survey 2</button>
         <div class="innerModule nextDiv" style="display:none;">
@@ -80,17 +64,15 @@
             <form action="/submit_pwd" method="POST" id="experimenterPwd1">
                 <label for="password">Password:</label>
                 <input type="text" name="password" id="password"><br><br>
-                <button type="submit" id="submitPassword">Submit Password</button>
+                <button type="submit">Submit Password</button>
             </form>
             <div id="pwdErrorNotification1" style="display:none; color: red;">Incorrect Password.</div><br>
         </div><br>
         
-        <button class="toggle nextButton" style="display:none;">Test Audio</button>
+        <button class="toggle nextButton" style="display:none;">Test Transcription</button>
         <div class="innerModule nextDiv" style="display:none;">
             <ul>
-                <li>The experimenter will now place your headphones and attach a microphone to record audio for the session.</li>
-                <li>The experimenter will then play three short tones to test your headphones</li>
-                <li>The experimenter will then direct you to press "Record" to test your microphone</li>
+                <li>Press "Record" to test your microphone</li>
                 <li>After you press "Record", please read out loud the statement that appears below.</li>
             </ul><br>
             <p id="audioStatusMessage"></p>
@@ -101,37 +83,58 @@
         <button class="toggle nextButton" style="display:none;">Mood Q&A</button>
         <div class="innerModule nextDiv" style="display:none;">
             <ul>
-                <li>Press "Begin"</li>
-                <li>Read the first question when it appears</li>
-                <li>Speak your answer aloud</li>
+                <li>Press "Begin" to start recording</li>
+                <li>Speak your answer to each question aloud</li>
                 <li>Press "Submit" to register your answer and receive the next question</li>
             </ul> <br>
             <button id="beginSERButton">Begin</button>
-            <p id="status" style="display:none;" disabled></p>
+            <p id="QAStatus" style="display:none;" disabled></p>
             <p id="questionContainer" style="display:none;" disabled></p>
             <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button><br><br>
-            <button class="taskComplete">Task Complete</button>
+            <button id="serComplete">Task Complete</button>
         </div><br>
     </div><br>
 
-    <button class="toggle nextButton" style="display:none;">Experimental Tasks</button>
-    <div class="nextDiv" style="display:none;">
-        <h2 >Experimental Tasks</h2>
-        <p>The following is a set of experimental tasks to be completed.</p>
-        <p>After completing a task, please wait for instructions before advancing to the next task.</p>
-        
+    <div id="mainTasksDiv" style="display:none;">
         <div class="testModule" style="display:block;">
+            <p>After completing a task, please wait for instructions before advancing to the next task.</p>
             <button class="toggle">Test 1</button>
             <div class="innerModule" style="display:none;">
-                <button class="openStressTask">Go to Test 1</button><br><br>
+                <p>Instructions</p>
+                <div><ul>
+                    <li>Start with the number 1,009. For your first answer, subtract 13 from 1,009. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
+                    <li>Speak each answer aloud (e.g. "One thousand ninety-six") and press the "Submit" button to check your answer.</li>
+                    <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,009.</li>
+                    <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
+                    <li>Press the Start Test button to begin.</li>
+                </ul></div><br>
+                
+                <button id="startTestButton1" style="display:block;">Start Test</button><br>
+                <div>
+                    <p id="loadingMessage1" style="display:none;">Test loading...</p>
+                    <button id="submitAnswerButton1" disabled>Submit Answer</button><br><br>
+                    <p id="result1"></p>
+                    <p id="status1"></p>
+                </div><br>
                 <button class="taskComplete">Task Complete</button><br>
             </div><br>
             
-            <button class="toggle nextButton" style="display:none;">Screen / VR Task 1</button>
+            <button class="toggle nextButton" style="display:none;">Password</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwd2">
+                    <label for="password">Password:</label>
+                    <input type="text" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotification2" style="display:none; color: red;">Incorrect Password.</div><br>
+            </div><br>
+
+            <!-- <button class="toggle nextButton" style="display:none;">Screen / VR Task 1</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <p>The test supervisor will now assist you with the VR headset.</p> 
                 <button class="taskComplete">Task Complete</button>
-            </div><br>
+            </div><br> -->
             
             <button class="toggle nextButton" style="display:none;">IAT Task 1</button>
             <div class="innerModule nextDiv" style="display:none;">
@@ -143,34 +146,55 @@
                 <button class="taskComplete">Task Complete</button>
             </div><br>
 
-            <button class="toggle nextButton" style="display:none;">PRS Survey 1</button>
+            <!-- <button class="toggle nextButton" style="display:none;">PRS Survey 1</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <ul>
                     <li>The test supervisor will now assist you with the next section of the test.</li>
                     <li>Please press "Task Complete" when you return</li>
                 </ul>
                 <button class="taskComplete">Task Complete</button>
-            </div><br>  
+            </div><br>   -->
 
             <button class="toggle nextButton" style="display:none;">Break 1</button>
-            <div class="innerModule nextDiv" style="display:none;">
-                <button class="breakButton">Take Break</button><br><br>
+            <div class="innerModule nextDiv" id="break1Div" style="display:none">
+                <p>Please watch the following video for 3 minutes.</p>
+                <video id="video1" width="640" height="360" controls>
+                    <source src="{{ url_for('video', filename='Video1.mp4') }}" type="video/mp4">
+                </video><br>
+                <p id="restMessage1"></p>
                 <button class="taskComplete">Break Complete</button>
             </div><br>
             
             <button class="toggle nextButton" style="display:none;">Test 2</button>
             <div class="innerModule nextDiv" style="display:none;">
-                <button class="openStressTask">Go to Test 2</button><br><br>
-                <button class="taskComplete">Task Complete</button>
+                <p>Instructions</p>
+                <div><ul>
+                    <li>Start with the number 1,059. For your first answer, subtract 13 from 1,059. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
+                    <li>Speak each answer aloud (e.g. "One thousand ninety-six") and press the "Submit" button to check your answer.</li>
+                    <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,059.</li>
+                    <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
+                    <li>Press the Start Test button to begin.</li>
+                </ul></div><br>
+                
+                <button id="startTestButton2" style="display:block;">Start Test</button><br>
+                <div>
+                    <p id="loadingMessage2" style="display:none;">Test loading...</p>
+                    <button id="submitAnswerButton2" disabled>Submit Answer</button><br><br>
+                    <p id="result2"></p>
+                    <p id="status2"></p>
+                </div><br>
+                <button class="taskComplete">Task Complete</button><br>
             </div><br>
-            
-            <button class="toggle nextButton" style="display:none;">Screen / VR Task 2</button>
+
+            <button class="toggle nextButton" style="display:none;">Password</button>
             <div class="innerModule nextDiv" style="display:none;">
-                <ul>
-                    <li>The test supervisor will now assist you with the next section of the test.</li>
-                    <li>Please press "Task Complete" when you return</li>
-                </ul>
-                <button class="taskComplete">Task Complete</button>
+                <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwd3">
+                    <label for="password">Password:</label>
+                    <input type="text" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotification3" style="display:none; color: red;">Incorrect Password.</div><br>
             </div><br>
 
             <button class="toggle nextButton" style="display:none;">IAT Task 2</button>
@@ -183,18 +207,17 @@
                 <button class="taskComplete">Task Complete</button>
             </div><br>
 
-            <button class="toggle nextButton" style="display:none;">PRS Task 2</button>
-            <div class="innerModule nextDiv" style="display:none;">
-                <ul>
-                    <li>The test supervisor will now assist you with the next section of the test.</li>
-                    <li>Please press "Task Complete" when you return</li>
-                </ul>
-                <button class="taskComplete">Task Complete</button>
-            </div><br>
-
             <button class="toggle nextButton" style="display:none">Break 2</button>
-            <div class="innerModule nextDiv" style="display:none;">
+            <!-- <div class="innerModule nextDiv" style="display:none;">
                 <button class="breakButton">Take Break</button><br><br>
+                <button class="taskComplete">Break Complete</button>
+            </div> -->
+            <div class="innerModule nextDiv" id="break2Div" style="display:none">
+                <p>Please watch the following video for 3 minutes</p>
+                <video id="video2" width="640" height="360" controls>
+                    <source src="{{ url_for('video', filename='Video2.mp4') }}" type="video/mp4">
+                </video><br>
+                <p id="restMessage2"></p>
                 <button class="taskComplete">Break Complete</button>
             </div>
         </div>
@@ -212,10 +235,16 @@
     </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script>
+        const serComplete = document.getElementById('serComplete');
+        const mainTasksDiv = document.getElementById('mainTasksDiv');
         const survey1Button = document.getElementById('survey1Button');
         const survey1Div = document.getElementById('survey1Div');
         const pwdErrorNotification1 = document.getElementById('pwdErrorNotification1');
         const experimenterPwd1 = document.getElementById('experimenterPwd1');
+        const pwdErrorNotification2 = document.getElementById('pwdErrorNotification2');
+        const experimenterPwd2 = document.getElementById('experimenterPwd2');
+        const pwdErrorNotification3 = document.getElementById('pwdErrorNotification3');
+        const experimenterPwd3 = document.getElementById('experimenterPwd3');
         const nameForm = document.getElementById('nameForm')
         const submitButton = document.getElementById('submitButton');
         const notification1 = document.getElementById('notification1');
@@ -237,19 +266,348 @@
         let demographics;
         let breakWin;
         let breakButtons = document.getElementsByClassName('breakButton');
-        let stressButtons = document.getElementsByClassName('openStressTask');
+        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
+        let startTime;
+        let elapsedTime = 0;
+        let initialTime = 300;  // 300 = 5 minutes
+        let timeLeft = initialTime;
+        let timerInterval;
+        let eventMarker;
+        let testStarted = false;
+        let testEnded = false;
+        let isProcessing = false;
+
         const pss4Div = document.getElementById('pss4Div');
+        const startTestButton1 = document.getElementById('startTestButton1');
+        const startTestButton2 = document.getElementById('startTestButton2');
+        const submitAnswerButton1 = document.getElementById('submitAnswerButton1');
+        const submitAnswerButton2 = document.getElementById('submitAnswerButton2');
+        const loadingMessage1 = document.getElementById('loadingMessage1');
+        const loadingMessage2 = document.getElementById('loadingMessage2');
+        const QAStatusContainer = document.getElementById('QAStatus');
+        const result1 = document.getElementById('result1');
+        const result2 = document.getElementById('result2');
+        const testStatusContainer1 = document.getElementById('status1');
+        const testStatusContainer2 = document.getElementById('status2');
+
+        // Start Test
+        startTestButton1.addEventListener('click', function() {
+            eventMarker = 'stressor_test_1';
+            startTestButton1.disabled = true;
+            submitAnswerButton1.disabled = true;
+            loadingMessage1.style.display = 'block';
+            testNumber = 1;
+            testEnded = false;
+            setCurrentTest(testNumber - 1);
+            startTest();
+        });
+        startTestButton2.addEventListener('click', function() {
+            eventMarker = 'stressor_test_2';
+            startTestButton2.disabled = true;
+            submitAnswerButton2.disabled = true;
+            loadingMessage2.style.display = 'block';
+            testNumber = 2;
+            testEnded = false;
+            setCurrentTest(testNumber - 1);
+            startTest();
+        }); 
+ 
+        submitAnswerButton1.addEventListener('click', processAnswer);
+        submitAnswerButton2.addEventListener('click', processAnswer);
+
+        function setCurrentTest(testNum){
+            fetch('/set_current_test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ test_number: testNum })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data.message);
+                console.log("Event Marker: ", eventMarker);
+                if(testNum == 0){
+                    loadingMessage1.style.display = 'none';
+                } else {
+                    loadingMessage2.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // function getCurrentTest(){
+        //     // Initialize test
+        //     fetch('/get_current_test', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         }
+        //     })
+        //     .then(response => {
+        //         if (!response.ok) {
+        //             throw new Error(`HTTP error! status: ${response.status}`);
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(data => {
+        //         testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
+        //         console.log("Test Number: ", testNumber);
+        //         // eventMarker = "stressor_test_" + testNumber;
+        
+        //         //DEBUG STATEMENT
+        //         console.log("Event Marker: ", eventMarker);
+        //         if(testNumber == 1){
+        //             console.log("The test number is 1.")
+        //             submitAnswerButton1.disabled = true;
+        //             loadingMessage1.style.display = 'none';
+        //         } else {
+        //             submitAnswerButton2.disabled = true;
+        //             loadingMessage2.style.display = 'none';
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //     });
+        // }
+
+        function startTest(){
+            if (eventMarker === undefined) {
+                alert('Failed to start test. The event marker is not set.');
+                return;
+            }
+            if (testStarted) {
+                alert("Test already started. Please refresh the page to start again.");
+                return;
+            } else {
+                setEventMarker(eventMarker);
+                setCondition('None');
+                if (testNumber == 1){
+                    submitAnswerButton1.disabled = true;
+                    loadingMessage1.style.display = 'block';
+                    testStatusContainer1.innerText = 'Please wait...';
+                } else {
+                    submitAnswerButton2.disabled = true;
+                    loadingMessage2.style.display = 'block';
+                    testStatusContainer2.innerText = 'Please wait...';
+                }
+                
+                fetch('/get_first_question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+                    if (testNumber == 1){
+                        submitAnswerButton1.disabled = false;
+                        loadingMessage1.style.display = 'none';
+                        startTestButton1.disabled = true;
+                        testStatusContainer1.innerText = 'Recording... Speak your answer and submit when ready.';
+                    } else {
+                        submitAnswerButton2.disabled = false;
+                        loadingMessage2.style.display = 'none';
+                        startTestButton2.disabled = true;
+                        testStatusContainer2.innerText = 'Recording... Speak your answer and submit when ready.';
+                    }
+                    startClock();  
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to start test.');
+                });
+                testStarted = true;
+            }
+        }
+
+        function startClock() { 
+            if(!timerInterval) {
+                timerInterval = setInterval(updateClock, 1000);
+            }
+        }
+
+        function stopClock() {
+            clearInterval(timerInterval); 
+            timerInterval = null;
+        }
+                
+        function resetClock(){
+            stopClock();
+            timeLeft = initialTime;
+        }
+
+        function updateClock() {
+            timeLeft--;
+            if(timeLeft < 0) {
+                clearInterval(timerInterval);
+                endTest();
+            }
+        }
+
+        function endTest() {
+            stopClock();
+            testEnded = true;
+            testStarted = false;
+            if (testNumber == 1){
+                submitAnswerButton1.disabled = true;
+                submitAnswerButton1.style.display = 'none';
+                startTestButton1.style.display = 'none';
+                startTestButton1.disabled = true;
+                result1.style.display = 'none';
+            } else {
+                submitAnswerButton2.disabled = true;
+                submitAnswerButton2.style.display = 'none';
+                startTestButton2.style.display = 'none';
+                startTestButton2.disabled = true;
+                result2.style.display = 'none';
+            }
+
+            // This will simply return if isProcessing is true.
+            processAnswer(testEnded);
+            setEventMarker('subject_idle');
+            if (testNumber === 1){
+                testStatusContainer1.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
+                
+            } else if (testNumber === 2){
+                testStatusContainer2.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
+            }
+            resetClock();
+        }
+
+        function processAnswer(){
+            if(isProcessing) {
+                return; // If function is busy, gtfo.
+            }
+
+            isProcessing = true;
+            if (testNumber == 1) {
+                testStatusContainer1.innerText = "Analyzing Answer...";
+                submitAnswerButton1.disabled = true;
+            } else {
+                testStatusContainer2.innerText = "Analyzing Answer...";
+                submitAnswerButton2.disabled = true;
+            }
+
+            fetch('/process_answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test_status: testEnded })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'complete' || testEnded) {
+                    console.log(data);
+                    // This block handles the eventuality that all questions have been answered
+                    // It also covers eventuality that function is in-progress when clock ends.
+                    if (data.status === 'complete') {
+                        if (testNumber == 1){
+                            testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
+                            submitAnswerButton1.style.display = 'none';
+                        } else {
+                            testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
+                            submitAnswerButton2.style.display = 'none';
+                        }
+                        isProcessing = false;
+                    } 
+
+                    if (testNumber == 1){
+                        testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
+                        submitAnswerButton1.style.display = 'none';
+                        result1.style.display = "none";
+                    } else {
+                        testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
+                        submitAnswerButton2.style.display = 'none';
+                        result2.style.display = "none";
+                    }
+                    
+                    testStarted = false;
+                    stopClock();
+                    eventMarker = 'subject_idle';
+                    setEventMarker(eventMarker);
+                    isProcessing = false;
+
+                } else if (data.result === 'correct') {
+                    if (testNumber == 1){
+                        result1.innerText = "Correct.";
+                        submitAnswerButton1.disabled = false;
+                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                    } else {
+                        result2.innerText = "Correct.";
+                        submitAnswerButton2.disabled = false;
+                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                    }
+                    isProcessing = false;
+
+                } else if (data.result === 'transciption_error'){
+                    if (testNumber == 1){
+                        result1.innerText = "Sorry, I couldn't understand you.";
+                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                        submitAnswerButton1.disabled = false;
+                    } else {
+                        result2.innerText = "Sorry, I couldn't understand you.";
+                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                        submitAnswerButton2.disabled = false;
+                    }
+                    isProcessing = false;
+                }
+                else if (data.result === 'incorrect') {
+                    const restartNumber = testNumber === 1 ? "1,009" : "1,059";
+                    if (testNumber == 1){
+                        result1.innerText = `Incorrect. Please start again from ${restartNumber}.`;
+                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                        submitAnswerButton1.disabled = false;
+                    } else {
+                        result2.innerText = `Incorrect. Please start again from ${restartNumber}.`;
+                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                        submitAnswerButton2.disabled = false;
+                    }
+                    isProcessing = false;
+                } 
+                else if (data.result === 'error') {
+                    if (testNumber == 1){
+                        testStatusContainer1.innerText = "Sorry, I could not understand the response.";
+                        submitAnswerButton1.disabled = false;
+                    }
+                    isProcessing = false;
+                } 
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (testNumber == 1){
+                    testStatusContainer1.innerText = "Something went wrong. Please repeat your answer.";
+                    submitAnswerButton1.disabled = false;
+                } else {
+                    testStatusContainer2.innerText = "Something went wrong. Please repeat your answer.";
+                    submitAnswerButton2.disabled = false;
+                }
+                isProcessing = false;
+            });
+            
+        }
 
         document.addEventListener('DOMContentLoaded', function(){
             for (let i = 0; i < breakButtons.length; i++) {
                 breakButtons[i].addEventListener('click', function() {
                     breakWin = window.open('/break_page', '_blank', 'width=800, height=600');
-                });
-            }
-
-            for (let i = 0; i < stressButtons.length; i++) {
-                stressButtons[i].addEventListener('click', function() {
-                    window.open('/test_page', '_blank', 'width=800, height=600');
                 });
             }
 
@@ -266,6 +624,11 @@
                     document.getElementById('noMatch').style.display = 'none';  // Hide error message
                 }
             }
+
+            serComplete.addEventListener('click', function() {
+                serComplete.disabled = true;
+                mainTasksDiv.style.display = 'block';
+            });
         });
         
         // Resets emotion baseline question index to 0 when page is loaded
@@ -298,34 +661,48 @@
             });
         });
 
+        function submitPassword(expPwd, statusElement){
+            const formData = new FormData(expPwd);
+            fetch('/submit_pwd', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData).toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Incorrect password.') {
+                    statusElement.style.display = 'block';
+                } else {
+                    statusElement.style.display = 'none';
+                    let nextButton = document.querySelector('.nextButton:not([style*="display: block"])');
+                    let nextDiv = document.querySelector('.nextDiv:not([style*="display: block"])');
+
+                    if (nextButton) nextButton.style.display = 'block';
+                    if (nextDiv) nextDiv.style.display = 'block';
+                }
+            })
+            .catch((error) => {
+                statusElement.style.display = 'block';
+                console.error('Error:', error);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             experimenterPwd1.addEventListener('submit', function(event){
                 event.preventDefault();
-                const formData = new FormData(experimenterPwd1);
-                fetch('/submit_pwd', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams(formData).toString()
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message === 'Incorrect password.') {
-                        pwdErrorNotification1.style.display = 'block';
-                    } else {
-                        pwdErrorNotification1.style.display = 'none';
-                        let nextButton = document.querySelector('.nextButton:not([style*="display: block"])');
-                        let nextDiv = document.querySelector('.nextDiv:not([style*="display: block"])');
+                submitPassword(experimenterPwd1, pwdErrorNotification1);
+            });
+            
+            experimenterPwd2.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwd2, pwdErrorNotification2);
+            });
 
-                        if (nextButton) nextButton.style.display = 'block';
-                        if (nextDiv) nextDiv.style.display = 'block';
-                    }
-                })
-                .catch((error) => {
-                    pwdErrorNotification1.style.display = 'block';
-                    console.error('Error:', error);
-                });
+            experimenterPwd3.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwd3, pwdErrorNotification3);
             });
 
             nameForm.addEventListener('submit', function(event){
@@ -409,7 +786,8 @@
                 if (data.status === 'error') {
                     status.innerText = data.message;
                 } else {
-                    status.innerText = data.status;
+                    // status.innerText = data.status;
+                    status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                     console.log(data.message);
                     return startRecording(); 
                 }
@@ -434,7 +812,7 @@
                         submitAnswer.disabled = true;
                         submitAnswer.style.display = 'none';
                         status.innerText = data.message;
-                        questionContainer.innerText = "No more questions."
+                        questionContainer.innerText = "No more questions. Please click “Task Complete” to proceed to the next step.."
                     } else {
                         questionContainer.innerText = data.question;
                         console.log(data.question);
@@ -472,6 +850,43 @@
                     audioTestComplete = true;
                 }
             }
+        });
+
+        var restTimeMillis = restTime * 60 * 1000;
+
+        document.addEventListener("DOMContentLoaded", function(){
+
+            var video1 = document.getElementById("video1");
+            var video2 = document.getElementById("video2");
+            var timeout1, timeout2;
+            setCondition('None');
+            
+            function stopVideo(video, messageId, timeoutVar) {
+                clearTimeout(timeoutVar); 
+                return setTimeout(function() {
+                    video.pause();
+                    setEventMarker('subject_idle');
+                    document.getElementById(messageId).innerHTML = "Your break has ended. Click 'Break Complete' to continue.";
+                }, restTimeMillis);
+            }
+
+            video1.addEventListener("play", function() {
+                setEventMarker('break_1');
+                timeout1 = stopVideo(video1, "restMessage1", timeout1);
+            });
+
+            video2.addEventListener("play", function() {
+                setEventMarker('break_2');
+                timeout2 = stopVideo(video2, "restMessage2", timeout2);
+            });
+
+            document.getElementById("break1").addEventListener("click", function() {
+                toggleVis("break1Div");
+            });
+
+            document.getElementById("break2").addEventListener("click", function() {
+                toggleVis("break2Div");
+            }); 
         });
     </script>
 </body>

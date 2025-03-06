@@ -346,7 +346,7 @@ def process_answer() -> Response:
             if test_manager.current_question_index >= len(questions):
                 test_manager.current_question_index = 0
                 print(f"Question index is {test_manager.current_question_index}")
-                return jsonify({'status': 'complete', 'message': 'Answer recorded and logged.'})
+                return jsonify({'status': 'complete', 'message': 'Please let the experimenter know that you have completed this section.'})
             
             else:
                 if transcription.startswith("Google Speech Recognition could not understand"):
@@ -375,6 +375,24 @@ def process_answer() -> Response:
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/set_current_test', methods=['POST'])
+def set_current_test() -> Response:
+    global test_manager
+    test_number = request.get_json().get('test_number')
+    if test_number is None:
+        raise ValueError("Missing 'test_number' in request JSON")
+
+    try: 
+        test_number = int(test_number)
+        test_manager.current_test_index = test_number
+        test_manager.current_question_index = 0
+        print(f"Test set to {test_number}.")
+        print(f"Current Question Index: {test_manager.current_question_index}")
+        return jsonify({'message': f'Test set to {test_number}.'}), 200
+    
+    except ValueError:
+        return jsonify({'message': 'Invalid test number.'}), 400
+    
 @app.route('/get_current_test', methods=['POST'])
 def get_current_test() -> Response:
     global test_manager
@@ -475,18 +493,18 @@ def import_emotibit_csv() -> Response:
     
     return jsonify({"success": True, "message": "File uploaded successfully.", "file_path": file_path}), 200
     
-@app.route('/convert_emotibit_data', methods=['POST'])
-def upload_subject_data() -> Response:
-    global subject_manager, emotibit_streamer
-    try:
-        message = emotibit_streamer.hdf5_to_csv()
+# @app.route('/convert_emotibit_data', methods=['POST'])
+# def upload_subject_data() -> Response:
+#     global subject_manager, emotibit_streamer
+#     try:
+#         message = emotibit_streamer.hdf5_to_csv()
 
-        # TODO: Add code for uploading to postgres
+#         # TODO: Add code for uploading to postgres
 
-        return jsonify({'message': message}), 200
+#         return jsonify({'message': message}), 200
 
-    except Exception as e:
-        return jsonify({'error': 'Error processing subject data.'}), 400
+#     except Exception as e:
+#         return jsonify({'error': 'Error processing subject data.'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -535,8 +553,10 @@ def submit() -> Response:
 
             audio_file_manager.set_audio_folder(subject_manager.subject_folder)
             emotibit_streamer.set_data_folder(subject_manager.subject_folder)
-            emotibit_streamer.initialize_hdf5_file(subject_id)
+            emotibit_streamer.set_filenames(subject_id)
+
             vernier_manager.set_data_folder(subject_manager.subject_folder) 
+            vernier_manager.set_filenames(subject_id)
 
             pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
@@ -1010,7 +1030,7 @@ def start_vernier() -> None:
         if vernier_manager.running:
             return jsonify({'message': 'Vernier belt is already running'}), 200
         
-        vernier_manager.initialize_hdf5_file(subject_manager.subject_id)
+        vernier_manager.initialize_hdf5_file()
 
         time.sleep(1)
 
@@ -1021,7 +1041,7 @@ def start_vernier() -> None:
 
         vernier_manager.run()
         print("Vernier belt is running.")
-        
+
         return jsonify({'message': 'Vernier stream started.'}), 200
 
     except Exception as e:
@@ -1047,6 +1067,14 @@ def stop_vernier() -> None:
 def start_emotibit() -> None:
     global emotibit_streamer
     try:
+        if subject_manager.subject_id is None:
+            return jsonify({'message': 'Subject information is not set.'}), 400
+        
+        print("Initializing EmobiBit data H5 file...")
+        emotibit_streamer.initialize_hdf5_file()
+
+        time.sleep(1)
+        print("Starting EmotiBit stream...")
         emotibit_streamer.start()
         print("OSC server is streaming data.")
         return jsonify({'message': 'EmotiBit stream started.'}), 200
@@ -1073,6 +1101,7 @@ def stop_emotibit() -> None:
 def closeh5():
     global emotibit_streamer
 
+    print("Closing EmotiBit H5 file...")
     file_closed = emotibit_streamer.close_h5_file()
     return jsonify({'message': file_closed}), 200
 

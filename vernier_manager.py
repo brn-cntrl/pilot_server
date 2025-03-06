@@ -74,13 +74,22 @@ class VernierManager:
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
-    def initialize_hdf5_file(self, subject_id):
-        # current_date = datetime.now().strftime("%Y-%m-%d")
-        current_date = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    def set_filenames(self, subject_id):
+        current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.h5")
         self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.csv")
 
+    def initialize_hdf5_file(self):
+        # current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        # current_date = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        # self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.h5")
+        # self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.csv")
+
         try:
+            if not self.hdf5_filename:
+                print("HDF5 filename not set.")
+                return
+            
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
@@ -101,7 +110,7 @@ class VernierManager:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
-    def start(self):
+    def start(self, subject_id):
         asyncio.set_event_loop(asyncio.new_event_loop())
         self._godirect = GoDirect(use_ble=True, use_usb=True)
         print("GoDirect v"+str(self._godirect.get_version()))
@@ -115,39 +124,6 @@ class VernierManager:
             self._sensors = self._device.get_enabled_sensors()
             self._device_started = True
 
-    # def calculate_respiratory_rate(self, force_values, fs=10, window_seconds=30):
-    #     """
-    #     Calculate the respiratory rate from force values.
-    #     This function calculates the respiratory rate based on the provided force values.
-    #     It uses peak detection to count the number of breaths within a specified window of time.
-    #     Parameters:
-    #         force_values (list or array-like): The force values from which to calculate the respiratory rate.
-    #         fs (int, optional): The sampling frequency of the force values in Hz. Default is 10 Hz.
-    #         window_seconds (int, optional): The time window in seconds over which to calculate the respiratory rate. Default is 30 seconds.
-    #         NOTE: A moving average can be applied to the force values before peak detection to smooth the signal. This has been added and commented
-    #         out for future use.
-    #     Returns:
-    #         float or None: The calculated respiratory rate in breaths per minute, or None if there are not enough data points.
-    #     """
-    #     if len(force_values) < fs * window_seconds:
-    #         return None  
-        
-    #     force_array = np.array(force_values)
-
-        # Apply a moving average to the force values
-        # window_size = fs * 3 # 3-second window
-        # baseline = np.convolve(force_array, np.ones(window_size)/window_size, mode='same')
-        # Subtract baseline to normalize signal
-        # corrected_signal = force_array - baseline
-
-        # replace force_array with corrected_signal if moving average is applied
-        # peaks, _ = signal.find_peaks(force_array, distance = fs/2)
-
-        # num_breaths = len(peaks)
-        # respiratory_rate = (num_breaths / window_seconds) * 60 
-
-        # return respiratory_rate
-    
     def collect_data(self):
         if not self.running:
             print("Go Direct device stopped.")
