@@ -110,7 +110,7 @@ class VernierManager:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
-    def start(self, subject_id):
+    def start(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         self._godirect = GoDirect(use_ble=True, use_usb=True)
         print("GoDirect v"+str(self._godirect.get_version()))
