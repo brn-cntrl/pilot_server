@@ -63,6 +63,25 @@ function setNextTest(){
     });
 }
 
+function completeTask(taskId) {
+    fetch('/complete_task', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'},
+        body: JSON.stringify({ task_id: taskId })
+    })
+    .then(response => console.log(`Task ${taskId} completed`))
+    .catch(error => console.error('Error:', error));
+}
+
+function sendStatus() {
+    fetch('/status_update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Subject is ready' })
+    });
+}
+
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;

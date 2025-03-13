@@ -34,7 +34,7 @@
             <li>Make sure Scarlett audio interface is correctly set up and connected.</li>
         </ul><br> 
 
-        <form id="experimentNameForm" action="/submit_experiment" method="POST">
+        <form id="experimentNameForm" action="/submit_experiment" method="POST" autocomplete="off">
             <label for="experiment_name">Experiment Name:</label>
             <input type="text" id="experiment_name" name="experiment_name" required><br><br>
             <label for="trial_name">Trial Name:</label>
@@ -52,10 +52,11 @@
         <h3>Subject Instructions</h3>
         <button id="launchSubjectGUI">Launch Subject Dashboard</button><br>
         <p>The subject will now fill out the Participant Information, Demographic, and PSS-4 surveys. Launch the Subject Dashboard and move it to their screen.</p>
-        <p>Please read the provided instrunctions to the subject:</p>
-        <p>
-            “Now, I am going to have you fill out a few forms. They will not require too much typing, but you can just use your other hand [gesture to dominant hand, not wearing Emotibit] when you need to type. Make sure you click “Submit” at the end of each Google Form before clicking 'Task Complete' for that section.”
-        </p>
+        <p>Please read the provided instructions to the subject:</p>
+        <p>“Now, I am going to have you fill out a few forms. They will not require too much typing, but you can just use your other hand [gesture to dominant hand, not wearing Emotibit] when you need to type. Make sure you click “Submit” at the end of each Google Form before clicking 'Task Complete' for that section.”</p>
+        <p id="subject_info" style="display:none; color: green;">Subject has submitted the Information Form.</p>
+        <p id="survey_1" style="display:none; color: green;">Subject has submitted the Demographic Form.</p>
+        <p id="survey_2" style="display:none; color: green;">Subject has submitted the PSS-4 Form.</p>
     </div><br>
 
     <button class="toggle">Device Setup</button><br>
@@ -65,13 +66,6 @@
         <ul>
             <li>Ensure the subject is fitted with the microphone and headphones.</li>
             <li>Ensure the audio interface and microphones are connected and powered on.</li>
-            <!-- <li><span class="required">IMPORTANT:</span> Subject must fill out the "Subject Information" form before the EmotiBit can be started.</li>
-            <li>Ensure the EmotiBit is fitted to the subject.</li>
-            <li>Power on the EmotiBit by sliding the DIP switch on the board to the right.</li>
-            <li>Open the Oscilloscope app on the desktop and select the EmotiBit device from the dropdown menu.</li>
-            <li><span class="required">IMPORTANT:</span> Once you see the graphs detecting data, check "Record" on the Oscilloscope interface.</li>
-            <li>From the "Output List" on the Oscilloscope interface, check "OSC" to stream data to the server.</li>
-            <li>Start the EmotiBit stream by pressing the button below.</li> -->
             <li>Ensure the Vernier Belt is fitted to the subject.</li>
             <li>Ensure the Vernier Belt is switched on and that the BlueTooth light is active.</li>
             <li>Click "Start Respiratory Belt" to begin streaming the Vernier Belt data.</li>
@@ -99,23 +93,29 @@
         <h4>Instructions</h4>
         <ul>
             <li>Please select your audio input or microphone.</li>
-            <li>Fit subject with microphone and headphones</li>
-            <li>Instruct subject to follow the written directions on the "Test Audio" portion of their page.</li>
-            <li>When subject is fitted with AirPods, click "Test Audio Output" below.</li>
-            <li>Test microphone: When subject is fitted with microphone, monitor the audio signal in system audio settings.</li>
+            <li>Test microphone: When subject is fitted with microphone monitor the audio signal in system audio settings.</li>
             <li>Monitor the signal and adjust microphone as needed.</li>
+            <li>Fit subject with AirPods.</li>
+            <li>Test headphones: When subject is fitted with AirPods, click "Test Audio Output" below.</li>
         </ul><br>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
 
+        <p>The subject will now test audio input, do the SER basline task, and the first stress task. Make sure you are ready to transition efficiently into the first experimental condition once the subject finishes the stress task. Switch to the Subject Dashboard window and return control to the subject.</p>
+
         <label for="audioDevices">Select Audio Input Device:</label><br><br>
-        <select id="audioDevices" onchange="setDevice()"></select><br>
+        <select id="audioDevices" onchange="setDevice()"></select><br><br>
     </div><br>
+
+    <p id="test_transcription" style="display:none; color:green;">Subject has completed the test transcription.</p>
+    <p id="ser_baseline" style="display:none; color:green;">Subject has completed the SER baseline task.</p>
+    <p id="test_1" style="display:none; color:green;">Subject has completed the first stress task.</p>
 
     <h2>Experimental Tasks</h2>
     <button class="toggle">Begin Tasks</button><br>
     <div class="testModule" style="display:none;">
         <h3>Experimental Tasks</h3>
         <!-- Task for continuous recording -->
+        <p>Once the subject has finished with the first stress task, they will inform you. Walk them to the first experimental condition. </p>
         <button class="toggle">Task 1 (General Recording)</button><br>
         <div class="innerModule" id='taskGenDiv1' style="display:none">
             <h4>Task Instructions</h4>
@@ -128,7 +128,7 @@
                 <li>After the task is completed, press "Calculate Rest Time."</li>
                 <li>The subject must click "Task Completed" when the task is finished.</li>
             </ul><br>
-
+            
             <select onchange="updateCondition('taskGenDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -180,6 +180,7 @@
             </select><br><br>
             <button id="startPRSTask1">Start Task</button><br>
             <p id="breakInstructions1" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT, Break 1, and Stress Task #2</p>
+
         </div><br>
 
         <button class="toggle">IAT Task 1</button><br>
@@ -190,8 +191,14 @@
                 <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
                 <li>Click "Stop Task" when the task is complete. The event marker will be set to "subject_idle".</li>
             </ul><br>
-            <button id="iat1" class="IATButton">Start Task</button><br><br>
+            <button id="iat1" class="IATButton">Start Task</button><br>
         </div><br>
+
+        <p id="iat_1" style="display:none; color:green;">Subject has completed the first IAT task.</p>
+        <p id="break_1" style="display:none; color:green;">Subject has completed the first break.</p>
+        <p id="test_2" style="display:none; color:green;">Subject has completed the second stress task.</p>
+
+        <p>Once the subject has finished with the second stress task, they will inform you. Walk them to the second experimental condition.</p>
 
         <button class="toggle">Task 2 (General Recording)</button><br>
         <div class="innerModule" id="taskGenDiv2" style="display:none">
@@ -264,6 +271,9 @@
             </ul><br>
             <button id="iat2" class="IATButton">Start Task</button><br><br>
         </div><br>
+
+        <p id="iat_2" style="display:none; color:green;">Subject has completed the second IAT task.</p>
+        <p id="break_2" style="display:none; color:green;">Subject has completed the second break.</p>
     </div>
 
     <h2>Post-Test</h2>
@@ -276,8 +286,9 @@
             <ul>
                 <li>Instruct the subject to fill out the exit survey before completing the experiment.</li>
             </ul>
-        </div><br>
-
+        </div>
+        <p id="exit_survey" style="display:none; color:green;">Subject has completed the exit survey.</p>
+        
         <button class="toggle">Stop Devices</button><br>
         <div class="innerModule" style="display:none;">
             <button class="stopEmotibit">Stop Emotibit</button><br>
@@ -384,7 +395,7 @@
                 <li>Enter the subject's email address below.</li>
                 <li>Click "Encrypt Subject" to generate a unique subject ID.</li>
             </ul>
-            <form id="encryptSubject" action="/encrypt_subject" method="POST">
+            <form id="encryptSubject" action="/encrypt_subject" method="POST" autocomplete="off">
                 <label for="email">Email:</label>
                 <input type="text" id="email" name="email" required><br><br>
                 <button type="submit">Encrypt Subject</button>
@@ -403,7 +414,7 @@
                 <li>Enter the ID string.</li>
                 <li>Click "Decrypt Subject" to generate a unique subject ID.</li>
             </ul>
-            <form id="decryptSubject" action="/decrypt_subject" method="POST">
+            <form id="decryptSubject" action="/decrypt_subject" method="POST" autocomplete="off">
                 <label for="id_string">Encrypted ID String:</label>
                 <input type="text" id="id_string" name="id_string" required><br><br>
                 <button type="submit">Decrypt Subject</button>
@@ -463,7 +474,25 @@
         const stopVernierButtons = document.querySelectorAll('.stopVernier');
         const vernierStatus = document.querySelectorAll('.vernierStatus');
         const startIATButtons = document.querySelectorAll('.IATButton');
-        
+
+        const eventSource = new EventSource('/stream');
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log("Update received:", data);
+            if (data.event_type === 'task_completed' && data.task_id) {
+                console.log("Task completed:", data.message);
+                const taskStatusDiv = document.getElementById(data.task_id);
+                if (taskStatusDiv) {
+                    taskStatusDiv.style.display = "block";
+                }
+            } else if (data.event_type === 'status_update') {
+                console.log("Status update:", data.message);
+            } else if (data.event_type === 'error') {
+                console.error("Error:", data.message);
+                alert("Error: " + data.message);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function(){
             startVernierButton.addEventListener('click', function(){
                 vernierStatus.forEach(status => {

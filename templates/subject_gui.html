@@ -22,7 +22,7 @@
 
             <button class="toggle">Participant Information</button><br>
             <div class="innerModule" style="display:block;">
-                <form action="/submit" method="POST" id="nameForm">
+                <form action="/submit" method="POST" id="nameForm" autocomplete="off">
                     <label for="first_name">First Name:</label>
                     <input type="text" id="first_name" name="first_name" required><br><br>
                     <label for="last_name">Last Name:</label>
@@ -48,20 +48,20 @@
         <div class="innerModule" id="survey1Div" style="display:none;">
             <p>Please fill out this form.</p>
             <div id="demographicsDiv" style="display:block;"></div><br>
-            <button class="taskComplete">Task Complete</button>
+            <button class="taskComplete" onclick="completeTask('survey_1')">Task Complete</button>
         </div><br>
 
         <button class="toggle nextButton" style="display:none;">Survey 2</button>
         <div class="innerModule nextDiv" style="display:none;">
             <p>Please fill out this form.</p>
             <div id="pss4Div" style="display:none;"></div><br>
-            <button class="taskComplete">Task Complete</button>
+            <button class="taskComplete" onclick="completeTask('survey_2')">Task Complete</button>
         </div><br>
 
         <button class="toggle nextButton" style="display:none;">Password</button>
         <div class="innerModule nextDiv" style="display:none;">
             <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
-            <form action="/submit_pwd" method="POST" id="experimenterPwd1">
+            <form action="/submit_pwd" method="POST" id="experimenterPwd1" autocomplete="off">
                 <label for="password">Password:</label>
                 <input type="text" name="password" id="password"><br><br>
                 <button type="submit">Submit Password</button>
@@ -77,7 +77,7 @@
             </ul><br>
             <p id="audioStatusMessage"></p>
             <button id="testAudio">Record</button><br><br>
-            <button class="taskComplete">Task Complete</button>
+            <button class="taskComplete" onclick="completeTask('test_transcription')">Task Complete</button>
         </div><br>
 
         <button class="toggle nextButton" style="display:none;">Mood Q&A</button>
@@ -91,7 +91,7 @@
             <p id="QAStatus" style="display:none;" disabled></p>
             <p id="questionContainer" style="display:none;" disabled></p>
             <button id="submitAnswer" style="display:none;" disabled>Submit Answer</button><br><br>
-            <button id="serComplete">Task Complete</button>
+            <button id="serComplete" onclick="completeTask('ser_baseline')">Task Complete</button>
         </div><br>
     </div><br>
 
@@ -116,13 +116,13 @@
                     <p id="result1"></p>
                     <p id="status1"></p>
                 </div><br>
-                <button class="taskComplete">Task Complete</button><br>
+                <button class="taskComplete" onclick="completeTask('test_1')">Task Complete</button><br>
             </div><br>
             
             <button class="toggle nextButton" style="display:none;">Password</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
-                <form action="/submit_pwd" method="POST" id="experimenterPwd2">
+                <form action="/submit_pwd" method="POST" id="experimenterPwd2" autocomplete="off">
                     <label for="password">Password:</label>
                     <input type="text" name="password" id="password"><br><br>
                     <button type="submit">Submit Password</button>
@@ -143,7 +143,7 @@
                     <li>Complete the tasks as directed.</li>
                     <li>Press "Task Complete" when you have finished the task.</li>
                 </ul>
-                <button class="taskComplete">Task Complete</button>
+                <button class="taskComplete" onclick="completeTask('iat_1')">Task Complete</button>
             </div><br>
 
             <!-- <button class="toggle nextButton" style="display:none;">PRS Survey 1</button>
@@ -162,7 +162,7 @@
                     <source src="{{ url_for('video', filename='Video1.mp4') }}" type="video/mp4">
                 </video><br>
                 <p id="restMessage1"></p>
-                <button class="taskComplete">Break Complete</button>
+                <button class="taskComplete" onclick="completeTask('break_1')">Break Complete</button>
             </div><br>
             
             <button class="toggle nextButton" style="display:none;">Test 2</button>
@@ -183,13 +183,13 @@
                     <p id="result2"></p>
                     <p id="status2"></p>
                 </div><br>
-                <button class="taskComplete">Task Complete</button><br>
+                <button class="taskComplete" onclick="completeTask('test_2')">Task Complete</button><br>
             </div><br>
 
             <button class="toggle nextButton" style="display:none;">Password</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
-                <form action="/submit_pwd" method="POST" id="experimenterPwd3">
+                <form action="/submit_pwd" method="POST" id="experimenterPwd3" autocomplete="off">
                     <label for="password">Password:</label>
                     <input type="text" name="password" id="password"><br><br>
                     <button type="submit">Submit Password</button>
@@ -204,21 +204,17 @@
                     <li>Complete the tasks as directed.</li>
                     <li>Press "Task Complete" when you have finished the task.</li>
                 </ul>
-                <button class="taskComplete">Task Complete</button>
+                <button class="taskComplete" onclick="completeTask('iat_2')">Task Complete</button>
             </div><br>
 
             <button class="toggle nextButton" style="display:none">Break 2</button>
-            <!-- <div class="innerModule nextDiv" style="display:none;">
-                <button class="breakButton">Take Break</button><br><br>
-                <button class="taskComplete">Break Complete</button>
-            </div> -->
             <div class="innerModule nextDiv" id="break2Div" style="display:none">
                 <p>Please watch the following video for 3 minutes</p>
                 <video id="video2" width="640" height="360" controls>
                     <source src="{{ url_for('video', filename='Video2.mp4') }}" type="video/mp4">
                 </video><br>
                 <p id="restMessage2"></p>
-                <button class="taskComplete">Break Complete</button>
+                <button class="taskComplete" onclick="completeTask('break_2')">Break Complete</button>
             </div>
         </div>
     </div><br>
@@ -229,7 +225,7 @@
         <div class="testModule" style="display:block;">
             <button class="toggle">Exit Survey</button>
             <div class="innerModule" id="exitSurveyDiv" style="display:none;"></div><br><br>
-            <button class="taskComplete" id="postTestComplete">Task Complete</button><br>
+            <button class="taskComplete" id="postTestComplete" onclick="completeTask('exit_survey')">Task Complete</button><br>
             <p id="completeMessage" style="display:none;">All tasks are complete. Please wait for further instructions.</p>
         </div>
     </div>
@@ -342,41 +338,6 @@
                 console.error('Error:', error);
             });
         }
-
-        // function getCurrentTest(){
-        //     // Initialize test
-        //     fetch('/get_current_test', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         }
-        //     })
-        //     .then(response => {
-        //         if (!response.ok) {
-        //             throw new Error(`HTTP error! status: ${response.status}`);
-        //         }
-        //         return response.json();
-        //     })
-        //     .then(data => {
-        //         testNumber = data.test_number + 1; // Add 1 because test_index starts at 0.
-        //         console.log("Test Number: ", testNumber);
-        //         // eventMarker = "stressor_test_" + testNumber;
-        
-        //         //DEBUG STATEMENT
-        //         console.log("Event Marker: ", eventMarker);
-        //         if(testNumber == 1){
-        //             console.log("The test number is 1.")
-        //             submitAnswerButton1.disabled = true;
-        //             loadingMessage1.style.display = 'none';
-        //         } else {
-        //             submitAnswerButton2.disabled = true;
-        //             loadingMessage2.style.display = 'none';
-        //         }
-        //     })
-        //     .catch(error => {
-        //         console.error('Error:', error);
-        //     });
-        // }
 
         function startTest(){
             if (eventMarker === undefined) {
@@ -739,6 +700,7 @@
                         exitSurveyDiv.innerHTML = `<iframe src="${exitSurvey}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
                         exitSurveyDiv.style.display = 'block';
                         demographicsDiv.innerHTML = `<iframe src="${demographics}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        completeTask('subject_info');
                     }
                 })
                 .catch((error) => {

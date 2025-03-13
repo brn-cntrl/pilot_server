@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, render_template_string, redirect, send_file, Response
 import webview
 import warnings
+import json
 import threading
 from threading import Thread
 import os, sys
@@ -24,10 +25,6 @@ from form_manager import FormManager
 from timestamp_manager import TimestampManager
 from werkzeug.utils import secure_filename
 
-# TODO: add code for creating tmp if not found
-# TODO: Debug h5 to csv
-# TODO: Separate conditions and event markers
-
 app = Flask(__name__)
 emotibit_thread = None
 
@@ -45,6 +42,9 @@ ser_manager = SERManager()
 form_manager = FormManager()
 timestamp_manager = TimestampManager()
 vernier_manager = VernierManager()
+
+update_message = None
+update_event = threading.Event()
 
 ##################################################################
 ## Routes 
@@ -170,17 +170,60 @@ def set_event_marker():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# @app.route('/baseline_comparison', methods=['POST'])
-# def baseline_comparison() -> Response:
-#     global emotibit_streamer
+@app.route('/complete_task', methods=['POST'])
+def complete_task() -> Response:
+    global update_message
+    task_id = request.json.get('task_id', '')
 
-#     try:
-#         response = emotibit_streamer.compare_baseline()
-#         return jsonify(response), 200
+    update_message = {
+        'event_type': 'task_completed',
+        'task_id': task_id,
+        'message': f'Task {task_id} completed.'
+    }
     
-#     except Exception as e:
-#         return jsonify({'status': 'error', 'message': str(e)}), 400
+    update_event.set()
+    return jsonify(success=True), 200
+
+@app.route('/status_update', methods=['POST'])
+def status_update() -> Response:
+    global update_message
+    status = request.json.get('status', '')
+
+    update_message = {
+        'event_type': 'status_update',
+        'message': status
+    }
     
+    update_event.set()
+    return jsonify(success=True), 200
+
+@app.route('/send_error', methods=['POST'])
+def send_error() -> Response:
+    global update_message
+    error_message = request.json.get('error', '')
+    update_message = {
+        'event_type': 'error',
+        'message': error_message
+    }
+    
+    update_event.set()
+    return jsonify(success=True), 200
+
+@app.route('/stream')
+def stream():
+    def event_stream():
+        global update_message
+        last_message = None
+        while True:
+            update_event.wait()
+            if update_message != last_message:
+                last_message = update_message
+                yield f"data: {json.dumps(update_message)}\n\n"
+
+            update_event.clear()
+
+    return Response(event_stream(), content_type="text/event-stream")
+
 @app.route('/reset_ser_question_index', methods=['POST'])
 def reset_ser_question_index() -> Response:
     global test_manager
@@ -188,29 +231,6 @@ def reset_ser_question_index() -> Response:
     test_manager.current_ser_question_index = 0
 
     return jsonify({'status': 'SER questions reset'})
-
-# @app.route('/start_biometric_baseline', methods=['POST'])
-# def start_biometric_baseline() -> Response:
-#     global emotibit_streamer
-#     try:
-#         if emotibit_streamer.is_streaming:
-#             emotibit_streamer.start_baseline_collection()
-#             return jsonify({'status': 'Collecting baseline data.'})
-#         else:
-#             return jsonify({'status': 'EmotiBit not connected.'}), 400
-
-#     except Exception as e:
-#         return jsonify({'status': 'error', 'message': str(e)}), 400 
-    
-# @app.route('/stop_biometric_baseline', methods=['POST'])
-# def stop_biometric_baseline() -> Response:
-#     global emotibit_streamer
-#     try:
-#         emotibit_streamer.stop_baseline_collection()
-#         return jsonify({'status': 'Baseline data collection stopped.'}), 200
-    
-#     except Exception as e:
-#         return jsonify({'status': 'error', 'message': str(e)}), 400
     
 @app.route('/get_ser_question', methods=['GET'])
 def get_ser_question() -> Response:
@@ -1232,7 +1252,7 @@ if __name__ == '__main__':
     if not os.path.exists('tmp'):
         os.makedirs('tmp')
 
-    app.run(port=PORT_NUMBER,debug=False)
+    app.run(port=PORT_NUMBER,debug=False, threaded=True)
     
     # Uncomment when switching to pywebview
     # flask_thread = threading.Thread(target=run_flask)
