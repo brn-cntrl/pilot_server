@@ -63,7 +63,7 @@
             <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
             <form action="/submit_pwd" method="POST" id="experimenterPwd1" autocomplete="off">
                 <label for="password">Password:</label>
-                <input type="text" name="password" id="password"><br><br>
+                <input type="password" name="password" id="password"><br><br>
                 <button type="submit">Submit Password</button>
             </form>
             <div id="pwdErrorNotification1" style="display:none; color: red;">Incorrect Password.</div><br>
@@ -124,7 +124,7 @@
                 <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
                 <form action="/submit_pwd" method="POST" id="experimenterPwd2" autocomplete="off">
                     <label for="password">Password:</label>
-                    <input type="text" name="password" id="password"><br><br>
+                    <input type="password" name="password" id="password"><br><br>
                     <button type="submit">Submit Password</button>
                 </form>
                 <div id="pwdErrorNotification2" style="display:none; color: red;">Incorrect Password.</div><br>
@@ -191,7 +191,7 @@
                 <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
                 <form action="/submit_pwd" method="POST" id="experimenterPwd3" autocomplete="off">
                     <label for="password">Password:</label>
-                    <input type="text" name="password" id="password"><br><br>
+                    <input type="password" name="password" id="password"><br><br>
                     <button type="submit">Submit Password</button>
                 </form>
                 <div id="pwdErrorNotification3" style="display:none; color: red;">Incorrect Password.</div><br>
@@ -250,7 +250,7 @@
         const testAudio = document.getElementById('testAudio');
         const audioStatusMessage = document.getElementById('audioStatusMessage');
         const beginSERButton = document.getElementById('beginSERButton');
-        const status = document.getElementById('status');
+        // const status = document.getElementById('status');
         const questionContainer = document.getElementById('questionContainer');
         const submitAnswer = document.getElementById('submitAnswer');
         const completeMessage = document.getElementById('completeMessage');
@@ -714,17 +714,17 @@
         beginSERButton.addEventListener('click', function() {
             beginSERButton.disabled = true;
             questionContainer.style.display = 'block';
-            status.style.display = 'block';
+            // status.style.display = 'block';
             submitAnswer.style.display = 'block';
             submitAnswer.disabled = true; 
             
-            status.innerText = "Please wait before responding...";
+            // status.innerText = "Please wait before responding...";
             setEventMarker('ser_baseline');
             setCondition('None');
             startRecording()
                 .then(() => {
                     submitAnswer.disabled = false;
-                    status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
+                    // status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                     fetchNextQuestion();  
                 })
                 .catch(error => {
@@ -735,7 +735,7 @@
 
         submitAnswer.addEventListener('click', function() {
             submitAnswer.disabled = true;
-            status.innerText = "Processing your answer...";
+            // status.innerText = "Processing your answer...";
             
             fetch("/process_ser_answer", {
                 method: "POST",
@@ -746,22 +746,22 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'error') {
-                    status.innerText = data.message;
+                    // status.innerText = data.message;
                 } else {
                     // status.innerText = data.status;
-                    status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
+                    // status.innerText = "Recording... Please speak clearly. Press 'Submit Answer' when finished.";
                     console.log(data.message);
                     return startRecording(); 
                 }
             })
             .then(() => {
                 submitAnswer.disabled = false;
-                status.style.display = 'none';;
+                // status.style.display = 'none';;
                 fetchNextQuestion(); 
             })
             .catch(error => {
                 console.error('Error:', error);
-                status.innerText = "Error occurred while processing the answer.";
+                // status.innerText = "Error occurred while processing the answer.";
             });
         });
 
@@ -773,7 +773,7 @@
                         setEventMarker('subject_idle');
                         submitAnswer.disabled = true;
                         submitAnswer.style.display = 'none';
-                        status.innerText = data.message;
+                        // status.innerText = data.message;
                         questionContainer.innerText = "No more questions. Please click “Task Complete” to proceed to the next step.."
                     } else {
                         questionContainer.innerText = data.question;
@@ -782,7 +782,7 @@
                 })
                 .catch(error => {
                     console.error('Error getting SER question:', error);
-                    status.innerText = "Error occurred while getting the SER question.";
+                    // status.innerText = "Error occurred while getting the SER question.";
                 });
         }
 
