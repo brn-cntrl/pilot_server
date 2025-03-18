@@ -320,17 +320,45 @@ def get_first_question() -> Response:
             return jsonify({'message': 'Question found.', 'question': question['question'], "test_index": test_manager.current_test_index})
     except Exception as e:
         return jsonify({'message': 'Error getting first question.', 'error': str(e)}), 400
-    
+
+@app.route('/confirm_transcription', methods=['POST'])
+def confirm_transcription() -> Response:
+    """
+    Stops the current recording, transcribes the audio, and returns the transcription result.
+    This function performs the following steps:
+    1. Stops the current audio recording using the recording_manager.
+    2. Transcribes the audio file using the audio_file_manager.
+    3. Updates the current answer in the test_manager with the transcribed text.
+    4. Returns a JSON response with the transcription result, asking for confirmation.
+
+    NOTE: Confirmation is handled on the client side.
+
+    Returns:
+        Response: A JSON response containing the transcription result and a confirmation prompt.
+                  If an error occurs during transcription, returns a JSON response with an error message and a 400 status code.
+    """
+    global test_manager, recording_manager, audio_file_manager
+
+    print("Stopping the recording...")
+    recording_manager.stop_recording()
+
+    try:
+        print("Recording stopped. Transcribing....")
+        test_manager.current_answer = transcribe_audio(audio_file_manager.recording_file)
+
+        return jsonify({'transcription': f"I got: {test_manager.current_answer}. Is this correct (Y/N)?"})
+
+    except:
+        return jsonify({'status': 'error', 'message': 'Error transcribing audio.'}), 400
+
 @app.route('/process_answer', methods=['POST'])
 def process_answer() -> Response:
     """
     Process the answer submitted by the user.
     This function handles the following tasks:
-    - Stops the current recording.
     - Retrieves the current test and its questions.
     - Extracts the test status from the request.
     - Generates a filename for the audio file based on the subject ID, timestamp, test, and question index.
-    - Transcribes the audio file and saves it.
     - Appends the transcription and other data to the subject's data file.
     - Handles errors related to transcription.
     - Updates the test and question indices based on the test status and correctness of the answer.
@@ -340,8 +368,8 @@ def process_answer() -> Response:
     """
 
     global recording_manager, subject_manager, audio_file_manager, test_manager
-    print("stopping the recording")
-    recording_manager.stop_recording()
+    # print("stopping the recording")
+    # recording_manager.stop_recording()
     current_test = test_manager.current_test_index
     questions = test_manager.get_task_questions(current_test)
     test_ended = request.get_json().get('test_status')
@@ -351,11 +379,11 @@ def process_answer() -> Response:
         id = subject_manager.subject_id
 
         file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
-        print("transcribing....")
-        transcription = transcribe_audio(audio_file_manager.recording_file)
-        print("saving file...")
+        transcription = test_manager.current_answer
+
+        print("Saving file...")
         audio_file_manager.save_audio_file(file_name)
-        print("saving data...")
+        print("Saving data...")
         # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
         subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 

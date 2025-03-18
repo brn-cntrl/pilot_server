@@ -112,9 +112,12 @@
                 <button id="startTestButton1" style="display:block;">Start Test</button><br>
                 <div>
                     <p id="loadingMessage1" style="display:none;">Test loading...</p>
-                    <button id="submitAnswerButton1" disabled>Submit Answer</button><br><br>
-                    <p id="result1"></p>
+                    <!-- <div id="clock1">Time left: 10</div><br> -->
                     <p id="status1"></p>
+                    <button id="yesButton1" style="display:none;" disabled>Yes</button>
+                    <button id="noButton1" style="display:none;" disabled>No</button><br><br>
+                    <button id="submitAnswerButton1" disabled>Submit Answer</button><br>
+                    <p id="result1"></p>
                 </div><br>
                 <button class="taskComplete" onclick="completeTask('test_1')">Task Complete</button><br>
             </div><br>
@@ -179,9 +182,12 @@
                 <button id="startTestButton2" style="display:block;">Start Test</button><br>
                 <div>
                     <p id="loadingMessage2" style="display:none;">Test loading...</p>
-                    <button id="submitAnswerButton2" disabled>Submit Answer</button><br><br>
-                    <p id="result2"></p>
+                    <!-- <div id="clock2">Time Left: 10</div><br> -->
                     <p id="status2"></p>
+                    <button id="yesButton2" style="display:none;" disabled>Yes</button>
+                    <button id="noButton2" style="display:none;" disabled>No</button><br><br>
+                    <button id="submitAnswerButton2" disabled>Submit Answer</button><br>
+                    <p id="result2"></p>
                 </div><br>
                 <button class="taskComplete" onclick="completeTask('test_2')">Task Complete</button><br>
             </div><br>
@@ -267,6 +273,8 @@
         let elapsedTime = 0;
         let initialTime = 300;  // 300 = 5 minutes
         let timeLeft = initialTime;
+        let answerTimeLeft = 10;
+
         let timerInterval;
         let eventMarker;
         let testStarted = false;
@@ -285,6 +293,13 @@
         const result2 = document.getElementById('result2');
         const testStatusContainer1 = document.getElementById('status1');
         const testStatusContainer2 = document.getElementById('status2');
+        const yesButton1 = document.getElementById('yesButton1');
+        const yesButton2 = document.getElementById('yesButton2');
+        const noButton1 = document.getElementById('noButton1');
+        const noButton2 = document.getElementById('noButton2');
+        const clock1 = document.getElementById('clock1');
+        const clock2 = document.getElementById('clock2');
+        let countdownTimeLeft = 10;
 
         // Start Test
         startTestButton1.addEventListener('click', function() {
@@ -297,6 +312,7 @@
             setCurrentTest(testNumber - 1);
             startTest();
         });
+
         startTestButton2.addEventListener('click', function() {
             eventMarker = 'stressor_test_2';
             startTestButton2.disabled = true;
@@ -307,9 +323,88 @@
             setCurrentTest(testNumber - 1);
             startTest();
         }); 
- 
-        submitAnswerButton1.addEventListener('click', processAnswer);
-        submitAnswerButton2.addEventListener('click', processAnswer);
+
+        submitAnswerButton1.addEventListener('click', function(){
+            confirmTranscription(testStatusContainer1);
+            submitAnswerButton1.disabled = true;
+        });
+
+        submitAnswerButton2.addEventListener('click', function(){
+            confirmTranscription(testStatusContainer2);
+            submitAnswerButton2.disabled = true;
+        });
+
+        yesButton1.addEventListener('click', function(){
+            processAnswer();
+            yesButton1.style.display = 'none';
+            noButton1.style.display = 'none';
+        });
+
+        yesButton2.addEventListener('click', function(){
+            processAnswer();
+            yesButton2.style.display = 'none';
+            noButton2.style.display = 'none';
+        });
+
+        noButton1.addEventListener('click', function(){
+            startRecording();
+            testStatusContainer1.innerText = "Recording... Please repeat your answer and submit when ready.";
+            yesButton1.style.display = 'none';
+            noButton1.style.display = 'none';
+            submitAnswerButton1.disabled = false;
+        });
+
+        noButton2.addEventListener('click', function(){
+            startRecording();
+            testStatusContainer2.innerText = "Recording... Please repeat your answer and submit when ready.";
+            yesButton2.style.display = 'none';
+            noButton2.style.display = 'none';
+            submitAnswerButton2.disabled = false;
+        });
+
+        function countDown(clockDiv){
+            const countdownInterval = setInterval(() => {
+                countdownTimeLeft--;
+                clockDiv.innerText = `:${countdownTimeLeft}`;
+                if (countdownTimeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    if(clockDiv == clock1){
+                        testStatusContainer1.innerText = "Time's up! Please submit your response and start over at 1,009.";
+                    } else {
+                        clockDiv.innerText = "Time's up! Please submit your response and start over at 1,059.";
+                    }
+                    countdownTimeLeft = 10;
+                }
+            }, 1000);
+        }
+
+        function confirmTranscription(statusDiv){
+            fetch('/confirm_transcription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.transcription);
+                statusDiv.innerText = data.transcription;
+                if (testNumber == 1){
+                    yesButton1.style.display = 'inline-block';
+                    yesButton1.disabled = false;
+                    noButton1.style.display = 'inline-block';
+                    noButton1.disabled = false;
+                } else {
+                    yesButton2.style.display = 'inline-block';
+                    yesButton2.disabled = false;
+                    noButton2.style.display = 'inline-block';
+                    noButton2.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
 
         function setCurrentTest(testNum){
             fetch('/set_current_test', {
@@ -842,13 +937,13 @@
                 timeout2 = stopVideo(video2, "restMessage2", timeout2);
             });
 
-            document.getElementById("break1").addEventListener("click", function() {
-                toggleVis("break1Div");
-            });
+            // document.getElementById("break1").addEventListener("click", function() {
+            //     toggleVis("break1Div");
+            // });
 
-            document.getElementById("break2").addEventListener("click", function() {
-                toggleVis("break2Div");
-            }); 
+            // document.getElementById("break2").addEventListener("click", function() {
+            //     toggleVis("break2Div");
+            // }); 
         });
     </script>
 </body>

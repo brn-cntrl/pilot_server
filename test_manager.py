@@ -36,6 +36,15 @@ class TestManager:
         self._current_question_index = 0  
         self._current_test_index = 0
         self._current_ser_question_index = 0
+        self._current_answer = None
+    
+    @property
+    def current_answer(self):
+        return self._current_answer
+    
+    @current_answer.setter
+    def current_answer(self, answer):
+        self._current_answer = answer
     
     @property
     def test_1_taken(self):
