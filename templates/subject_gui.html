@@ -112,7 +112,8 @@
                 <button id="startTestButton1" style="display:block;">Start Test</button><br>
                 <div>
                     <p id="loadingMessage1" style="display:none;">Test loading...</p>
-                    <!-- <div id="clock1">Time left: 10</div><br> -->
+                    <div id="clock1">Time left: 10</div><br>
+                    <p id="clockStatus1" style="color: red;"></p>
                     <p id="status1"></p>
                     <button id="yesButton1" style="display:none;" disabled>Yes</button>
                     <button id="noButton1" style="display:none;" disabled>No</button><br><br>
@@ -182,7 +183,8 @@
                 <button id="startTestButton2" style="display:block;">Start Test</button><br>
                 <div>
                     <p id="loadingMessage2" style="display:none;">Test loading...</p>
-                    <!-- <div id="clock2">Time Left: 10</div><br> -->
+                    <div id="clock2">Time Left: 10</div><br>
+                    <p id="clockStatus2" style="color: red;"></p>
                     <p id="status2"></p>
                     <button id="yesButton2" style="display:none;" disabled>Yes</button>
                     <button id="noButton2" style="display:none;" disabled>No</button><br><br>
@@ -299,7 +301,10 @@
         const noButton2 = document.getElementById('noButton2');
         const clock1 = document.getElementById('clock1');
         const clock2 = document.getElementById('clock2');
+        let clockStatus1 = document.getElementById('clockStatus1');
+        let clockStatus2 = document.getElementById('clockStatus2');
         let countdownTimeLeft = 10;
+        let countdownInterval;
 
         // Start Test
         startTestButton1.addEventListener('click', function() {
@@ -362,20 +367,27 @@
             submitAnswerButton2.disabled = false;
         });
 
-        function countDown(clockDiv){
-            const countdownInterval = setInterval(() => {
+        function startCountdown(clockDiv){
+            clearInterval(countdownInterval);
+            countdownTimeLeft = 10;
+            clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
+            countdownInterval = setInterval(() => {
                 countdownTimeLeft--;
-                clockDiv.innerText = `:${countdownTimeLeft}`;
-                if (countdownTimeLeft <= 0) {
+                if (countdownTimeLeft === 0) {
                     clearInterval(countdownInterval);
                     if(clockDiv == clock1){
-                        testStatusContainer1.innerText = "Time's up! Please submit your response and start over at 1,009.";
+                        clockStatus1.innerText = "Time's up! Please submit your response and start over at 1,009.";
                     } else {
-                        clockDiv.innerText = "Time's up! Please submit your response and start over at 1,059.";
+                        clockStatus2.innerText = "Time's up! Please submit your response and start over at 1,059.";
                     }
-                    countdownTimeLeft = 10;
+                    return
                 }
+                clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
             }, 1000);
+        }
+
+        function stopCountdown(clockDiv){
+            clearInterval(countdownInterval);
         }
 
         function confirmTranscription(statusDiv){
@@ -474,11 +486,13 @@
                         loadingMessage1.style.display = 'none';
                         startTestButton1.disabled = true;
                         testStatusContainer1.innerText = 'Recording... Speak your answer and submit when ready.';
+                        startCountdown(clock1);
                     } else {
                         submitAnswerButton2.disabled = false;
                         loadingMessage2.style.display = 'none';
                         startTestButton2.disabled = true;
                         testStatusContainer2.innerText = 'Recording... Speak your answer and submit when ready.';
+                        startCountdown(clock2);
                     }
                     startClock();  
                 })
@@ -576,9 +590,11 @@
                     // It also covers eventuality that function is in-progress when clock ends.
                     if (data.status === 'complete') {
                         if (testNumber == 1){
+                            stopCountdown(clock1);
                             testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
                             submitAnswerButton1.style.display = 'none';
                         } else {
+                            stopCountdown(clock2);
                             testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
                             submitAnswerButton2.style.display = 'none';
                         }
@@ -586,10 +602,12 @@
                     } 
 
                     if (testNumber == 1){
+                        stopCountdown(clock1);
                         testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
                         submitAnswerButton1.style.display = 'none';
                         result1.style.display = "none";
                     } else {
+                        stopCountdown(clock2);
                         testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
                         submitAnswerButton2.style.display = 'none';
                         result2.style.display = "none";
@@ -606,10 +624,12 @@
                         result1.innerText = "Correct.";
                         submitAnswerButton1.disabled = false;
                         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                        startCountdown(clock1);
                     } else {
                         result2.innerText = "Correct.";
                         submitAnswerButton2.disabled = false;
                         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                        startCountdown(clock2);
                     }
                     isProcessing = false;
 
@@ -618,10 +638,12 @@
                         result1.innerText = "Sorry, I couldn't understand you.";
                         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton1.disabled = false;
+                        startCountdown(clock1);
                     } else {
                         result2.innerText = "Sorry, I couldn't understand you.";
                         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton2.disabled = false;
+                        startCountdown(clock2);
                     }
                     isProcessing = false;
                 }
@@ -631,10 +653,12 @@
                         result1.innerText = `Incorrect. Please start again from ${restartNumber}.`;
                         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton1.disabled = false;
+                        startCountdown(clock1)
                     } else {
                         result2.innerText = `Incorrect. Please start again from ${restartNumber}.`;
                         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton2.disabled = false;
+                        startCountdown(clock2);
                     }
                     isProcessing = false;
                 } 
@@ -642,6 +666,11 @@
                     if (testNumber == 1){
                         testStatusContainer1.innerText = "Sorry, I could not understand the response.";
                         submitAnswerButton1.disabled = false;
+                        startCountdown(clock1);
+                    } else {
+                        testStatusContainer2.innerText = "Sorry, I could not understand the response.";
+                        submitAnswerButton2.disabled = false;
+                        startCountdown(clock2);
                     }
                     isProcessing = false;
                 } 
