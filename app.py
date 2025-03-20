@@ -1104,7 +1104,7 @@ def stop_vernier() -> None:
             print("Vernier server stopped.")
             return jsonify({'message': 'Respiratory belt stopped.'}), 200
         else:
-            return jsonify({'message': 'Respiratory belt is not active.'}), 400
+            return jsonify({'message': 'Respiratory belt is not active.'}), 200
         
     except Exception as e:
         print(f"An error occurred while trying to stop Vernier stream: {str(e)}")
