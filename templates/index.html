@@ -302,14 +302,12 @@
             <h4>EmotiBit Post Processing</h4>
             <p>Instructions</p>
             <ul>
-                <li>Click "Close EmotiBit H5 File" to close the hdf5 file.</li>
                 <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
                 <li>To import the ground truth data from the EmotiBit, first transfer the csv file from the EmotiBit SD card.</li>
                 <li>Click "Import EmotiBit Data" and select the file from the location in which it was stored.</li>
                 <li>Once imported, the csv file will be renamed to indicate the subject ID and copied into the subject data folder.</li>
             </ul><br>
-            <button id="closeH5">Close EmotiBit H5 File</button><br>
-            <p id="h5Status"></p>
+
             <button id="convertEmotibitData">Convert EmotiBit Data</button><br>
             <p id="postProcessingStatus"></p>
             <button id="openEmotibitDialog">Import EmotiBit Data</button><br>
@@ -432,8 +430,6 @@
     </div>
     <!-- <script src="/static/js/scripts.js"></script> -->
     <script>
-        const closeH5 = document.getElementById('closeH5');
-        const h5Status = document.getElementById('h5Status');
         const audioProcessingStatus = document.getElementById('audioProcessingStatus');
         const audioProcessingPath = document.getElementById('audioProcessingPath');
         const processAudio = document.getElementById('processAudio');
@@ -551,39 +547,7 @@
                 });
             });
         });
-
-        document.addEventListener('DOMContentLoaded', function(){
-            console.log("Script running, DOM loaded.");
-            console.log("closeH5:", closeH5);
-
-            if (!closeH5) {
-                console.error("closeH5 is null, event listener not added.");
-                return;
-            }
-            closeH5.addEventListener('click', function(){
-                h5Status.innerText  = "Closing .h5 file...";
-                fetch('/closeh5', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    h5Status.innerText = data.message;
-                })
-                .catch(error => {
-                    h5Status.innerText = "An error occurred.";
-                });
-            });
-        });
-
+    
         openEmotibitDialog.addEventListener('click', function() {
             document.getElementById('emotibitFileInput').click();
         });
