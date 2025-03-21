@@ -282,6 +282,7 @@
         let testStarted = false;
         let testEnded = false;
         let isProcessing = false;
+        let isPaused = false;
 
         const pss4Div = document.getElementById('pss4Div');
         const startTestButton1 = document.getElementById('startTestButton1');
@@ -305,6 +306,7 @@
         let clockStatus2 = document.getElementById('clockStatus2');
         let countdownTimeLeft = 10;
         let countdownInterval;
+        let timerEnded = false;
 
         // Start Test
         startTestButton1.addEventListener('click', function() {
@@ -330,12 +332,16 @@
         }); 
 
         submitAnswerButton1.addEventListener('click', function(){
-            confirmTranscription(testStatusContainer1);
+            clockStatus1.innerText = '';
+            pauseCountdown();
+            confirmTranscription(testStatusContainer1, false);
             submitAnswerButton1.disabled = true;
         });
 
         submitAnswerButton2.addEventListener('click', function(){
-            confirmTranscription(testStatusContainer2);
+            clockStatus2.innerText = '';
+            pauseCountdown();
+            confirmTranscription(testStatusContainer2, false);
             submitAnswerButton2.disabled = true;
         });
 
@@ -343,12 +349,14 @@
             processAnswer();
             yesButton1.style.display = 'none';
             noButton1.style.display = 'none';
+            resumeCountdown();
         });
 
         yesButton2.addEventListener('click', function(){
             processAnswer();
             yesButton2.style.display = 'none';
             noButton2.style.display = 'none';
+            resumeCountdown();
         });
 
         noButton1.addEventListener('click', function(){
@@ -357,6 +365,7 @@
             yesButton1.style.display = 'none';
             noButton1.style.display = 'none';
             submitAnswerButton1.disabled = false;
+            resumeCountdown();
         });
 
         noButton2.addEventListener('click', function(){
@@ -365,52 +374,106 @@
             yesButton2.style.display = 'none';
             noButton2.style.display = 'none';
             submitAnswerButton2.disabled = false;
+            resumeCountdown();
         });
 
         function startCountdown(clockDiv){
             clearInterval(countdownInterval);
             countdownTimeLeft = 10;
             clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
+
             countdownInterval = setInterval(() => {
-                countdownTimeLeft--;
-                if (countdownTimeLeft === 0) {
-                    clearInterval(countdownInterval);
-                    if(clockDiv == clock1){
-                        clockStatus1.innerText = "Time's up! Please submit your response and start over at 1,009.";
-                    } else {
-                        clockStatus2.innerText = "Time's up! Please submit your response and start over at 1,059.";
+                if (!isPaused){
+                    countdownTimeLeft--;
+                    clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
+
+                    if (countdownTimeLeft <= 0 && !timerEnded) {
+                        clearInterval(countdownInterval);
+                        timerEnded = true;
+
+                        if(clockDiv == clock1){
+                            clockStatus1.innerText = "Times up!"
+                            result1.innerText = "Please start over at 1,009.";
+                            if(!isProcessing){
+                                confirmTranscription(testStatusContainer1, true);
+                                processAnswer();
+                            }
+                            
+                        } else {
+                            clockStatus2.innerText = "Time's up!";
+                            result2.innerText = "Please start over at 1,059.";
+                            if(!isProcessing){
+                                confirmTranscription(testStatusContainer2, true);
+                                processAnswer();
+                            }
+                        }
+                        return
                     }
-                    return
+                    
                 }
-                clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
             }, 1000);
+        }
+
+        function pauseCountdown(){
+            isPaused = true;
+        }
+
+        function resumeCountdown(){
+            isPaused = false;
         }
 
         function stopCountdown(clockDiv){
             clearInterval(countdownInterval);
+            if (clockDiv == clock1) {
+                clockStatus1.innerText = '';
+            } else {
+                clockStatus2.innerText = '';
+            }
         }
 
-        function confirmTranscription(statusDiv){
+        function confirmTranscription(statusDiv, timeUp){
+            console.log(timeUp);
             fetch('/confirm_transcription', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({ time_up: timeUp, test_status: testEnded })
             })
             .then(response => response.json())
             .then(data => {
-                console.log(data.transcription);
-                statusDiv.innerText = data.transcription;
                 if (testNumber == 1){
-                    yesButton1.style.display = 'inline-block';
-                    yesButton1.disabled = false;
-                    noButton1.style.display = 'inline-block';
-                    noButton1.disabled = false;
+                    if (timeUp) {
+                        yesButton1.style.display = 'none';
+                        yesButton1.disabled = true;
+                        noButton1.style.display = 'none';
+                        noButton1.disabled = true;
+                        console.log(data.status);
+                        console.log(data.message);
+                    } else {
+                        console.log(data.transcription);
+                        statusDiv.innerText = data.transcription;
+                        yesButton1.style.display = 'inline-block';
+                        yesButton1.disabled = false;
+                        noButton1.style.display = 'inline-block';
+                        noButton1.disabled = false;
+                    }
                 } else {
-                    yesButton2.style.display = 'inline-block';
-                    yesButton2.disabled = false;
-                    noButton2.style.display = 'inline-block';
-                    noButton2.disabled = false;
+                    if (timeUp) {
+                        yesButton2.style.display = 'none';
+                        yesButton2.disabled = true;
+                        noButton2.style.display = 'none';
+                        noButton2.disabled = true;
+                        console.log(data.status);
+                        console.log(data.message);
+                    } else {
+                        console.log(data.transcription);
+                        statusDiv.innerText = data.transcription;
+                        yesButton2.style.display = 'inline-block';
+                        yesButton2.disabled = false;
+                        noButton2.style.display = 'inline-block';
+                        noButton2.disabled = false;
+                    }
                 }
             })
             .catch(error => {
@@ -485,12 +548,14 @@
                         submitAnswerButton1.disabled = false;
                         loadingMessage1.style.display = 'none';
                         startTestButton1.disabled = true;
+                        clockStatus1.innerText = '';
                         testStatusContainer1.innerText = 'Recording... Speak your answer and submit when ready.';
                         startCountdown(clock1);
                     } else {
                         submitAnswerButton2.disabled = false;
                         loadingMessage2.style.display = 'none';
                         startTestButton2.disabled = true;
+                        clockStatus2.innerText = '';
                         testStatusContainer2.innerText = 'Recording... Speak your answer and submit when ready.';
                         startCountdown(clock2);
                     }
@@ -538,16 +603,19 @@
                 startTestButton1.style.display = 'none';
                 startTestButton1.disabled = true;
                 result1.style.display = 'none';
+                stopCountdown(clock1);
             } else {
                 submitAnswerButton2.disabled = true;
                 submitAnswerButton2.style.display = 'none';
                 startTestButton2.style.display = 'none';
                 startTestButton2.disabled = true;
                 result2.style.display = 'none';
+                stopCountdown(clock2);
             }
 
             // This will simply return if isProcessing is true.
-            processAnswer(testEnded);
+            processAnswer();
+
             setEventMarker('subject_idle');
             if (testNumber === 1){
                 testStatusContainer1.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
@@ -614,6 +682,7 @@
                     }
                     
                     testStarted = false;
+                    timerEnded =  false;
                     stopClock();
                     eventMarker = 'subject_idle';
                     setEventMarker(eventMarker);
@@ -624,65 +693,72 @@
                         result1.innerText = "Correct.";
                         submitAnswerButton1.disabled = false;
                         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                        timerEnded = false;
+                        resumeCountdown();
                         startCountdown(clock1);
                     } else {
                         result2.innerText = "Correct.";
                         submitAnswerButton2.disabled = false;
                         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                        timerEnded = false;
+                        resumeCountdown();
                         startCountdown(clock2);
                     }
                     isProcessing = false;
 
-                } else if (data.result === 'transciption_error'){
-                    if (testNumber == 1){
-                        result1.innerText = "Sorry, I couldn't understand you.";
-                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
-                        submitAnswerButton1.disabled = false;
-                        startCountdown(clock1);
-                    } else {
-                        result2.innerText = "Sorry, I couldn't understand you.";
-                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
-                        submitAnswerButton2.disabled = false;
-                        startCountdown(clock2);
-                    }
-                    isProcessing = false;
-                }
+                } //else if (data.result === 'transciption_error'){
+                //     if (testNumber == 1){
+                //         result1.innerText = "Sorry, I couldn't understand you.";
+                //         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
+                //         submitAnswerButton1.disabled = false;
+                //     } else {
+                //         result2.innerText = "Sorry, I couldn't understand you.";
+                //         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
+                //         submitAnswerButton2.disabled = false;
+                //     }
+                //     isProcessing = false;
+                // }
                 else if (data.result === 'incorrect') {
                     const restartNumber = testNumber === 1 ? "1,009" : "1,059";
                     if (testNumber == 1){
                         result1.innerText = `Incorrect. Please start again from ${restartNumber}.`;
                         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton1.disabled = false;
-                        startCountdown(clock1)
+                        timerEnded = false;
+                        resumeCountdown();
+                        startCountdown(clock1);
+
                     } else {
                         result2.innerText = `Incorrect. Please start again from ${restartNumber}.`;
                         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
                         submitAnswerButton2.disabled = false;
+                        timerEnded = false;
+                        resumeCountdown();
                         startCountdown(clock2);
                     }
                     isProcessing = false;
                 } 
-                else if (data.result === 'error') {
-                    if (testNumber == 1){
-                        testStatusContainer1.innerText = "Sorry, I could not understand the response.";
-                        submitAnswerButton1.disabled = false;
-                        startCountdown(clock1);
-                    } else {
-                        testStatusContainer2.innerText = "Sorry, I could not understand the response.";
-                        submitAnswerButton2.disabled = false;
-                        startCountdown(clock2);
-                    }
-                    isProcessing = false;
-                } 
+                // else if (data.result === 'error') {
+                //     if (testNumber == 1){
+                //         testStatusContainer1.innerText = "Sorry, I could not understand the response.";
+                //         submitAnswerButton1.disabled = false;
+                //     } else {
+                //         testStatusContainer2.innerText = "Sorry, I could not understand the response.";
+                //         submitAnswerButton2.disabled = false;
+                //     }
+                //     isProcessing = false;
+                // } 
             })
             .catch(error => {
                 console.error('Error:', error);
                 if (testNumber == 1){
                     testStatusContainer1.innerText = "Something went wrong. Please repeat your answer.";
                     submitAnswerButton1.disabled = false;
+                    stopCountdown(clock1);
                 } else {
                     testStatusContainer2.innerText = "Something went wrong. Please repeat your answer.";
                     submitAnswerButton2.disabled = false;
+                    stopCountdown(clock2);
                 }
                 isProcessing = false;
             });

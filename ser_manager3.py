@@ -54,6 +54,18 @@ class SERManager:
         softmax_probs = F.softmax(logits, dim=-1)
         
         confidence = softmax_probs[0, predicted_id].item()
-
+        # 3 to 5 seconds 
+        # F1 score 
+        # CCC Concordance Correlation Coefficient
+        # Carlos Busso
+        # SAIL
+        # Emily Provost
+        # Jeremy (Taiwanese)
+        # Training same model with different seeds
+        # Whisper large
+        # WavOM
+        # Benchtest against other datasets
+        # papers focus on depression
+        # Save top two or three emotions
         return self.inverse_label_map[str(predicted_id)], confidence
     

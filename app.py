@@ -339,6 +339,9 @@ def confirm_transcription() -> Response:
     """
     global test_manager, recording_manager, audio_file_manager
 
+    test_status = request.get_json().get('test_status')
+    time_up = request.get_json().get('time_up')
+
     print("Stopping the recording...")
     recording_manager.stop_recording()
 
@@ -346,7 +349,13 @@ def confirm_transcription() -> Response:
         print("Recording stopped. Transcribing....")
         test_manager.current_answer = transcribe_audio(audio_file_manager.recording_file)
 
-        return jsonify({'transcription': f"I got: {test_manager.current_answer}. Is this correct (Y/N)?"})
+        if test_status == "testEnded":
+            return jsonify({'status': 'test_ended', 'message': 'Answer recorded and processed by endTest function.'})
+        
+        if time_up:
+            return jsonify({'status': 'time is up.', 'message': 'Answer recorded.'})
+        else:
+            return jsonify({'transcription': f"I got: {test_manager.current_answer}. Is this correct (Y/N)?"})
 
     except:
         return jsonify({'status': 'error', 'message': 'Error transcribing audio.'}), 400
@@ -373,52 +382,65 @@ def process_answer() -> Response:
     current_test = test_manager.current_test_index
     questions = test_manager.get_task_questions(current_test)
     test_ended = request.get_json().get('test_status')
+    id = subject_manager.subject_id
 
     try:
-        ts = recording_manager.timestamp
-        id = subject_manager.subject_id
-
-        file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
-        transcription = test_manager.current_answer
-
-        print("Saving file...")
-        audio_file_manager.save_audio_file(file_name)
-        print("Saving data...")
-        # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+        if test_manager.current_question_index >= len(questions):
+            test_manager.current_question_index = 0
+            print(f"Question index is {test_manager.current_question_index}")
+            return jsonify({'status': 'complete', 'message': 'Please let the experimenter know that you have completed this section.'})
 
         if test_ended:
-            return jsonify({'status': 'times_up.', 'message': 'Answer recorded and logged.'})
+            recording_manager.stop_recording()
+            print("Recording stopped. Transcribing....")
+            ts = recording_manager.timestamp
+            transcription = transcribe_audio(audio_file_manager.recording_file)
+            file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+
+            print("Saving file...")
+            audio_file_manager.save_audio_file(file_name)
+
+            print("Saving data...")
+            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+
+            return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.'})
         
         else:
-            if test_manager.current_question_index >= len(questions):
-                test_manager.current_question_index = 0
-                print(f"Question index is {test_manager.current_question_index}")
-                return jsonify({'status': 'complete', 'message': 'Please let the experimenter know that you have completed this section.'})
-            
-            else:
-                if transcription.startswith("Google Speech Recognition could not understand"):
-                    recording_manager.start_recording()
-                    return jsonify({'status': 'transcription_error'}), 400
+            transcription = test_manager.current_answer
+            # if transcription.startswith("Google Speech Recognition could not understand"):
+            #     recording_manager.start_recording()
+            #     return jsonify({'status': 'transcription_error'}), 200
     
-                elif transcription.startswith("Could not request results"):
-                    recording_manager.start_recording()
-                    return jsonify({'status': 'transcription_error'}), 400
-                
-                correct_answer = questions[test_manager.current_question_index]['answer']
-                result = 'incorrect'
+            # elif transcription.startswith("Could not request results"):
+            #     recording_manager.start_recording()
+            #     return jsonify({'status': 'transcription_error'}), 200
 
-                if test_manager.check_answer(transcription, correct_answer):
-                    result = 'correct'
-                    test_manager.current_question_index += 1
-                
-                if result == 'incorrect':
-                    test_manager.current_question_index = 0
-                
-                print(f"Result: {result}")
-                print("Starting the recording...")
-                recording_manager.start_recording()
-                return jsonify({'status': 'Answer submitted and recording started...', 'result': result})
+            ts = recording_manager.timestamp
+            file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+
+            print("Saving file...")
+            audio_file_manager.save_audio_file(file_name)
+
+            print("Saving data...")
+            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+
+            correct_answer = questions[test_manager.current_question_index]['answer']
+            result = 'incorrect'
+
+            if test_manager.check_answer(transcription, correct_answer):
+                result = 'correct'
+                test_manager.current_question_index += 1
+            
+            if result == 'incorrect':
+                test_manager.current_question_index = 0
+            
+            print(f"Result: {result}")
+            print("Starting the recording...")
+            recording_manager.start_recording()
+
+            return jsonify({'status': 'Answer submitted and recording started...', 'result': result})
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
