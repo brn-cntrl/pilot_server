@@ -14,6 +14,7 @@ import string
 import speech_recognition as sr
 import random
 import base64
+from transcription_manager import TranscriptionManager
 from subject_manager_2 import SubjectManager
 from recording_manager import RecordingManager
 from test_manager import TestManager
@@ -42,6 +43,7 @@ ser_manager = SERManager()
 form_manager = FormManager()
 timestamp_manager = TimestampManager()
 vernier_manager = VernierManager()
+transcription_manager = TranscriptionManager()
 
 update_message = None
 update_event = threading.Event()
@@ -214,6 +216,7 @@ def stream():
     def event_stream():
         global update_message
         last_message = None
+
         while True:
             update_event.wait()
             if update_message != last_message:
@@ -346,19 +349,23 @@ def confirm_transcription() -> Response:
     recording_manager.stop_recording()
 
     try:
-        print("Recording stopped. Transcribing....")
-        test_manager.current_answer = transcribe_audio(audio_file_manager.recording_file)
+        if time_up:
+            print("Recording stopped. Transcription set to 'time up'.")
+            test_manager.current_answer = "Time up."
+        else:
+            print("Recording stopped. Transcribing....")
+            test_manager.current_answer = transcribe_audio(audio_file_manager.recording_file)
 
         if test_status == "testEnded":
-            return jsonify({'status': 'test_ended', 'message': 'Answer recorded and processed by endTest function.'})
+            return jsonify({'transcription': test_manager.current_answer, 'status': 'test has ended', 'message': 'Answer recorded and processed by endTest function.'})
         
         if time_up:
-            return jsonify({'status': 'time is up.', 'message': 'Answer recorded.'})
+            return jsonify({'transcription': test_manager.current_answer, 'status': 'time is up.', 'message': 'Answer recorded.'})
         else:
-            return jsonify({'transcription': f"I got: {test_manager.current_answer}. Is this correct (Y/N)?"})
+            return jsonify({'transcription': f"I got: {test_manager.current_answer}. Is this correct (Y/N)?", 'status': 'Answer transcribed', 'message': 'Transcription complete'})
 
     except:
-        return jsonify({'status': 'error', 'message': 'Error transcribing audio.'}), 400
+        return jsonify({'transcription': 'None', 'status': 'error', 'message': 'Something went wrong.'}), 400
 
 @app.route('/process_answer', methods=['POST'])
 def process_answer() -> Response:
@@ -388,7 +395,7 @@ def process_answer() -> Response:
         if test_manager.current_question_index >= len(questions):
             test_manager.current_question_index = 0
             print(f"Question index is {test_manager.current_question_index}")
-            return jsonify({'status': 'complete', 'message': 'Please let the experimenter know that you have completed this section.'})
+            return jsonify({'status': 'complete', 'message': 'Test complete. Please let the experimenter know that you have completed this section.', 'result': 'No more questions.'})
 
         if test_ended:
             recording_manager.stop_recording()
@@ -404,17 +411,10 @@ def process_answer() -> Response:
             # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
             subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
-            return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.'})
+            return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.', 'result': 'None'})
         
         else:
             transcription = test_manager.current_answer
-            # if transcription.startswith("Google Speech Recognition could not understand"):
-            #     recording_manager.start_recording()
-            #     return jsonify({'status': 'transcription_error'}), 200
-    
-            # elif transcription.startswith("Could not request results"):
-            #     recording_manager.start_recording()
-            #     return jsonify({'status': 'transcription_error'}), 200
 
             ts = recording_manager.timestamp
             file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
@@ -440,7 +440,7 @@ def process_answer() -> Response:
             print("Starting the recording...")
             recording_manager.start_recording()
 
-            return jsonify({'status': 'Answer submitted and recording started...', 'result': result})
+            return jsonify({'status': 'Answer successfuly processed', 'message': 'Recording started...', 'result': result})
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
@@ -451,10 +451,10 @@ def set_current_test() -> Response:
     test_number = request.get_json().get('test_number')
     if test_number is None:
         raise ValueError("Missing 'test_number' in request JSON")
-
+    
     try: 
         test_number = int(test_number)
-        test_manager.current_test_index = test_number
+        test_manager.current_test_index = test_number-1
         test_manager.current_question_index = 0
         print(f"Test set to {test_number}.")
         print(f"Current Question Index: {test_manager.current_question_index}")
@@ -562,19 +562,6 @@ def import_emotibit_csv() -> Response:
     file.save(file_path)
     
     return jsonify({"success": True, "message": "File uploaded successfully.", "file_path": file_path}), 200
-    
-# @app.route('/convert_emotibit_data', methods=['POST'])
-# def upload_subject_data() -> Response:
-#     global subject_manager, emotibit_streamer
-#     try:
-#         message = emotibit_streamer.hdf5_to_csv()
-
-#         # TODO: Add code for uploading to postgres
-
-#         return jsonify({'message': message}), 200
-
-#     except Exception as e:
-#         return jsonify({'error': 'Error processing subject data.'}), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:
@@ -844,14 +831,6 @@ def record_task() -> Response:
             print(f"EmbotiBit Condition: {emotibit_streamer.condition}")
             print(f"Vernier Event Marker: {vernier_manager.event_marker}")
             print(f"Vernier Condition: {vernier_manager.condition}")
-
-            # timeout = 10 # seconds
-            # start_time = time.time()
-           
-            # while not recording_manager.stream_is_active:
-            #     if time.time() - start_time > timeout:
-            #         return jsonify({'message': 'Error starting recording.'}), 400
-            #     time.sleep(0.5)
 
             return jsonify({'message': 'Recording started.'}), 200
         
@@ -1168,14 +1147,6 @@ def stop_emotibit() -> None:
         print(f"An error occurred while trying to stop OSC stream: {str(e)}")
         return jsonify({'error': 'Error stopping EmotiBit stream.'}), 400
 
-@app.route('/closeh5', methods=['POST'])
-def closeh5():
-    global emotibit_streamer
-
-    print("Closing EmotiBit H5 file...")
-    file_closed = emotibit_streamer.close_h5_file()
-    return jsonify({'message': file_closed}), 200
-
 @app.route('/submit_pwd', methods=['POST'])
 def submit_pwd() -> Response:
     password = "ucsdxrlab"
@@ -1272,19 +1243,13 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
 ## Speech Recognition 
 ##################################################################
 def transcribe_audio(file) -> str:
-    global recording_manager 
-
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(file) as source:
-        audio_data = recognizer.record(source)
-        try:
-            return recognizer.recognize_google(audio_data)
-        
-        except sr.UnknownValueError:
-            return "Google Speech Recognition could not understand the audio."
-        
-        except sr.RequestError as e:
-            return f"Could not request results from Google Speech Recognition service; {e}"
+    global recording_manager, transcription_manager
+    try:
+        return transcription_manager.transcribe(file)
+           
+    except Exception as e:
+        print(f"An error occurred during transcription: {str(e)}")
+        return str(e)
 
 def run_flask():
     app.run(debug=False, use_reloader=False)
@@ -1304,18 +1269,3 @@ if __name__ == '__main__':
         os.makedirs('tmp')
 
     app.run(port=PORT_NUMBER,debug=False, threaded=True)
-    
-    # Uncomment when switching to pywebview
-    # flask_thread = threading.Thread(target=run_flask)
-    # flask_thread.daemon = True  
-    # flask_thread.start()
-
-    # window = webview.create_window("Pilot Server", "http://127.0.0.1:5000")
-
-    # try:
-    #     webview.start()
-    # except Exception as e:
-    #     print(f"Error: {e}")
-    # finally:
-    #     # Close the program when the webview window is closed
-    #     sys.exit()

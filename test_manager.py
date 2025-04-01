@@ -148,11 +148,22 @@ class TestManager:
 
     def preprocess_text(self, text):
         text = text.lower()
-        text = re.sub(r'[^\w\s]', '', text)
+        text = re.sub(r'[^\w\s-]', '', text)  
+        print(f"Preprocessed text: {text.strip()}")
         return text.strip()
 
     def check_answer(self, transcription, correct_answers):
         print(f"Transcription: {transcription}")
         transcription = self.preprocess_text(transcription)
+        transcription_normalized = transcription.replace('-', '')
 
-        return any(word in correct_answers for word in transcription.split())
+        print(f"Checking against answers: {correct_answers}")
+        print(f"Processed transcription: '{transcription}', Normalized: '{transcription_normalized}'")
+
+        # Direct match check
+        if transcription in correct_answers or transcription_normalized in correct_answers:
+            print("Match found!")
+            return True
+
+        print("No match found.")
+        return False

@@ -99,11 +99,11 @@
         <div class="testModule" style="display:block;">
             <p>After completing a task, please wait for instructions before advancing to the next task.</p>
             <button class="toggle">Test 1</button>
-            <div class="innerModule" style="display:none;">
+            <div class="innerModule test-container" id="test-container-1" style="display:none;">
                 <p>Instructions</p>
                 <div><ul>
                     <li>Start with the number 1,009. For your first answer, subtract 13 from 1,009. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
-                    <li>Speak each answer aloud (e.g. "One thousand ninety-six") and press the "Submit" button to check your answer.</li>
+                    <li>Speak each answer aloud using single digit responses for best result (e.g. "One, Nine, Six" for 196) and press the "Submit" button to check your answer.</li>
                     <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,009.</li>
                     <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
                     <li>Press the Start Test button to begin.</li>
@@ -170,11 +170,11 @@
             </div><br>
             
             <button class="toggle nextButton" style="display:none;">Test 2</button>
-            <div class="innerModule nextDiv" style="display:none;">
+            <div class="innerModule nextDiv test-container" id="test-container-2" style="display:none;">
                 <p>Instructions</p>
                 <div><ul>
                     <li>Start with the number 1,059. For your first answer, subtract 13 from 1,059. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
-                    <li>Speak each answer aloud (e.g. "One thousand ninety-six") and press the "Submit" button to check your answer.</li>
+                    <li>Speak each answer aloud using single digit responses for best result (e.g. "One, Nine, Six" for 196) and press the "Submit" button to check your answer.</li>
                     <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,059.</li>
                     <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
                     <li>Press the Start Test button to begin.</li>
@@ -264,26 +264,6 @@
         const completeMessage = document.getElementById('completeMessage');
         const exitSurveyDiv = document.getElementById('exitSurveyDiv');
         const demographicsDiv = document.getElementById('demographicsDiv');
-
-        let pss4;
-        let exitSurvey;
-        let demographics;
-        let breakWin;
-        let breakButtons = document.getElementsByClassName('breakButton');
-        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
-        let startTime;
-        let elapsedTime = 0;
-        let initialTime = 300;  // 300 = 5 minutes
-        let timeLeft = initialTime;
-        let answerTimeLeft = 10;
-
-        let timerInterval;
-        let eventMarker;
-        let testStarted = false;
-        let testEnded = false;
-        let isProcessing = false;
-        let isPaused = false;
-
         const pss4Div = document.getElementById('pss4Div');
         const startTestButton1 = document.getElementById('startTestButton1');
         const startTestButton2 = document.getElementById('startTestButton2');
@@ -302,468 +282,58 @@
         const noButton2 = document.getElementById('noButton2');
         const clock1 = document.getElementById('clock1');
         const clock2 = document.getElementById('clock2');
-        let clockStatus1 = document.getElementById('clockStatus1');
-        let clockStatus2 = document.getElementById('clockStatus2');
-        let countdownTimeLeft = 10;
-        let countdownInterval;
-        let timerEnded = false;
+        const clockStatus1 = document.getElementById('clockStatus1');
+        const clockStatus2 = document.getElementById('clockStatus2');
 
-        // Start Test
-        startTestButton1.addEventListener('click', function() {
-            eventMarker = 'stressor_test_1';
-            startTestButton1.disabled = true;
-            submitAnswerButton1.disabled = true;
-            loadingMessage1.style.display = 'block';
-            testNumber = 1;
-            testEnded = false;
-            setCurrentTest(testNumber - 1);
-            startTest();
-        });
+        let pss4;
+        let exitSurvey;
+        let demographics;
+        let breakWin;
+        let breakButtons = document.getElementsByClassName('breakButton');
+        let testNumber; // NOTE: testNumber is set with test_manager.current_test_index which starts at 0.
+        let eventMarker;
+        let test1;
+        let test2;
 
-        startTestButton2.addEventListener('click', function() {
-            eventMarker = 'stressor_test_2';
-            startTestButton2.disabled = true;
-            submitAnswerButton2.disabled = true;
-            loadingMessage2.style.display = 'block';
-            testNumber = 2;
-            testEnded = false;
-            setCurrentTest(testNumber - 1);
-            startTest();
-        }); 
-
-        submitAnswerButton1.addEventListener('click', function(){
-            clockStatus1.innerText = '';
-            pauseCountdown();
-            confirmTranscription(testStatusContainer1, false);
-            submitAnswerButton1.disabled = true;
-        });
-
-        submitAnswerButton2.addEventListener('click', function(){
-            clockStatus2.innerText = '';
-            pauseCountdown();
-            confirmTranscription(testStatusContainer2, false);
-            submitAnswerButton2.disabled = true;
-        });
-
-        yesButton1.addEventListener('click', function(){
-            processAnswer();
-            yesButton1.style.display = 'none';
-            noButton1.style.display = 'none';
-            resumeCountdown();
-        });
-
-        yesButton2.addEventListener('click', function(){
-            processAnswer();
-            yesButton2.style.display = 'none';
-            noButton2.style.display = 'none';
-            resumeCountdown();
-        });
-
-        noButton1.addEventListener('click', function(){
-            startRecording();
-            testStatusContainer1.innerText = "Recording... Please repeat your answer and submit when ready.";
-            yesButton1.style.display = 'none';
-            noButton1.style.display = 'none';
-            submitAnswerButton1.disabled = false;
-            resumeCountdown();
-        });
-
-        noButton2.addEventListener('click', function(){
-            startRecording();
-            testStatusContainer2.innerText = "Recording... Please repeat your answer and submit when ready.";
-            yesButton2.style.display = 'none';
-            noButton2.style.display = 'none';
-            submitAnswerButton2.disabled = false;
-            resumeCountdown();
-        });
-
-        function startCountdown(clockDiv){
-            clearInterval(countdownInterval);
-            countdownTimeLeft = 10;
-            clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
-
-            countdownInterval = setInterval(() => {
-                if (!isPaused){
-                    countdownTimeLeft--;
-                    clockDiv.innerText = `Time left: ${countdownTimeLeft}`;
-
-                    if (countdownTimeLeft <= 0 && !timerEnded) {
-                        clearInterval(countdownInterval);
-                        timerEnded = true;
-
-                        if(clockDiv == clock1){
-                            clockStatus1.innerText = "Times up!"
-                            result1.innerText = "Please start over at 1,009.";
-                            if(!isProcessing){
-                                confirmTranscription(testStatusContainer1, true);
-                                processAnswer();
-                            }
-                            
-                        } else {
-                            clockStatus2.innerText = "Time's up!";
-                            result2.innerText = "Please start over at 1,059.";
-                            if(!isProcessing){
-                                confirmTranscription(testStatusContainer2, true);
-                                processAnswer();
-                            }
-                        }
-                        return
-                    }
-                    
-                }
-            }, 1000);
-        }
-
-        function pauseCountdown(){
-            isPaused = true;
-        }
-
-        function resumeCountdown(){
-            isPaused = false;
-        }
-
-        function stopCountdown(clockDiv){
-            clearInterval(countdownInterval);
-            if (clockDiv == clock1) {
-                clockStatus1.innerText = '';
-            } else {
-                clockStatus2.innerText = '';
-            }
-        }
-
-        function confirmTranscription(statusDiv, timeUp){
-            console.log(timeUp);
-            fetch('/confirm_transcription', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ time_up: timeUp, test_status: testEnded })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (testNumber == 1){
-                    if (timeUp) {
-                        yesButton1.style.display = 'none';
-                        yesButton1.disabled = true;
-                        noButton1.style.display = 'none';
-                        noButton1.disabled = true;
-                        console.log(data.status);
-                        console.log(data.message);
-                    } else {
-                        console.log(data.transcription);
-                        statusDiv.innerText = data.transcription;
-                        yesButton1.style.display = 'inline-block';
-                        yesButton1.disabled = false;
-                        noButton1.style.display = 'inline-block';
-                        noButton1.disabled = false;
-                    }
-                } else {
-                    if (timeUp) {
-                        yesButton2.style.display = 'none';
-                        yesButton2.disabled = true;
-                        noButton2.style.display = 'none';
-                        noButton2.disabled = true;
-                        console.log(data.status);
-                        console.log(data.message);
-                    } else {
-                        console.log(data.transcription);
-                        statusDiv.innerText = data.transcription;
-                        yesButton2.style.display = 'inline-block';
-                        yesButton2.disabled = false;
-                        noButton2.style.display = 'inline-block';
-                        noButton2.disabled = false;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
+        function initTest1(){
+            test1 = new Test({
+                testNumber: 1,
+                testStatusContainer: testStatusContainer1,
+                startTestButton: startTestButton1,
+                submitAnswerButton: submitAnswerButton1,
+                resultContainer: result1,
+                loadingMessage: loadingMessage1,
+                yesButton: yesButton1,
+                noButton: noButton1,
+                clockDisplay: clock1,
+                clockStatus: clockStatus1
             });
-        }
-
-        function setCurrentTest(testNum){
-            fetch('/set_current_test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ test_number: testNum })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data.message);
-                console.log("Event Marker: ", eventMarker);
-                if(testNum == 0){
-                    loadingMessage1.style.display = 'none';
-                } else {
-                    loadingMessage2.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-
-        function startTest(){
-            if (eventMarker === undefined) {
-                alert('Failed to start test. The event marker is not set.');
-                return;
-            }
-            if (testStarted) {
-                alert("Test already started. Please refresh the page to start again.");
-                return;
-            } else {
-                setEventMarker(eventMarker);
-                setCondition('None');
-                if (testNumber == 1){
-                    submitAnswerButton1.disabled = true;
-                    loadingMessage1.style.display = 'block';
-                    testStatusContainer1.innerText = 'Please wait...';
-                } else {
-                    submitAnswerButton2.disabled = true;
-                    loadingMessage2.style.display = 'block';
-                    testStatusContainer2.innerText = 'Please wait...';
-                }
-                
-                fetch('/get_first_question', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data);
-                    if (testNumber == 1){
-                        submitAnswerButton1.disabled = false;
-                        loadingMessage1.style.display = 'none';
-                        startTestButton1.disabled = true;
-                        clockStatus1.innerText = '';
-                        testStatusContainer1.innerText = 'Recording... Speak your answer and submit when ready.';
-                        startCountdown(clock1);
-                    } else {
-                        submitAnswerButton2.disabled = false;
-                        loadingMessage2.style.display = 'none';
-                        startTestButton2.disabled = true;
-                        clockStatus2.innerText = '';
-                        testStatusContainer2.innerText = 'Recording... Speak your answer and submit when ready.';
-                        startCountdown(clock2);
-                    }
-                    startClock();  
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to start test.');
-                });
-                testStarted = true;
-            }
-        }
-
-        function startClock() { 
-            if(!timerInterval) {
-                timerInterval = setInterval(updateClock, 1000);
-            }
-        }
-
-        function stopClock() {
-            clearInterval(timerInterval); 
-            timerInterval = null;
-        }
-                
-        function resetClock(){
-            stopClock();
-            timeLeft = initialTime;
-        }
-
-        function updateClock() {
-            timeLeft--;
-            if(timeLeft < 0) {
-                clearInterval(timerInterval);
-                endTest();
-            }
-        }
-
-        function endTest() {
-            stopClock();
-            testEnded = true;
-            testStarted = false;
-            if (testNumber == 1){
-                submitAnswerButton1.disabled = true;
-                submitAnswerButton1.style.display = 'none';
-                startTestButton1.style.display = 'none';
-                startTestButton1.disabled = true;
-                result1.style.display = 'none';
-                stopCountdown(clock1);
-            } else {
-                submitAnswerButton2.disabled = true;
-                submitAnswerButton2.style.display = 'none';
-                startTestButton2.style.display = 'none';
-                startTestButton2.disabled = true;
-                result2.style.display = 'none';
-                stopCountdown(clock2);
-            }
-
-            // This will simply return if isProcessing is true.
-            processAnswer();
-
-            setEventMarker('subject_idle');
-            if (testNumber === 1){
-                testStatusContainer1.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
-                
-            } else if (testNumber === 2){
-                testStatusContainer2.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
-            }
-            resetClock();
-        }
-
-        function processAnswer(){
-            if(isProcessing) {
-                return; // If function is busy, gtfo.
-            }
-
-            isProcessing = true;
-            if (testNumber == 1) {
-                testStatusContainer1.innerText = "Analyzing Answer...";
-                submitAnswerButton1.disabled = true;
-            } else {
-                testStatusContainer2.innerText = "Analyzing Answer...";
-                submitAnswerButton2.disabled = true;
-            }
-
-            fetch('/process_answer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ test_status: testEnded })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'complete' || testEnded) {
-                    console.log(data);
-                    // This block handles the eventuality that all questions have been answered
-                    // It also covers eventuality that function is in-progress when clock ends.
-                    if (data.status === 'complete') {
-                        if (testNumber == 1){
-                            stopCountdown(clock1);
-                            testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
-                            submitAnswerButton1.style.display = 'none';
-                        } else {
-                            stopCountdown(clock2);
-                            testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
-                            submitAnswerButton2.style.display = 'none';
-                        }
-                        isProcessing = false;
-                    } 
-
-                    if (testNumber == 1){
-                        stopCountdown(clock1);
-                        testStatusContainer1.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
-                        submitAnswerButton1.style.display = 'none';
-                        result1.style.display = "none";
-                    } else {
-                        stopCountdown(clock2);
-                        testStatusContainer2.innerText = "Test complete. Please let the experimenter know that you have completed this section.";
-                        submitAnswerButton2.style.display = 'none';
-                        result2.style.display = "none";
-                    }
-                    
-                    testStarted = false;
-                    timerEnded =  false;
-                    stopClock();
-                    eventMarker = 'subject_idle';
-                    setEventMarker(eventMarker);
-                    isProcessing = false;
-
-                } else if (data.result === 'correct') {
-                    if (testNumber == 1){
-                        result1.innerText = "Correct.";
-                        submitAnswerButton1.disabled = false;
-                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
-                        timerEnded = false;
-                        resumeCountdown();
-                        startCountdown(clock1);
-                    } else {
-                        result2.innerText = "Correct.";
-                        submitAnswerButton2.disabled = false;
-                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
-                        timerEnded = false;
-                        resumeCountdown();
-                        startCountdown(clock2);
-                    }
-                    isProcessing = false;
-
-                } //else if (data.result === 'transciption_error'){
-                //     if (testNumber == 1){
-                //         result1.innerText = "Sorry, I couldn't understand you.";
-                //         testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
-                //         submitAnswerButton1.disabled = false;
-                //     } else {
-                //         result2.innerText = "Sorry, I couldn't understand you.";
-                //         testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
-                //         submitAnswerButton2.disabled = false;
-                //     }
-                //     isProcessing = false;
-                // }
-                else if (data.result === 'incorrect') {
-                    const restartNumber = testNumber === 1 ? "1,009" : "1,059";
-                    if (testNumber == 1){
-                        result1.innerText = `Incorrect. Please start again from ${restartNumber}.`;
-                        testStatusContainer1.innerText = "Recording... Speak your answer and submit when ready.";
-                        submitAnswerButton1.disabled = false;
-                        timerEnded = false;
-                        resumeCountdown();
-                        startCountdown(clock1);
-
-                    } else {
-                        result2.innerText = `Incorrect. Please start again from ${restartNumber}.`;
-                        testStatusContainer2.innerText = "Recording... Speak your answer and submit when ready.";
-                        submitAnswerButton2.disabled = false;
-                        timerEnded = false;
-                        resumeCountdown();
-                        startCountdown(clock2);
-                    }
-                    isProcessing = false;
-                } 
-                // else if (data.result === 'error') {
-                //     if (testNumber == 1){
-                //         testStatusContainer1.innerText = "Sorry, I could not understand the response.";
-                //         submitAnswerButton1.disabled = false;
-                //     } else {
-                //         testStatusContainer2.innerText = "Sorry, I could not understand the response.";
-                //         submitAnswerButton2.disabled = false;
-                //     }
-                //     isProcessing = false;
-                // } 
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                if (testNumber == 1){
-                    testStatusContainer1.innerText = "Something went wrong. Please repeat your answer.";
-                    submitAnswerButton1.disabled = false;
-                    stopCountdown(clock1);
-                } else {
-                    testStatusContainer2.innerText = "Something went wrong. Please repeat your answer.";
-                    submitAnswerButton2.disabled = false;
-                    stopCountdown(clock2);
-                }
-                isProcessing = false;
+            test1.setTest(() => {
+                test1.startTest();
             });
             
         }
+        function initTest2(){
+            test2 = new Test({
+                testNumber: 2,
+                testStatusContainer: testStatusContainer2,
+                startTestButton: startTestButton2,
+                submitAnswerButton: submitAnswerButton2,
+                resultContainer: result2,
+                loadingMessage: loadingMessage2,
+                yesButton: yesButton2,
+                noButton: noButton2,
+                clockDisplay: clock2,
+                clockStatus: clockStatus2
+            });
+            test2.setTest(() => {
+                test2.startTest();
+            });
+        }
+
+        // Start Test
+        startTestButton1.addEventListener('click', initTest1);
+        startTestButton2.addEventListener('click', initTest2);
 
         document.addEventListener('DOMContentLoaded', function(){
             for (let i = 0; i < breakButtons.length; i++) {
@@ -935,7 +505,6 @@
 
         submitAnswer.addEventListener('click', function() {
             submitAnswer.disabled = true;
-            // status.innerText = "Processing your answer...";
             
             fetch("/process_ser_answer", {
                 method: "POST",
@@ -956,12 +525,11 @@
             })
             .then(() => {
                 submitAnswer.disabled = false;
-                // status.style.display = 'none';;
                 fetchNextQuestion(); 
             })
             .catch(error => {
                 console.error('Error:', error);
-                // status.innerText = "Error occurred while processing the answer.";
+                status.innerText = "Error occurred while processing the answer.";
             });
         });
 
@@ -990,13 +558,13 @@
             if (testAudio.innerText === 'Record') {
                 audioStatusMessage.innerText = "Please wait...";
                 startRecording()
-                .then(() => {
-                    playBeep();
-                })
-                .then(() => {
-                    audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
-                    testAudio.innerText = 'Stop';      
-                })
+                    .then(() => {
+                        playBeep();
+                    })
+                    .then(() => {
+                        audioStatusMessage.innerText = "Recording... Please say 'She sells seashells by the sea shore'. Press 'Stop' when finished.";
+                        testAudio.innerText = 'Stop';      
+                    });
             }
             else if (testAudio.innerText === 'Stop') {
                 try {
@@ -1041,15 +609,413 @@
                 setEventMarker('break_2');
                 timeout2 = stopVideo(video2, "restMessage2", timeout2);
             });
-
-            // document.getElementById("break1").addEventListener("click", function() {
-            //     toggleVis("break1Div");
-            // });
-
-            // document.getElementById("break2").addEventListener("click", function() {
-            //     toggleVis("break2Div");
-            // }); 
         });
+
+        class Test {
+            constructor({ testNumber, testStatusContainer, startTestButton, submitAnswerButton, resultContainer, loadingMessage, yesButton, noButton, clockDisplay, clockStatus}) {
+                this.testNumber = testNumber; 
+                this.eventMarker = `stressor_test_${this.testNumber}`;
+                
+                //Fields for test module
+                this.testStatusContainer = testStatusContainer;
+                this.startTestButton = startTestButton;
+                this.submitAnswerButton = submitAnswerButton;
+                this.loadingMessage = loadingMessage;
+                this.clockDisplay = clockDisplay;
+                this.clockStatus = clockStatus;
+                this.yesButton = yesButton;
+                this.noButton = noButton;
+
+                // Fields for confirmTranscription()
+                this.transcription = null;
+                this.confirmMessage = null;
+                this.confirmStatus = null;
+
+                // Fields for processAnswer()
+                this.processedResult = null;
+                this.processedStatus = null;
+                this.processedMessage = null;
+                this.resultContainer = resultContainer;
+
+                this.isProcessing = false;
+                this.timeUp = false;
+                this.testEnded = false;
+                this.testStarted = false;
+                
+                // Fields for timer and countdown clocks
+                this.isPaused;
+                this.initialTime = 300;  // 300 = 5 minutes
+                this.timeLeft = this.initialTime;
+                this.countdownTimeLeft = 10;
+                this.timerEnded = false;
+                this.restartNumber = this.testNumber === 1 ? "1,009" : "1,059";
+
+                this.initializeEventListeners();
+            }
+
+            setTest(callback){
+                fetch('/set_current_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ test_number: this.testNumber })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to set test number.');
+                })
+                .finally(() => {
+                    if (callback){
+                        callback();
+                    }
+                });
+            }
+
+            initializeEventListeners() {
+                this.yesButton.addEventListener('click', this.yesButtonClickHandler.bind(this));
+                this.noButton.addEventListener('click', this.noButtonClickHandler.bind(this));
+                this.submitAnswerButton.addEventListener('click', this.submitAnswerButtonClickHandler.bind(this));
+            }
+
+            submitAnswerButtonClickHandler() {
+                this.clockStatus.innerText = '';
+                this.testStatusContainer.innerText = '';
+                this.pauseCountdown();
+                this.confirmTranscription(false, () => {
+                    this.submitAnswerButton.disabled = true;
+                    this.yesButton.style.display = 'inline-block';
+                    this.noButton.style.display = 'inline-block';
+                    this.yesButton.disabled = false;
+                    this.noButton.disabled = false;
+                    this.testStatusContainer.innerText = this.transcription;
+                });
+            }
+
+            yesButtonClickHandler(){
+                this.processAnswer(() => {
+                    this.processResult();
+                });
+            }
+            
+            noButtonClickHandler(){
+                startRecording()
+                .then(() => {
+                    this.testStatusContainer.innerText = "Recording... Please repeat your answer and submit when ready.";
+                    this.yesButton.style.display = 'none';
+                    this.noButton.style.display = 'none';
+                    this.submitAnswerButton.disabled = false;
+                    this.resumeCountdown();
+                })
+                .catch(error => {
+                    console.error('Error starting audio stream:', error);
+                    alert('Error starting audio stream: ' + error);
+                });
+            }
+
+            startTest() {
+                if(this.eventMarker === undefined){
+                    alert("Failed to start test. Event Marker is not set.");
+                    return;
+                }
+
+                if(this.testStarted){
+                    alert("Test already started.");
+                    return;
+                } 
+                
+                setEventMarker(this.eventMarker);
+                setCondition("None");
+
+                this.submitAnswerButton.disabled = true;
+                this.loadingMessage.style.display = 'block';
+                this.testStatusContainer.innerText = 'Please wait...';
+                
+                fetch('/get_first_question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+                    this.submitAnswerButton.disabled = false;
+                    this.loadingMessage.style.display = 'none';
+                    this.startTestButton.disabled = true;
+                    this.clockStatus.innerText = '';
+                    this.testStatusContainer.innerText = 'Recording... Speak your answer and submit when ready.';
+
+                    this.resumeCountdown();
+                    this.startClock();  
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to start test.');
+                });
+                this.testStarted = true;
+            }
+
+            confirmTranscription(timeUp, callback){
+                console.log("Confirming transcription... timeUp = ", this.timeUp);
+                fetch('/confirm_transcription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ time_up: timeUp, test_status: this.testEnded })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.confirmStatus = data.status;
+                    this.confirmMessage = data.message;
+                    this.transcription = data.transcription;
+
+                    if (timeUp){
+                        console.log("IN TIMEUP BLOCK");
+                        console.log(this.transcription);
+                        console.log(this.confirmStatus);
+                        console.log(this.confirmMessage);
+                    } else {
+                        console.log("IN ELSE BLOCK");
+                        console.log(this.transcription);
+                        console.log(this.confirmStatus);
+                        console.log(this.confirmMessage);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    if(callback){
+                        callback();
+                    }
+                });
+            }
+
+            processAnswer(callback) {
+                if(this.isProcessing) {
+                    return; // If function is busy, gtfo.
+                }
+
+                this.isProcessing = true;
+
+                if(!this.submitAnswerButton.disabled){
+                    this.submitAnswerButton.disabled = true;
+                }
+                
+                if (!this.timeUp){
+                    this.testStatusContainer.innerText = "Analyzing Answer...";
+                } 
+
+                fetch('/process_answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ test_status: this.testEnded })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.processedStatus = data.status;
+                    this.processedResult = data.result;
+                    this.processedMessage = data.message;
+
+                    console.log(this.processedStatus);
+                    console.log(this.processedResult);
+                    console.log(this.processedMessage);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.testStatusContainer.innerText = "Something went wrong. Please repeat your answer.";
+                    this.submitAnswerButton.disabled = false;
+                    this.clearCountdownStatus();
+                    this.resetCountdown();
+                    this.resumeCountdown();
+                })
+                .finally(() => {
+                    this.isProcessing = false;
+                    if (callback){
+                        callback();
+                    }
+                });
+            }
+
+            processResult() {
+                if (this.testEnded){
+                    return;
+                }
+
+                //This function is a callback to processAnswer and enforces linear processing for async function.
+                if (this.processedStatus === 'complete') {
+                    // This block handles the eventuality that all questions have been answered.
+
+                    this.stopClock();
+                    this.clearCountdownStatus();
+                    
+                    this.testStatusContainer.innerText = this.processedMessage;
+                    this.resultContainer.innerText = this.processedResult;
+                    this.submitAnswerButton.style.display = 'none';
+                    this.submitAnswerButton.disabled = true;
+                    this.startTestButton.style.display = 'none';
+                    this.startTestButton.disabled = true;
+                    this.testStarted = false;
+                    this.eventMarker = 'subject_idle';
+                    setEventMarker(this.eventMarker);
+
+                    return;
+                }
+
+                if (this.timeUp) {
+                    console.log("setting resultContainer to 'please start again from...'");
+                    this.resultContainer.innerText = `Please start again from ${this.restartNumber}.`;
+                    this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                } else if (this.processedResult === 'correct') {
+                    this.resultContainer.innerText = "Correct.";
+                    this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                } else if (this.processedResult === 'incorrect') {
+                    this.resultContainer.innerText = `Incorrect. Please start again from ${this.restartNumber}.`;
+                    this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
+                } 
+
+                this.resetCountdown();
+                this.resumeCountdown();
+
+                this.timeUp = false;
+                this.timerEnded = false;
+                this.yesButton.style.display = 'none';
+                this.noButton.style.display = 'none';
+                console.log("enabling submit button.");
+                this.submitAnswerButton.disabled = false;
+
+                return;
+            }
+
+            endTest() {
+                this.stopClock();
+                this.clearCountdownStatus();
+
+                this.testEnded = true;
+                this.testStarted = false;
+                this.submitAnswerButton.disabled = true;
+                this.submitAnswerButton.style.display = 'none';
+                this.startTestButton.style.display = 'none';
+                this.startTestButton.disabled = true;
+                this.resultContainer.style.display = 'none';
+
+                this.processAnswer(() => {
+                    this.processResult();
+                });
+
+                this.testStatusContainer.innerText = 'Time is up! Please let the experimenter know that you have completed this section.';
+                // this.resetClock();
+                setEventMarker('subject_idle');
+            }
+        
+            /////////////// CLOCK ///////////////
+            startClock() { 
+                if(!this.timerInterval) {
+                    this.timerInterval = setInterval(this.updateClock, 1000);
+                }
+            }
+
+            stopClock() {
+                clearInterval(this.timerInterval); 
+                this.timerInterval = null;
+            }
+                
+            resetClock(){
+                this.stopClock();
+                this.timeLeft = this.initialTime;
+            }
+
+            updateClock() {
+                this.timeLeft--;
+                if(this.timeLeft < 0){
+                    clearInterval(this.timerInterval);
+                    this.endTest();
+                    return;
+                }
+
+                if(!this.isPaused){
+                    this.countdownTimeLeft--;
+                    if (this.countdownTimeLeft < 0) this.countdownTimeLeft = 0; // Clamp value
+                    this.clockDisplay.innerText = `Time left: ${this.countdownTimeLeft}`;
+                    if (this.countdownTimeLeft <= 0 && !this.timerEnded) { 
+                        this.pauseCountdown();
+                        console.log("disabling submit button.");
+                        this.submitAnswerButton.disabled = true;
+                        console.log("setting timerEnded to true.");
+                        this.timerEnded = true;
+                        this.timeUp = true;
+                        console.log("setting Time's up and start over messages.")
+                        this.clockStatus.innerText = "Time's up!";
+                        this.clockStatus.style.display = 'block';
+                        this.resultContainer.innerText = `Please start over at ${this.restartNumber}.`;
+
+                        if(!this.isProcessing){
+                            console.log("Calling confirmTranscription for test 1");
+                            this.confirmTranscription(true, () => {
+                                this.yesButton.style.display = 'none';
+                                this.yesButton.disabled = true;
+                                this.noButton.style.display = 'none';
+                                this.noButton.disabled = true;
+                                this.processAnswer(() => {
+                                    this.processResult();
+                                });
+                            });
+                        }
+                    } 
+                }
+            }
+            
+            resumeCountdown() {
+                console.log("resuming countdown.");
+                this.isPaused = false;
+            }
+
+            resetCountdown(){
+                console.log("resetting countdown.");
+                this.countdownTimeLeft = 10;
+                // this.clockDisplay.innerText = `Time left: ${this.countdownTimeLeft}`;
+                this.timerEnded = false;
+                // this.clockStatus.innerText = '';
+                // this.clockStatus.style.display = 'none';
+            }
+
+            pauseCountdown() {
+                this.isPaused = true;
+            }
+
+            clearCountdownStatus(){
+                this.pauseCountdown();
+                this.clockStatus.innerText = '';
+                this.clockStatus.style.display = 'none';
+            }
+
+            startClock() {
+                if(!this.timerInterval) {
+                    this.timerInterval = setInterval(this.updateClock.bind(this), 1000);
+                }
+            }
+        }
     </script>
 </body>
 </html>

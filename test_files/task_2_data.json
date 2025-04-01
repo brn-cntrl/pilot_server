@@ -1,326 +1,574 @@
 [
     {
         "question": "1059 - 13",
-        "answer": ["1046", "one thousand forty-six", "One Thousand Forty-Six"]
+        "answer": [
+            "1046",
+            "one thousand forty-six",
+            "one thousand forty-six",
+            "one zero four six",
+            "one-zero-four-six",
+            "1 0 4 6",
+            "1 zero 4 6"
+        ]
     },
     {
         "question": "1046 - 13",
-        "answer": ["1033", "one thousand thirty-three", "One Thousand Thirty-Three"]
+        "answer": [
+            "1033",
+            "one thousand thirty-three",
+            "one thousand thirty-three",
+            "one zero three three",
+            "one-zero-three-three",
+            "1 0 3 3",
+            "1 zero 3 3"
+        ]
     },
     {
         "question": "1033 - 13",
-        "answer": ["1020", "one thousand twenty", "One Thousand Twenty"]
+        "answer": [
+            "1020",
+            "one thousand twenty",
+            "one thousand twenty",
+            "one zero two zero",
+            "one-zero-two-zero",
+            "1 0 2 0",
+            "1 zero 2 0"
+        ]
     },
     {
         "question": "1020 - 13",
-        "answer": ["1007", "one thousand seven", "One Thousand Seven"]
+        "answer": [
+            "1007",
+            "one thousand seven",
+            "one thousand seven",
+            "one zero zero seven",
+            "one-zero-zero-seven",
+            "1 0 0 7",
+            "1 zero zero 7"
+        ]
     },
     {
         "question": "1007 - 13",
-        "answer": ["994", "nine hundred ninety-four", "Nine Hundred Ninety-Four"]
+        "answer": [
+            "994",
+            "nine hundred ninety-four",
+            "nine hundred ninety-four",
+            "nine nine four",
+            "nine-nine-four",
+            "9 9 4",
+            "9 nine 4"
+        ]
     },
     {
         "question": "994 - 13",
-        "answer": ["981", "nine hundred eighty-one", "Nine Hundred Eighty-One"]
+        "answer": [
+            "981",
+            "nine hundred eighty-one",
+            "nine hundred eighty-one",
+            "nine eight one",
+            "nine-eight-one",
+            "9 8 1",
+            "9 eight 1"
+        ]
     },
     {
         "question": "981 - 13",
-        "answer": ["968", "nine hundred sixty-eight", "Nine Hundred Sixty-Eight"]
+        "answer": [
+            "968",
+            "nine hundred sixty-eight",
+            "nine hundred sixty-eight",
+            "nine six eight",
+            "nine-six-eight",
+            "9 6 8",
+            "9 six 8"
+        ]
     },
     {
         "question": "968 - 13",
-        "answer": ["955", "nine hundred fifty-five", "Nine Hundred Fifty-Five"]
+        "answer": [
+            "955",
+            "nine hundred fifty-five",
+            "nine hundred fifty-five",
+            "nine five five",
+            "nine-five-five",
+            "9 5 5",
+            "9 five 5"
+        ]
     },
     {
         "question": "955 - 13",
-        "answer": ["942", "nine hundred forty-two", "Nine Hundred Forty-Two"]
+        "answer": [
+            "942",
+            "nine hundred forty-two",
+            "nine hundred forty-two",
+            "nine four two",
+            "nine-four-two",
+            "9 4 2",
+            "9 four 2"
+        ]
     },
     {
         "question": "942 - 13",
-        "answer": ["929", "nine hundred twenty-nine", "Nine Hundred Twenty-Nine"]
+        "answer": [
+            "929",
+            "nine hundred twenty-nine",
+            "nine hundred twenty-nine",
+            "nine two nine",
+            "nine-two-nine",
+            "9 2 9",
+            "9 two 9"
+        ]
     },
     {
         "question": "929 - 13",
-        "answer": ["916", "nine hundred sixteen", "Nine Hundred Sixteen"]
+        "answer": [
+            "916",
+            "nine hundred sixteen",
+            "nine hundred sixteen",
+            "nine one six",
+            "nine-one-six",
+            "9 1 6",
+            "9 one 6"
+        ]
     },
     {
         "question": "916 - 13",
-        "answer": ["903", "nine hundred three", "Nine Hundred Three"]
+        "answer": [
+            "903",
+            "nine hundred three",
+            "nine hundred three",
+            "nine zero three",
+            "nine-zero-three",
+            "9 0 3",
+            "9 zero 3"
+        ]
     },
     {
         "question": "903 - 13",
-        "answer": ["890", "eight hundred ninety", "Eight Hundred Ninety"]
+        "answer": [
+            "890",
+            "eight hundred ninety",
+            "eight hundred ninety",
+            "eight nine zero",
+            "eight-nine-zero",
+            "8 9 0",
+            "8 nine 0"
+        ]
     },
     {
         "question": "890 - 13",
-        "answer": ["877", "eight hundred seventy-seven", "Eight Hundred Seventy-Seven"]
+        "answer": [
+            "877",
+            "eight hundred seventy-seven",
+            "eight hundred seventy-seven",
+            "eight seven seven",
+            "eight-seven-seven",
+            "8 7 7",
+            "8 seven 7"
+        ]
     },
     {
         "question": "877 - 13",
-        "answer": ["864", "eight hundred sixty-four", "Eight Hundred Sixty-Four"]
+        "answer": [
+            "864",
+            "eight hundred sixty-four",
+            "eight hundred sixty-four",
+            "eight six four",
+            "eight-six-four",
+            "8 6 4",
+            "8 six 4"
+        ]
     },
     {
         "question": "864 - 13",
-        "answer": ["851", "eight hundred fifty-one", "Eight Hundred Fifty-One"]
+        "answer": [
+            "851",
+            "eight hundred fifty-one",
+            "eight hundred fifty-one",
+            "eight five one",
+            "eight-five-one",
+            "8 5 1",
+            "8 five 1"
+        ]
     },
     {
         "question": "851 - 13",
-        "answer": ["838", "eight hundred thirty-eight", "Eight Hundred Thirty-Eight"]
+        "answer": [
+            "838",
+            "eight hundred thirty-eight",
+            "eight hundred thirty-eight",
+            "eight three eight",
+            "eight-three-eight",
+            "8 3 8",
+            "8 three 8"
+        ]
     },
     {
         "question": "838 - 13",
-        "answer": ["825", "eight hundred twenty-five", "Eight Hundred Twenty-Five"]
+        "answer": [
+            "825",
+            "eight hundred twenty-five",
+            "eight hundred twenty-five",
+            "eight two five",
+            "eight-two-five",
+            "8 2 5",
+            "8 two 5"
+        ]
     },
     {
         "question": "825 - 13",
-        "answer": ["812", "eight hundred twelve", "Eight Hundred Twelve"]
+        "answer": [
+            "812",
+            "eight hundred twelve",
+            "eight hundred twelve",
+            "eight one two",
+            "eight-one-two",
+            "8 1 2",
+            "8 one 2"
+        ]
     },
     {
         "question": "812 - 13",
-        "answer": ["799", "seven hundred ninety-nine", "Seven Hundred Ninety-Nine"]
+        "answer": [
+            "799",
+            "seven hundred ninety-nine",
+            "seven hundred ninety-nine",
+            "seven nine nine",
+            "seven-nine-nine",
+            "7 9 9",
+            "7 nine 9"
+        ]
     },
     {
         "question": "799 - 13",
-        "answer": ["786", "seven hundred eighty-six", "Seven Hundred Eighty-Six"]
+        "answer": [
+            "786",
+            "seven hundred eighty-six",
+            "seven hundred eighty-six",
+            "seven eight six",
+            "seven-eight-six",
+            "7 8 6",
+            "7 eight 6"
+        ]
     },
     {
         "question": "786 - 13",
-        "answer": ["773", "seven hundred seventy-three", "Seven Hundred Seventy-Three"]
+        "answer": [
+            "773",
+            "seven hundred seventy-three",
+            "seven hundred seventy-three",
+            "seven seven three",
+            "seven-seven-three",
+            "7 7 3",
+            "7 seven 3"
+        ]
     },
     {
         "question": "773 - 13",
-        "answer": ["760", "seven hundred sixty", "Seven Hundred Sixty"]
+        "answer": [
+            "760",
+            "seven hundred sixty",
+            "seven hundred sixty",
+            "seven six zero",
+            "seven-six-zero",
+            "7 6 0",
+            "7 six 0"
+        ]
     },
     {
         "question": "760 - 13",
-        "answer": ["747", "seven hundred forty-seven", "Seven Hundred Forty-Seven"]
+        "answer": [
+            "747",
+            "seven hundred forty-seven",
+            "seven hundred forty-seven",
+            "seven four seven",
+            "seven-four-seven",
+            "7 4 7",
+            "7 four 7"
+        ]
     },
     {
         "question": "747 - 13",
-        "answer": ["734", "seven hundred thirty-four", "Seven Hundred Thirty-Four"]
+        "answer": [
+            "734",
+            "seven hundred thirty-four",
+            "seven hundred thirty-four",
+            "seven three four",
+            "seven-three-four",
+            "7 3 4",
+            "7 three 4"
+        ]
     },
     {
         "question": "734 - 13",
-        "answer": ["721", "seven hundred twenty-one", "Seven Hundred Twenty-One"]
+        "answer": [
+            "721",
+            "seven hundred twenty-one",
+            "seven hundred twenty-one",
+            "seven two one",
+            "seven-two-one",
+            "7 2 1",
+            "7 two 1"
+        ]
     },
     {
         "question": "721 - 13",
-        "answer": ["708", "seven hundred eight", "Seven Hundred Eight"]
+        "answer": [
+            "708",
+            "seven hundred eight",
+            "seven hundred eight",
+            "seven zero eight",
+            "seven-zero-eight",
+            "7 0 8",
+            "7 zero 8"
+        ]
     },
     {
         "question": "708 - 13",
-        "answer": ["695", "six hundred ninety-five", "Six Hundred Ninety-Five"]
+        "answer": [
+            "695",
+            "six hundred ninety-five",
+            "six hundred ninety-five",
+            "six nine five",
+            "six-nine-five",
+            "6 9 5",
+            "6 nine 5"
+        ]
     },
     {
         "question": "695 - 13",
-        "answer": ["682", "six hundred eighty-two", "Six Hundred Eighty-Two"]
+        "answer": [
+            "682",
+            "six hundred eighty-two",
+            "six hundred eighty-two",
+            "six eight two",
+            "six-eight-two",
+            "6 8 2",
+            "6 eight 2"
+        ]
     },
     {
         "question": "682 - 13",
-        "answer": ["669", "six hundred sixty-nine", "Six Hundred Sixty-Nine"]
+        "answer": [
+            "669",
+            "six hundred sixty-nine",
+            "six hundred sixty-nine",
+            "six six nine",
+            "six-six-nine",
+            "6 6 9",
+            "6 six 9"
+        ]
     },
     {
         "question": "669 - 13",
-        "answer": ["656", "six hundred fifty-six", "Six Hundred Fifty-Six"]
+        "answer": [
+            "656",
+            "six hundred fifty-six",
+            "six hundred fifty-six",
+            "six five six",
+            "six-five-six",
+            "6 5 6",
+            "6 five 6"
+        ]
     },
     {
         "question": "656 - 13",
-        "answer": ["643", "six hundred forty-three", "Six Hundred Forty-Three"]
+        "answer": ["643", "six hundred forty-three", "Six Hundred Forty-Three", "six four three", "six-four-three", "6 4 3", "6 four 3"]
     },
     {
         "question": "643 - 13",
-        "answer": ["630", "six hundred thirty", "Six Hundred Thirty"]
+        "answer": ["630", "six hundred thirty", "Six Hundred Thirty", "six three zero", "six-three-zero", "6 3 0"]
     },
     {
         "question": "630 - 13",
-        "answer": ["617", "six hundred seventeen", "Six Hundred Seventeen"]
+        "answer": ["617", "six hundred seventeen", "Six Hundred Seventeen", "six one seven", "six-one-seven", "6 1 7"]
     },
     {
         "question": "617 - 13",
-        "answer": ["604", "six hundred four", "Six Hundred Four"]
+        "answer": ["604", "six hundred four", "Six Hundred Four", "six zero four", "six-zero-four", "6 0 4"]
     },
     {
         "question": "604 - 13",
-        "answer": ["591", "five hundred ninety-one", "Five Hundred Ninety-One"]
+        "answer": ["591", "five hundred ninety-one", "Five Hundred Ninety-One", "five nine one", "five-nine-one", "5 9 1"]
     },
     {
         "question": "591 - 13",
-        "answer": ["578", "five hundred seventy-eight", "Five Hundred Seventy-Eight"]
+        "answer": ["578", "five hundred seventy-eight", "Five Hundred Seventy-Eight", "five seven eight", "five-seven-eight", "5 7 8"]
     },
     {
         "question": "578 - 13",
-        "answer": ["565", "five hundred sixty-five", "Five Hundred Sixty-Five"]
+        "answer": ["565", "five hundred sixty-five", "Five Hundred Sixty-Five", "five six five", "five-six-five", "5 6 5"]
     },
     {
         "question": "565 - 13",
-        "answer": ["552", "five hundred fifty-two", "Five Hundred Fifty-Two"]
+        "answer": ["552", "five hundred fifty-two", "Five Hundred Fifty-Two", "five five two", "five-five-two", "5 5 2"]
     },
     {
         "question": "552 - 13",
-        "answer": ["539", "five hundred thirty-nine", "Five Hundred Thirty-Nine"]
+        "answer": ["539", "five hundred thirty-nine", "Five Hundred Thirty-Nine", "five three nine", "five-three-nine", "5 3 9"]
     },
     {
         "question": "539 - 13",
-        "answer": ["526", "five hundred twenty-six", "Five Hundred Twenty-Six"]
+        "answer": ["526", "five hundred twenty-six", "Five Hundred Twenty-Six", "five two six", "five-two-six", "5 2 6"]
     },
     {
         "question": "526 - 13",
-        "answer": ["513", "five hundred thirteen", "Five Hundred Thirteen"]
+        "answer": ["513", "five hundred thirteen", "Five Hundred Thirteen", "five one three", "five-one-three", "5 1 3"]
     },
     {
         "question": "513 - 13",
-        "answer": ["500", "five hundred", "Five Hundred"]
+        "answer": ["500", "five hundred", "Five Hundred", "five zero zero", "five-zero-zero", "5 0 0"]
     },
     {
         "question": "500 - 13",
-        "answer": ["487", "four hundred eighty-seven", "Four Hundred Eighty-Seven"]
+        "answer": ["487", "four hundred eighty-seven", "Four Hundred Eighty-Seven", "four eight seven", "four-eight-seven", "4 8 7"]
     },
     {
         "question": "487 - 13",
-        "answer": ["474", "four hundred seventy-four", "Four Hundred Seventy-Four"]
+        "answer": ["474", "four hundred seventy-four", "Four Hundred Seventy-Four", "four seven four", "four-seven-four", "4 7 4"]
     },
     {
         "question": "474 - 13",
-        "answer": ["461", "four hundred sixty-one", "Four Hundred Sixty-One"]
+        "answer": ["461", "four hundred sixty-one", "Four Hundred Sixty-One", "four six one", "four-six-one", "4 6 1"]
     },
     {
         "question": "461 - 13",
-        "answer": ["448", "four hundred forty-eight", "Four Hundred Forty-Eight"]
+        "answer": ["448", "four hundred forty-eight", "Four Hundred Forty-Eight", "four four eight", "four-four-eight", "4 4 8"]
     },
     {
         "question": "448 - 13",
-        "answer": ["435", "four hundred thirty-five", "Four Hundred Thirty-Five"]
+        "answer": ["435", "four hundred thirty-five", "Four Hundred Thirty-Five", "four three five", "four-three-five", "4 3 5"]
     },
     {
         "question": "435 - 13",
-        "answer": ["422", "four hundred twenty-two", "Four Hundred Twenty-Two"]
+        "answer": ["422", "four hundred twenty-two", "Four Hundred Twenty-Two", "four two two", "four-two-two", "4 2 2"]
     },
     {
         "question": "422 - 13",
-        "answer": ["409", "four hundred nine", "Four Hundred Nine"]
+        "answer": ["409", "four hundred nine", "Four Hundred Nine", "four zero nine", "four-zero-nine", "4 0 9"]
     },
     {
         "question": "409 - 13",
-        "answer": ["396", "three hundred ninety-six", "Three Hundred Ninety-Six"]
+        "answer": ["396", "three hundred ninety-six", "Three Hundred Ninety-Six", "three nine six", "three-nine-six", "3 9 6"]
     },
     {
         "question": "396 - 13",
-        "answer": ["383", "three hundred eighty-three", "Three Hundred Eighty-Three"]
+        "answer": ["383", "three hundred eighty-three", "Three Hundred Eighty-Three", "three eight three", "three-eight-three", "3 8 3"]
     },
     {
         "question": "383 - 13",
-        "answer": ["370", "three hundred seventy", "Three Hundred Seventy"]
+        "answer": ["370", "three hundred seventy", "Three Hundred Seventy", "three seven zero", "three-seven-zero", "3 7 0"]
     },
     {
         "question": "370 - 13",
-        "answer": ["357", "three hundred fifty-seven", "Three Hundred Fifty-Seven"]
+        "answer": ["357", "three hundred fifty-seven", "Three Hundred Fifty-Seven", "three five seven", "three-five-seven", "3 5 7"]
     },
     {
         "question": "357 - 13",
-        "answer": ["344", "three hundred forty-four", "Three Hundred Forty-Four"]
+        "answer": ["344", "three hundred forty-four", "Three Hundred Forty-Four", "three four four", "three-four-four", "3 4 4"]
     },
     {
         "question": "344 - 13",
-        "answer": ["331", "three hundred thirty-one", "Three Hundred Thirty-One"]
+        "answer": ["331", "three hundred thirty-one", "Three Hundred Thirty-One", "three three one", "three-three-one", "3 3 1"]
     },
     {
         "question": "331 - 13",
-        "answer": ["318", "three hundred eighteen", "Three Hundred Eighteen"]
+        "answer": ["318", "three hundred eighteen", "Three Hundred Eighteen", "three one eight", "three-one-eight", "3 1 8"]
     },
     {
         "question": "318 - 13",
-        "answer": ["305", "three hundred five", "Three Hundred Five"]
+        "answer": ["305", "three hundred five", "Three Hundred Five", "three zero five", "three-zero-five", "3 0 5"]
     },
     {
         "question": "305 - 13",
-        "answer": ["292", "two hundred ninety-two", "Two Hundred Ninety-Two"]
+        "answer": ["292", "two hundred ninety-two", "Two Hundred Ninety-Two", "two nine two", "two-nine-two", "2 9 2"]
     },
     {
         "question": "292 - 13",
-        "answer": ["279", "two hundred seventy-nine", "Two Hundred Seventy-Nine"]
+        "answer": ["279", "two hundred seventy-nine", "Two Hundred Seventy-Nine", "two seven nine", "two-seven-nine", "2 7 9"]
     },
     {
         "question": "279 - 13",
-        "answer": ["266", "two hundred sixty-six", "Two Hundred Sixty-Six"]
+        "answer": ["266", "two hundred sixty-six", "Two Hundred Sixty-Six", "two six six", "two-six-six", "2 6 6"]
     },
     {
         "question": "266 - 13",
-        "answer": ["253", "two hundred fifty-three", "Two Hundred Fifty-Three"]
+        "answer": ["253", "two hundred fifty-three", "Two Hundred Fifty-Three", "two five three", "two-five-three", "2 5 3"]
     },
     {
         "question": "253 - 13",
-        "answer": ["240", "two hundred forty", "Two Hundred Forty"]
+        "answer": ["240", "two hundred forty", "Two Hundred Forty", "two four zero", "two-four-zero", "2 4 0"]
     },
     {
         "question": "240 - 13",
-        "answer": ["227", "two hundred twenty-seven", "Two Hundred Twenty-Seven"]
+        "answer": ["227", "two hundred twenty-seven", "Two Hundred Twenty-Seven", "two two seven", "two-two-seven", "2 2 7"]
     },
     {
         "question": "227 - 13",
-        "answer": ["214", "two hundred fourteen", "Two Hundred Fourteen"]
+        "answer": ["214", "two hundred fourteen", "Two Hundred Fourteen", "two one four", "two-one-four", "2 1 4"]
     },
     {
         "question": "214 - 13",
-        "answer": ["201", "two hundred one", "Two Hundred One"]
+        "answer": ["201", "two hundred one", "Two Hundred One", "two zero one", "two-zero-one", "2 0 1"]
     },
     {
         "question": "201 - 13",
-        "answer": ["188", "one hundred eighty-eight", "One Hundred Eighty-Eight"]
+        "answer": ["188", "one hundred eighty-eight", "One Hundred Eighty-Eight", "one eight eight", "one-eight-eight", "1 8 8"]
     },
     {
         "question": "188 - 13",
-        "answer": ["175", "one hundred seventy-five", "One Hundred Seventy-Five"]
+        "answer": ["175", "one hundred seventy-five", "One Hundred Seventy-Five", "one seven five", "one-seven-five", "1 7 5"]
     },
     {
         "question": "175 - 13",
-        "answer": ["162", "one hundred sixty-two", "One Hundred Sixty-Two"]
+        "answer": ["162", "one hundred sixty-two", "One Hundred Sixty-Two", "one six two", "one-six-two", "1 6 2"]
     },
     {
         "question": "162 - 13",
-        "answer": ["149", "one hundred forty-nine", "One Hundred Forty-Nine"]
+        "answer": ["149", "one hundred forty-nine", "One Hundred Forty-Nine", "one four nine", "one-four-nine", "1 4 9"]
     },
     {
         "question": "149 - 13",
-        "answer": ["136", "one hundred thirty-six", "One Hundred Thirty-Six"]
+        "answer": ["136", "one hundred thirty-six", "One Hundred Thirty-Six", "one three six", "one-three-six", "1 3 6"]
     },
     {
         "question": "136 - 13",
-        "answer": ["123", "one hundred twenty-three", "One Hundred Twenty-Three"]
+        "answer": ["123", "one hundred twenty-three", "One Hundred Twenty-Three", "one two three", "one-two-three", "1 2 3"]
     },
     {
         "question": "123 - 13",
-        "answer": ["110", "one hundred ten", "One Hundred Ten"]
+        "answer": ["110", "one hundred ten", "One Hundred Ten", "one one zero", "one-one-zero", "1 1 0"]
     },
     {
         "question": "110 - 13",
-        "answer": ["97", "ninety-seven", "Ninety-Seven"]
+        "answer": ["97", "ninety-seven", "Ninety-Seven", "nine seven", "nine-seven", "9 7"]
     },
     {
         "question": "97 - 13",
-        "answer": ["84", "eighty-four", "Eighty-Four"]
+        "answer": ["84", "eighty-four", "Eighty-Four", "eight four", "eight-four", "8 4"]
     },
     {
         "question": "84 - 13",
-        "answer": ["71", "seventy-one", "Seventy-One"]
+        "answer": ["71", "seventy-one", "Seventy-One", "seven one", "seven-one", "7 1"]
     },
     {
         "question": "71 - 13",
-        "answer": ["58", "fifty-eight", "Fifty-Eight"]
+        "answer": ["58", "fifty-eight", "Fifty-Eight", "five eight", "five-eight", "5 8"]
     },
     {
         "question": "58 - 13",
-        "answer": ["45", "forty-five", "Forty-Five"]
+        "answer": ["45", "forty-five", "Forty-Five", "four five", "four-five", "4 5"]
     },
     {
         "question": "45 - 13",
-        "answer": ["32", "thirty-two", "Thirty-Two"]
+        "answer": ["32", "thirty-two", "Thirty-Two", "three two", "three-two", "3 2"]
     },
     {
         "question": "32 - 13",
-        "answer": ["19", "nineteen", "Nineteen"]
+        "answer": ["19", "nineteen", "Nineteen", "one nine", "one-nine", "1 9"]
     },
     {
         "question": "19 - 13",
-        "answer": ["6", "six", "Six"]
+        "answer": ["6", "six", "Six", "six", "6"]
     }
 ]
