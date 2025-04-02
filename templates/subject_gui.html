@@ -114,11 +114,12 @@
                     <p id="loadingMessage1" style="display:none;">Test loading...</p>
                     <div id="clock1">Time left: 10</div><br>
                     <p id="clockStatus1" style="color: red;"></p>
+                    <p id="result1"></p>
                     <p id="status1"></p>
                     <button id="yesButton1" style="display:none;" disabled>Yes</button>
                     <button id="noButton1" style="display:none;" disabled>No</button><br><br>
                     <button id="submitAnswerButton1" disabled>Submit Answer</button><br>
-                    <p id="result1"></p>
+                    
                 </div><br>
                 <button class="taskComplete" onclick="completeTask('test_1')">Task Complete</button><br>
             </div><br>
@@ -185,11 +186,11 @@
                     <p id="loadingMessage2" style="display:none;">Test loading...</p>
                     <div id="clock2">Time Left: 10</div><br>
                     <p id="clockStatus2" style="color: red;"></p>
+                    <p id="result2"></p>
                     <p id="status2"></p>
                     <button id="yesButton2" style="display:none;" disabled>Yes</button>
                     <button id="noButton2" style="display:none;" disabled>No</button><br><br>
                     <button id="submitAnswerButton2" disabled>Submit Answer</button><br>
-                    <p id="result2"></p>
                 </div><br>
                 <button class="taskComplete" onclick="completeTask('test_2')">Task Complete</button><br>
             </div><br>
@@ -688,11 +689,11 @@
             }
 
             submitAnswerButtonClickHandler() {
+                this.submitAnswerButton.disabled = true;
                 this.clockStatus.innerText = '';
                 this.testStatusContainer.innerText = '';
                 this.pauseCountdown();
                 this.confirmTranscription(false, () => {
-                    this.submitAnswerButton.disabled = true;
                     this.yesButton.style.display = 'inline-block';
                     this.noButton.style.display = 'inline-block';
                     this.yesButton.disabled = false;
@@ -884,13 +885,18 @@
                 }
 
                 if (this.timeUp) {
-                    console.log("setting resultContainer to 'please start again from...'");
+                    // Play time up sound?
+                    this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'correct') {
-                    this.resultContainer.innerText = "Correct.";
+                    // Play correct sound.
+                    this.resultContainer.style.color = "green";
+                    this.resultContainer.innerText = "Correct. Now subtract 13 from your answer.";
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'incorrect') {
+                    // Play incorrect sound.
+                    this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Incorrect. Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } 
