@@ -576,10 +576,10 @@ def submit() -> Response:
     6. Sets the subject information in the subject manager.
     7. Configures the audio file manager and emotibit streamer with the subject's folder.
     8. Initializes the HDF5 file for the EmotiBit streamer.
-    9. Generates custom URLs for the PSS4, exit, and demographics surveys.
+    9. Generates custom URLs for the PSS10, exit, and demographics surveys.
     Returns:
         Response: A JSON response indicating the success or failure of the operation.
-        - On success: Returns a JSON object with a success message and URLs for the PSS4, exit, and demographics surveys, with a 200 status code.
+        - On success: Returns a JSON object with a success message and URLs for the PSS10, exit, and demographics surveys, with a 200 status code.
         - On failure: Returns a JSON object with an error message, with a 400 status code.
     """
     global subject_manager, form_manager, audio_file_manager, emotibit_streamer, vernier_manager
@@ -615,11 +615,11 @@ def submit() -> Response:
             vernier_manager.set_data_folder(subject_manager.subject_folder) 
             vernier_manager.set_filenames(subject_id)
 
-            pss4 = form_manager.get_custom_url("pss4", subject_manager.subject_id)
+            pss10 = form_manager.get_custom_url("pss10", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
             demographics = form_manager.get_custom_url("demographics", subject_manager.subject_id)
 
-            return jsonify({'message': 'User information submitted.', 'pss4': pss4, 'demographics': demographics, 'exit_survey': exit_survey}), 200
+            return jsonify({'message': 'User information submitted.', 'pss10': pss10, 'demographics': demographics, 'exit_survey': exit_survey}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400

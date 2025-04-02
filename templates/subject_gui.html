@@ -54,7 +54,7 @@
         <button class="toggle nextButton" style="display:none;">Survey 2</button>
         <div class="innerModule nextDiv" style="display:none;">
             <p>Please fill out this form.</p>
-            <div id="pss4Div" style="display:none;"></div><br>
+            <div id="pss10Div" style="display:none;"></div><br>
             <button class="taskComplete" onclick="completeTask('survey_2')">Task Complete</button>
         </div><br>
 
@@ -255,7 +255,7 @@
         const notification1 = document.getElementById('notification1');
         const errorNotification1 = document.getElementById('errorNotification1');
         const surveyStatus = document.getElementById('surveyStatus');
-        const pss4Button = document.getElementById('pss4Button');
+        const pss10Button = document.getElementById('pss10Button');
         const testAudio = document.getElementById('testAudio');
         const audioStatusMessage = document.getElementById('audioStatusMessage');
         const beginSERButton = document.getElementById('beginSERButton');
@@ -265,7 +265,7 @@
         const completeMessage = document.getElementById('completeMessage');
         const exitSurveyDiv = document.getElementById('exitSurveyDiv');
         const demographicsDiv = document.getElementById('demographicsDiv');
-        const pss4Div = document.getElementById('pss4Div');
+        const pss10Div = document.getElementById('pss10Div');
         const startTestButton1 = document.getElementById('startTestButton1');
         const startTestButton2 = document.getElementById('startTestButton2');
         const submitAnswerButton1 = document.getElementById('submitAnswerButton1');
@@ -286,7 +286,7 @@
         const clockStatus1 = document.getElementById('clockStatus1');
         const clockStatus2 = document.getElementById('clockStatus2');
 
-        let pss4;
+        let pss10;
         let exitSurvey;
         let demographics;
         let breakWin;
@@ -463,11 +463,11 @@
                         notification1.style.display = 'block';
                         errorNotification1.style.display = 'none';
 
-                        pss4 = data.pss4;
+                        pss10 = data.pss10;
                         demographics = data.demographics;
                         exitSurvey = data.exit_survey;
-                        pss4Div.innerHTML = `<iframe src="${pss4}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
-                        pss4Div.style.display='block';
+                        pss10Div.innerHTML = `<iframe src="${pss10}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
+                        pss10Div.style.display='block';
                         exitSurveyDiv.innerHTML = `<iframe src="${exitSurvey}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
                         exitSurveyDiv.style.display = 'block';
                         demographicsDiv.innerHTML = `<iframe src="${demographics}" width="80%" height="600px" frameborder="0">Loading survey....</iframe>`;
