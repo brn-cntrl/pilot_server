@@ -55,7 +55,7 @@ update_event = threading.Event()
 def process_audio_files() -> Response:
     """
     Processes audio files in the current subject's audio folder, transcribes them, 
-    predicts emotion and confidence scores, and writes the results to a CSV file.
+    predicts the top 3 emotion and confidence scores, and writes the results to a CSV file.
     Returns:
         Response: A JSON response indicating the success of the operation with a message.
     """
@@ -65,22 +65,37 @@ def process_audio_files() -> Response:
     data_rows = []
     subject_id = subject_manager.subject_id
     audio_folder = audio_file_manager.audio_folder
-    
+    experiment_name = subject_manager.experiment_name
+    trial_name = subject_manager.trial_name
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    emotion1 = None
+    confidence1 = None
+    emotion2 = None 
+    confidence2 = None
+    emotion3 =  None 
+    confidence3 = None
+
     for file in os.listdir(audio_folder):
         if file.endswith(".wav"):
             parts = file.split("_")
             if parts[0] == subject_id and len(parts) > 2:
                 transcription = transcribe_audio(os.path.join(audio_folder, file))
-                emotion, confidence = ser_manager.predict_emotion(os.path.join(audio_folder, file))
+                emo_list = ser_manager.predict_emotion(os.path.join(audio_folder, file))
                 timestamp = parts[1]
-                data_rows.append([timestamp, file, transcription, emotion, confidence])
+
+                emotion1, confidence1 = emo_list[0][0], emo_list[0][1]
+                emotion2, confidence2 = emo_list[1][0], emo_list[1][1]
+                emotion3, confidence3 = emo_list[2][0], emo_list[2][1]
+
+                data_rows.append([timestamp, file, transcription, emotion1, confidence1, emotion2, confidence2, emotion3, confidence3])
 
     data_rows.sort(key=lambda x: x[0])
-    csv_path = os.path.join(subject_manager.subject_folder, f"{subject_id}_transcriptions_SER.csv")
+    csv_path = os.path.join(subject_manager.subject_folder, f"{date}_{experiment_name}_{trial_name}_{subject_id}_SER.csv")
 
     with open(csv_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Timestamp", "File_Name", "Transcription", "SER_Emotion", "SER_Confidence"])
+        writer.writerow(["Timestamp", "File_Name", "Transcription", "SER_Emotion_Label_1", "SER_Confidence_1", "SER_Emotion_Label_2", "SER_Confidence_2", "SER_Emotion_Label_3", "SER_Confidence_3" ])
         for row in data_rows:
             writer.writerow(row)   
 
