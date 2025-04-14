@@ -14,6 +14,14 @@ class TestManager:
             print("SER baseline file, SER_questions.json not found")
 
         try:
+            with open('test_files/task_0_data.json') as f: # Task 0 is stressor practice test
+                self._task_0_questions = json.load(f)
+                print("Stressor task file, task_0_data.json loaded successfully")
+        except FileNotFoundError:
+            self._task_0_questions = {}
+            print("task_0_data.json not found")
+
+        try:
             with open('test_files/task_1_data.json') as f:
                 self._task_1_questions = json.load(f)
                 print("Stressor task file, task_1_data.json loaded successfully")
@@ -31,8 +39,6 @@ class TestManager:
             self._task_2_questions = {}
             print("task_2_data.json not found")
 
-        self._test_1_taken = False
-        self._test_2_taken = False
         self._current_question_index = 0  
         self._current_test_index = 0
         self._current_ser_question_index = 0
@@ -45,22 +51,6 @@ class TestManager:
     @current_answer.setter
     def current_answer(self, answer):
         self._current_answer = answer
-    
-    @property
-    def test_1_taken(self):
-        return self._test_1_taken
-    
-    @test_1_taken.setter
-    def test_1_taken(self, test_1_taken):
-        self._test_1_taken = test_1_taken
-
-    @property
-    def test_2_taken(self):
-        return self._test_2_taken
-    
-    @test_2_taken.setter
-    def test_2_taken(self, test_2_taken):
-        self._test_2_taken = test_2_taken
         
     @property
     def ser_questions(self):
@@ -69,6 +59,14 @@ class TestManager:
     @ser_questions.setter
     def ser_questions(self, ser_questions):
         self._ser_questions = ser_questions
+
+    @property
+    def task_0_questions(self):
+        return self._task_0_questions
+    
+    @task_0_questions.setter
+    def task_0_questions(self, task_0_questions):
+        self._task_0_questions = task_0_questions
 
     @property
     def task_1_questions(self):
@@ -111,7 +109,7 @@ class TestManager:
         self._current_ser_question_index = index
     
     def get_task_questions(self, index):
-        task_questions = [self.task_1_questions, self.task_2_questions]
+        task_questions = [self.task_0_questions, self.task_1_questions, self.task_2_questions]
 
         if index >= len(task_questions):
             return None
@@ -138,6 +136,8 @@ class TestManager:
             return self.task_1_questions[index]
         elif task_number == 2:
             return self.task_2_questions[index]
+        elif task_number == 0:
+            return self.task_0_questions[index]
         else:
             return "Tests completed"
         

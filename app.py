@@ -349,8 +349,6 @@ def confirm_transcription() -> Response:
     3. Updates the current answer in the test_manager with the transcribed text.
     4. Returns a JSON response with the transcription result, asking for confirmation.
 
-    NOTE: Confirmation is handled on the client side.
-
     Returns:
         Response: A JSON response containing the transcription result and a confirmation prompt.
                   If an error occurs during transcription, returns a JSON response with an error message and a 400 status code.
@@ -402,6 +400,12 @@ def process_answer() -> Response:
     # print("stopping the recording")
     # recording_manager.stop_recording()
     current_test = test_manager.current_test_index
+
+    if test_manager.current_test_index == 0:
+        current_test_name = f"practice_stressor_test"
+    else:
+        current_test_name = f"stressor_test_{current_test}"
+
     questions = test_manager.get_task_questions(current_test)
     test_ended = request.get_json().get('test_status')
     id = subject_manager.subject_id
@@ -415,31 +419,36 @@ def process_answer() -> Response:
         if test_ended:
             recording_manager.stop_recording()
             print("Recording stopped. Transcribing....")
-            ts = recording_manager.timestamp
             transcription = transcribe_audio(audio_file_manager.recording_file)
-            file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
 
-            print("Saving file...")
-            audio_file_manager.save_audio_file(file_name)
+            if test_manager.current_test_index != 0:
+                ts = recording_manager.timestamp
+                file_name = f"{id}_{ts}_{current_test_name}_question_{test_manager.current_question_index}.wav"
 
-            print("Saving data...")
-            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+                print("Saving file...")
+                audio_file_manager.save_audio_file(file_name)
 
-            return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.', 'result': 'None'})
-        
+                print("Saving data...")
+                # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+                subject_manager.append_data({'Timestamp': ts, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+
+                return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.', 'result': 'None'})
+            else:
+                return jsonify({'status': 'times_up.', 'message': 'Practice Test complete.', 'result': transcription})
+             
         else:
             transcription = test_manager.current_answer
 
-            ts = recording_manager.timestamp
-            file_name = f"{id}_{ts}_stressor_test_{current_test+1}_question_{test_manager.current_question_index}.wav"
+            if test_manager.current_test_index != 0:
+                ts = recording_manager.timestamp
+                file_name = f"{id}_{ts}_{current_test_name}_question_{test_manager.current_question_index}.wav"
 
-            print("Saving file...")
-            audio_file_manager.save_audio_file(file_name)
+                print("Saving file...")
+                audio_file_manager.save_audio_file(file_name)
 
-            print("Saving data...")
-            # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': f'stressor_test_{current_test+1}', 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+                print("Saving data...")
+                # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+                subject_manager.append_data({'Timestamp': ts, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
             correct_answer = questions[test_manager.current_question_index]['answer']
             result = 'incorrect'
@@ -447,7 +456,12 @@ def process_answer() -> Response:
             if test_manager.check_answer(transcription, correct_answer):
                 result = 'correct'
                 test_manager.current_question_index += 1
-            
+                
+                if test_manager.current_question_index >= len(questions):
+                    test_manager.current_question_index = 0
+                    print(f"Question index is {test_manager.current_question_index} and length of question file is {len(questions)}.")
+                    return jsonify({'status': 'complete', 'message': 'Test complete. Please let the experimenter know that you have completed this section.', 'result': result})
+                
             if result == 'incorrect':
                 test_manager.current_question_index = 0
             
@@ -468,8 +482,7 @@ def set_current_test() -> Response:
         raise ValueError("Missing 'test_number' in request JSON")
     
     try: 
-        test_number = int(test_number)
-        test_manager.current_test_index = test_number-1
+        test_manager.current_test_index = int(test_number)
         test_manager.current_question_index = 0
         print(f"Test set to {test_number}.")
         print(f"Current Question Index: {test_manager.current_question_index}")
@@ -477,24 +490,6 @@ def set_current_test() -> Response:
     
     except ValueError:
         return jsonify({'message': 'Invalid test number.'}), 400
-    
-@app.route('/get_current_test', methods=['POST'])
-def get_current_test() -> Response:
-    global test_manager
-    # If both tests have been taken, reset them to allow a new cycle
-    if test_manager.test_1_taken and test_manager.test_2_taken:
-        test_manager.test_1_taken = False
-        test_manager.test_2_taken = False
-
-    if not test_manager.test_1_taken:
-        test_manager.current_test_index = 0
-        test_manager.test_1_taken = True
-    elif not test_manager.test_2_taken:
-        test_manager.current_test_index = 1
-        test_manager.test_2_taken = True
-
-    print(f"Test Index: {test_manager.current_test_index}.")
-    return jsonify({"test_number": test_manager.current_test_index})
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:

@@ -98,8 +98,35 @@
     <div id="mainTasksDiv" style="display:none;">
         <div class="testModule" style="display:block;">
             <p>After completing a task, please wait for instructions before advancing to the next task.</p>
-            <button class="toggle">Test 1</button>
+            <button class="toggle">Practice Test</button>
             <div class="innerModule test-container" id="test-container-1" style="display:none;">
+                <p>Instructions</p>
+                <div><ul>
+                    <li>Start with the number 20. For your first answer, subtract 5 from 20. Continue subtracting 5 from each new result until the screen prompts you to stop.</li>
+                    <li>Speak each answer aloud using single digit responses for best result (e.g. "One, Nine, Six" for 196) and press the "Submit" button to check your answer.</li>
+                    <li>You will have 10 seconds to speak your answer.</li>
+                    <li>You will then be asked to confirm the transcription.</li>
+                    <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 20.</li>
+                    <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
+                    <li>Press the Start Test button to begin.</li>
+                </ul></div><br>
+                
+                <button id="startTestButton0" style="display:block;">Start Test</button><br>
+                <div>
+                    <p id="loadingMessage0" style="display:none;">Test loading...</p>
+                    <div id="clock0">Time left: 10</div><br>
+                    <p id="clockStatus0" style="color: red;"></p>
+                    <p id="result0"></p>
+                    <p id="status0"></p>
+                    <button id="yesButton0" style="display:none;" disabled>Yes</button>
+                    <button id="noButton0" style="display:none;" disabled>No</button><br><br>
+                    <button id="submitAnswerButton0" disabled>Submit Answer</button><br>
+                </div><br>
+                <button class="taskComplete" onclick="completeTask('practice_test')">Task Complete</button><br>
+            </div><br>
+            
+            <button class="toggle nextButton" style="display:none;">Test 1</button>
+            <div class="innerModule test-container nextDiv" id="test-container-1" style="display:none;">
                 <p>Instructions</p>
                 <div><ul>
                     <li>Start with the number 1,009. For your first answer, subtract 13 from 1,009. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
@@ -259,30 +286,38 @@
         const testAudio = document.getElementById('testAudio');
         const audioStatusMessage = document.getElementById('audioStatusMessage');
         const beginSERButton = document.getElementById('beginSERButton');
-        // const status = document.getElementById('status');
         const questionContainer = document.getElementById('questionContainer');
         const submitAnswer = document.getElementById('submitAnswer');
         const completeMessage = document.getElementById('completeMessage');
         const exitSurveyDiv = document.getElementById('exitSurveyDiv');
         const demographicsDiv = document.getElementById('demographicsDiv');
         const pss10Div = document.getElementById('pss10Div');
+        const startTestButton0 = document.getElementById('startTestButton0');
         const startTestButton1 = document.getElementById('startTestButton1');
         const startTestButton2 = document.getElementById('startTestButton2');
+        const submitAnswerButton0 = document.getElementById('submitAnswerButton0');
         const submitAnswerButton1 = document.getElementById('submitAnswerButton1');
         const submitAnswerButton2 = document.getElementById('submitAnswerButton2');
+        const loadingMessage0 = document.getElementById('loadingMessage0');
         const loadingMessage1 = document.getElementById('loadingMessage1');
         const loadingMessage2 = document.getElementById('loadingMessage2');
         const QAStatusContainer = document.getElementById('QAStatus');
+        const result0 = document.getElementById('result0');
         const result1 = document.getElementById('result1');
         const result2 = document.getElementById('result2');
+        const testStatusContainer0 = document.getElementById('status0');
         const testStatusContainer1 = document.getElementById('status1');
         const testStatusContainer2 = document.getElementById('status2');
+        const yesButton0 = document.getElementById('yesButton0');
         const yesButton1 = document.getElementById('yesButton1');
         const yesButton2 = document.getElementById('yesButton2');
+        const noButton0 = document.getElementById('noButton0');
         const noButton1 = document.getElementById('noButton1');
         const noButton2 = document.getElementById('noButton2');
+        const clock0 = document.getElementById('clock0');
         const clock1 = document.getElementById('clock1');
         const clock2 = document.getElementById('clock2');
+        const clockStatus0 = document.getElementById('clockStatus0');
         const clockStatus1 = document.getElementById('clockStatus1');
         const clockStatus2 = document.getElementById('clockStatus2');
 
@@ -295,6 +330,24 @@
         let eventMarker;
         let test1;
         let test2;
+        
+        function initTest0(){
+            test0 = new Test({
+                testNumber: 0, 
+                testStatusContainer: testStatusContainer0,
+                startTestButton: startTestButton0,
+                submitAnswerButton: submitAnswerButton0,
+                resultContainer: result0,
+                loadingMessage: loadingMessage0,
+                yesButton: yesButton0,
+                noButton: noButton0,
+                clockDisplay: clock0,
+                clockStatus: clockStatus0
+            });
+            test0.setTest(() => {
+                test0.startTest();
+            });
+        }
 
         function initTest1(){
             test1 = new Test({
@@ -333,6 +386,7 @@
         }
 
         // Start Test
+        startTestButton0.addEventListener('click', initTest0);
         startTestButton1.addEventListener('click', initTest1);
         startTestButton2.addEventListener('click', initTest2);
 
@@ -615,7 +669,11 @@
         class Test {
             constructor({ testNumber, testStatusContainer, startTestButton, submitAnswerButton, resultContainer, loadingMessage, yesButton, noButton, clockDisplay, clockStatus}) {
                 this.testNumber = testNumber; 
-                this.eventMarker = `stressor_test_${this.testNumber}`;
+                if (this.testNumber == 0){
+                    this.eventMarker = 'practice_stressor_test';
+                } else {
+                    this.eventMarker = `stressor_test_${this.testNumber}`;
+                }
                 
                 //Fields for test module
                 this.testStatusContainer = testStatusContainer;
@@ -642,14 +700,23 @@
                 this.timeUp = false;
                 this.testEnded = false;
                 this.testStarted = false;
-                
+                this.numToSubtract = "13";
+
                 // Fields for timer and countdown clocks
                 this.isPaused;
                 this.initialTime = 300;  // 300 = 5 minutes
                 this.timeLeft = this.initialTime;
                 this.countdownTimeLeft = 10;
                 this.timerEnded = false;
-                this.restartNumber = this.testNumber === 1 ? "1,009" : "1,059";
+
+                if(this.testNumber === 0){
+                    this.restartNumber = "20";
+                    this.numToSubtract = "5";
+                } else if (this.testNumber === 1){
+                    this.restartNumber = "1,009";
+                } else {
+                    this.restartNumber = "1,059";
+                }
 
                 this.initializeEventListeners();
             }
@@ -892,7 +959,7 @@
                 } else if (this.processedResult === 'correct') {
                     // Play correct sound.
                     this.resultContainer.style.color = "green";
-                    this.resultContainer.innerText = "Correct. Now subtract 13 from your answer.";
+                    this.resultContainer.innerText = `Correct. Now subtract ${this.numToSubtract} from your answer.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'incorrect') {
                     // Play incorrect sound.

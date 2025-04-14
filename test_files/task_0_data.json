@@ -1,0 +1,18 @@
+[
+    {
+        "question": "20 - 5",
+        "answer": ["15", "fifteen", "one five", "1 5", "1-5", "one-five"]
+    },
+    {
+        "question": "15 - 5",
+        "answer": ["10", "ten", "one zero", "1 0", "1-0", "one-zero"]
+    },
+    {
+        "question": "10 - 5",
+        "answer": ["5", "five"]
+    },
+    {
+        "question": "5 - 5",
+        "answer": ["0", "zero"]
+    }
+]

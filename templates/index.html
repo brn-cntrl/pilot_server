@@ -56,7 +56,7 @@
         <p>“Now, I am going to have you fill out a few forms. They will not require too much typing, but you can just use your other hand [gesture to dominant hand, not wearing Emotibit] when you need to type. Make sure you click “Submit” at the end of each Google Form before clicking 'Task Complete' for that section.”</p>
         <p id="subject_info" style="display:none; color: green;">Subject has submitted the Information Form.</p>
         <p id="survey_1" style="display:none; color: green;">Subject has submitted the Demographic Form.</p>
-        <p id="survey_2" style="display:none; color: green;">Subject has submitted the PSS-4 Form.</p>
+        <p id="survey_2" style="display:none; color: green;">Subject has submitted the PSS-10 Form.</p>
     </div><br>
 
     <button class="toggle">Device Setup</button><br>
@@ -108,6 +108,7 @@
 
     <p id="test_transcription" style="display:none; color:green;">Subject has completed the test transcription.</p>
     <p id="ser_baseline" style="display:none; color:green;">Subject has completed the SER baseline task.</p>
+    <p id="practice_test" style="display:non; color:green;">Subject has completed the practice stress task.</p>
     <p id="test_1" style="display:none; color:green;">Subject has completed the first stress task.</p>
 
     <h2>Experimental Tasks</h2>
@@ -299,22 +300,26 @@
 
         <button class="toggle">Post Processing</button><br>
         <div class="innerModule" style="display:none;">
-            <h4>EmotiBit Post Processing</h4>
+            <h4>Emotibit Ground Truth Data</h4>
             <p>Instructions</p>
             <ul>
-                <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li>
+                <!-- <li>Click "Convert Respiratory Data" to convert the Vernier Belt hdf5 data to csv.</li>
+                <li>Click "Convert EmotiBit Data" to convert EmotiBit hdf5 data to csv.</li> -->
                 <li>To import the ground truth data from the EmotiBit, first transfer the csv file from the EmotiBit SD card.</li>
                 <li>Click "Import EmotiBit Data" and select the file from the location in which it was stored.</li>
                 <li>Once imported, the csv file will be renamed to indicate the subject ID and copied into the subject data folder.</li>
             </ul><br>
 
+            <!-- <button id="convertVernierData">Convert Respiratory Data</button>
+            <p id="vernierProcessingStatus"></p>
             <button id="convertEmotibitData">Convert EmotiBit Data</button><br>
-            <p id="postProcessingStatus"></p>
+            <p id="postProcessingStatus"></p> -->
             <button id="openEmotibitDialog">Import EmotiBit Data</button><br>
             <input type="file" id="emotibitFileInput" style="display: none;" onchange="selectEmotibitFile(event)" /><br>
             <p id="uploadEmotibitStatus"></p>
             <p id="emotibitFilePath"></p>
         </div><br>
+
         <button class="toggle">Transcription and SER</button>
         <div class="innerModule" style="display:none;">
             <h4>Transcription and SER</h4>
@@ -456,7 +461,9 @@
         const errorNotification3 = document.getElementById('errorNotification3');
         const notification4 = document.getElementById('notification4');
         const errorNotification4 = document.getElementById('errorNotification4');
-        const convertEmotibitData = document.getElementById('convertEmotibitData')
+        const convertEmotibitData = document.getElementById('convertEmotibitData');
+        const convertVernierData = document.getElementById('convertVernierData');
+        const vernierProcessingStatus = document.getElementById('vernierProcessingStatus');
         const openEmotibitDialog = document.getElementById('openEmotibitDialog');
         const startPRSTaskButton1 = document.getElementById('startPRSTask1');
         const startPRSTaskButton2 = document.getElementById('startPRSTask2');
@@ -970,21 +977,22 @@
                 }
             }
             
-            convertEmotibitData.addEventListener('click', function() {
-                postProcessingStatus.innerText = "Converting EmotiBit data to CSV...";
-                fetch('/convert_emotibit_data', {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    postProcessingStatus.innerText = data.message;
-                    console.log(data.message);
-                })
-                .catch(error => {
-                    postProcessingStatus.innerText = data.error;
-                    console.error('Error:', error);
-                });
-            });
+
+            // convertEmotibitData.addEventListener('click', function() {
+            //     postProcessingStatus.innerText = "Converting EmotiBit data to CSV...";
+            //     fetch('/convert_emotibit_data', {
+            //         method: 'POST'
+            //     })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         postProcessingStatus.innerText = data.message;
+            //         console.log(data.message);
+            //     })
+            //     .catch(error => {
+            //         postProcessingStatus.innerText = data.error;
+            //         console.error('Error:', error);
+            //     });
+            // });
 
             stopServerButtons.forEach(button => {
                 button.addEventListener('click', function() {
