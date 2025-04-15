@@ -1,9 +1,7 @@
-""" This example automatically connects to a Go Direct device via USB (if USB 
+""" When started, the class connects to a Go Direct device via USB (if USB 
 is not connected, then it searches for the nearest GoDirect device via Bluetooth)
 and starts reading measurements from the default sensor at a period of 
-1000ms (1 sample/second). Unlike the 'gdx_getting_started' examples that use the gdx module,
-this example works directly with the godirect module. This example might
-be important for troubleshooting, or if you do not want to use the gdx module.
+1000ms (1 sample/second). 
 
 If you want to enable specific sensors, you will need to know the sensor numbers.
 Run the example called 'gdx_getting_started_device_info.py' to get that information.
@@ -135,8 +133,7 @@ class VernierManager:
                     if sensor.sensor_description == "Force":
                         ts = self.timestamp_manager.get_timestamp("iso")
                         force_value = sensor.values[0] if sensor.values else None
-                        # self._force_values.append(sensor.values[0])
-                        # rr_values = self.calculate_respiratory_rate(self._force_values, self._fs, self._window_seconds)
+                        
 
                         if force_value is not None:
                             self._current_row["timestamp"] = ts
@@ -151,8 +148,16 @@ class VernierManager:
                             self.write_to_hdf5(self._current_row)
                         else:
                             print("Error reading force sensor.")
+                            
+                    elif sensor.sensor_description == "Respiratory Rate":
+                        rr_values = sensor.values[0] if sensor.values else None
+                        if rr_values is not None:
+                            self._current_row["RR"] = rr_values
+                        else:
+                            print("Error reading respiratory rate sensor.")
 
                     sensor.clear()
+
             else:
                 print("Error reading from sensor.")
                 break
