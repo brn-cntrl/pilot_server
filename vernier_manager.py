@@ -36,7 +36,7 @@ class VernierManager:
         self.data_folder = None
         self.thread = None
         self._running = False
-        self._current_row = {"timestamp": None, "force": None, "event_marker": self._event_marker, "condition": self._condition}
+        self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
         self._device_started = False
 
         # self._fs = 10
@@ -129,34 +129,30 @@ class VernierManager:
         
         while self.running:
             if self._device.read():
+                ts = self.timestamp_manager.get_timestamp("iso")
+                self._current_row["timestamp"] = ts
+                self._current_row["event_marker"] = self.event_marker
+                self._current_row["condition"] = self.condition
+
                 for sensor in self._sensors:
                     if sensor.sensor_description == "Force":
-                        ts = self.timestamp_manager.get_timestamp("iso")
                         force_value = sensor.values[0] if sensor.values else None
-                        
-
                         if force_value is not None:
-                            self._current_row["timestamp"] = ts
                             self._current_row["force"] = force_value
-                            # self._current_row["RR"] = rr_values
-                            self._current_row["event_marker"] = self.event_marker
-                            self._current_row["condition"] = self.condition
-
-                            #DEBUG
-                            print(self._current_row)
-
-                            self.write_to_hdf5(self._current_row)
                         else:
                             print("Error reading force sensor.")
-                            
-                    elif sensor.sensor_description == "Respiratory Rate":
-                        rr_values = sensor.values[0] if sensor.values else None
-                        if rr_values is not None:
-                            self._current_row["RR"] = rr_values
+
+                    elif sensor.sensor_description == "Respiration Rate":
+                        rr_value = sensor.values[0] if sensor.values else None
+
+                        if rr_value is not None:
+                            self._current_row["RR"] = rr_value
                         else:
                             print("Error reading respiratory rate sensor.")
 
                     sensor.clear()
+
+                self.write_to_hdf5(self._current_row)
 
             else:
                 print("Error reading from sensor.")
