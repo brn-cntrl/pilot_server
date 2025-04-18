@@ -429,6 +429,16 @@ async function startEmotibit(){
 //     });
 // }
 
+function playTickSound() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    oscillator.type = 'sine'; 
+    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime); 
+    oscillator.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.001); 
+}
+
 function playBeep() {
     const beepContext = new AudioContext();
     const oscillator = beepContext.createOscillator();
