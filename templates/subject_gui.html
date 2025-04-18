@@ -333,7 +333,7 @@
         let test1;
         let test2;
         
-        function initTest0(){
+        function initTest0(){ // Practice Test
             test0 = new Test({
                 testNumber: 0, 
                 testStatusContainer: testStatusContainer0,
@@ -723,36 +723,29 @@
 
                 // Sounds
                 this.tickingSound = new AudioPlayer(sharedAudioContext);
-
-                this.speedMessages = [
-                    new AudioPlayer(sharedAudioContext),
-                    new AudioPlayer(sharedAudioContext)
-                ];
-
-                this.accuracyMessages = [
-                    new AudioPlayer(sharedAudioContext),
-                    new AudioPlayer(sharedAudioContext)
-                ];
-
-                this.randomIndex1 = Math.random() < 0.5 ? 0 : 1;
-                this.randomIndex2 = Math.random() < 0.5 ? 0 : 1;
+                this.speedMessage = new AudioPlayer(sharedAudioContext);
+                this.accuracyMessage = new AudioPlayer(sharedAudioContext);
+                
                 this.speedMessagePlayed = false;
                 this.accuracyMessagePlayed = false;
 
+                // User Events
                 this.initializeEventListeners();
             }
 
             async setupAudio(){    
                 await this.tickingSound.load('/static/test_audio/ticking.mp3');
                 this.tickingSound.setVolume(.2);
-                await this.speedMessages[0].load('/static/test_audio/speed_1.mp3/');
-                this.speedMessages[0].setVolume(.8);
-                await this.speedMessages[1].load('/static/test_audio/speed_2.mp3/');
-                this.speedMessages[1].setVolume(.8);
-                await this.accuracyMessages[0].load('static/test_audio/accuracy_1.mp3/');
-                this.accuracyMessages[0].setVolume(.8);
-                await this.accuracyMessages[1].load('static/test_audio/accuracy_2.mp3/');
-                this.accuracyMessages[1].setVolume(.8);
+
+                if (this.testNumber == 0 || this.testNumber == 1){
+                    await this.speedMessage.load('/static/test_audio/speed_1.mp3/');
+                    await this.accuracyMessage.load('/static/test_audio/accuracy_1.mp3/');
+                } else if (this.testNumber == 2) {
+                    await this.speedMessage.load('/static/test_audio/speed_2.mp3/');
+                    await this.accuracyMessage.load('static/test_audio/accuracy_2.mp3/');
+                }
+                this.speedMessage.setVolume(.8);
+                this.accuracyMessage.setVolume(.8);
             }
         
             setTest(callback){
@@ -1070,10 +1063,10 @@
                 }
 
                 if(this.timeLeft <= 180 && !this.speedMessagePlayed){ //180 seconds left
-                    this.speedMessages[this.randomIndex1].play(false);
+                    this.speedMessage.play(false);
                     this.speedMessagePlayed = true;
                 } else if (this.timeLeft <= 60 && !this.accuracyMessagePlayed){ // 60 seconds left
-                    this.accuracyMessages[this.randomIndex2].play(false);
+                    this.accuracyMessage.play(false);
                     this.accuracyMessagePlayed = true;
                 }
 
