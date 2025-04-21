@@ -1,7 +1,7 @@
 from godirect import GoDirect
 godirect = GoDirect()
 device = godirect.get_device()
-
+device.enable_sensors([1,2])
 if device != None and device.open(auto_start=True):
     sensors = device.get_enabled_sensors()
     print("Connected to "+device.name)
