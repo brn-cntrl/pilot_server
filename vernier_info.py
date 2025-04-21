@@ -9,6 +9,8 @@ if device != None and device.open(auto_start=True):
     if device.read():
         for sensor in sensors:
             print(sensor.sensor_description)
+    device.stop()
+    device.close()
 	
 # if device != None and device.open(auto_start=True):
 # 	sensors = device.get_enabled_sensors()
@@ -19,6 +21,6 @@ if device != None and device.open(auto_start=True):
 # 			for sensor in sensors:
 # 				print(sensor.sensor_description+": "+str(sensor.values))
 # 				sensor.clear()
-device.stop()
-device.close()
+# device.stop()
+# device.close()
 godirect.quit()
