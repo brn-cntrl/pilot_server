@@ -638,7 +638,7 @@
                 }
             }
         });
-        
+
         var restTime = 5;
         var restTimeMillis = restTime * 60 * 1000;
 
@@ -726,7 +726,9 @@
                 this.tickingSound = new AudioPlayer(sharedAudioContext);
                 this.speedMessage = new AudioPlayer(sharedAudioContext);
                 this.accuracyMessage = new AudioPlayer(sharedAudioContext);
-                
+                this.correctSound = new AudioPlayer(sharedAudioContext);
+                this.incorrectSound = new AudioPlayer(sharedAudioContexrt);
+
                 this.speedMessagePlayed = false;
                 this.accuracyMessagePlayed = false;
 
@@ -736,7 +738,12 @@
 
             async setupAudio(){    
                 await this.tickingSound.load('/static/test_audio/ticking.mp3');
+                await this.correctSound.load('static/test_audio/correct_v2.mp3');
+                await this.incorrectSound.load('static/test_audio/incorrect_v2.mp3');
+
                 this.tickingSound.setVolume(.2);
+                this.correctSound.setVolume(.4);
+                this.incorrectSound.setVolume(.4);
 
                 if (this.testNumber == 1){
                     await this.speedMessage.load('/static/test_audio/speed_1.mp3/');
@@ -985,17 +992,16 @@
                 }
 
                 if (this.timeUp) {
-                    // Play time up sound?
                     this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'correct') {
-                    // Play correct sound.
+                    this.correctSound.play(false);
                     this.resultContainer.style.color = "green";
                     this.resultContainer.innerText = `Correct. Now subtract ${this.numToSubtract} from your answer.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'incorrect') {
-                    // Play incorrect sound.
+                    this.incorrectSound.play(false);
                     this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Incorrect. Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
