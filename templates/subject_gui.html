@@ -189,7 +189,7 @@
 
             <button class="toggle nextButton" style="display:none;">Break 1</button>
             <div class="innerModule nextDiv" id="break1Div" style="display:none">
-                <p>Please watch the following video for 3 minutes.</p>
+                <p>Please watch the following video for 5 minutes.</p>
                 <video id="video1" width="640" height="360" controls>
                     <source src="{{ url_for('video', filename='Video1.mp4') }}" type="video/mp4">
                 </video><br>
@@ -245,7 +245,7 @@
 
             <button class="toggle nextButton" style="display:none">Break 2</button>
             <div class="innerModule nextDiv" id="break2Div" style="display:none">
-                <p>Please watch the following video for 3 minutes</p>
+                <p>Please watch the following video for 5 minutes</p>
                 <video id="video2" width="640" height="360" controls>
                     <source src="{{ url_for('video', filename='Video2.mp4') }}" type="video/mp4">
                 </video><br>
@@ -638,7 +638,8 @@
                 }
             }
         });
-
+        
+        var restTime = 5;
         var restTimeMillis = restTime * 60 * 1000;
 
         document.addEventListener("DOMContentLoaded", function(){
@@ -737,7 +738,7 @@
                 await this.tickingSound.load('/static/test_audio/ticking.mp3');
                 this.tickingSound.setVolume(.2);
 
-                if (this.testNumber == 0 || this.testNumber == 1){
+                if (this.testNumber == 1){
                     await this.speedMessage.load('/static/test_audio/speed_1.mp3/');
                     await this.accuracyMessage.load('/static/test_audio/accuracy_1.mp3/');
                 } else if (this.testNumber == 2) {
@@ -1062,14 +1063,16 @@
                     return;
                 }
 
-                if(this.timeLeft <= 180 && !this.speedMessagePlayed){ //180 seconds left
-                    this.speedMessage.play(false);
-                    this.speedMessagePlayed = true;
-                } else if (this.timeLeft <= 60 && !this.accuracyMessagePlayed){ // 60 seconds left
-                    this.accuracyMessage.play(false);
-                    this.accuracyMessagePlayed = true;
+                if (this.testNumber != 0){
+                    if(this.timeLeft <= 180 && !this.speedMessagePlayed){ //180 seconds left
+                        this.speedMessage.play(false);
+                        this.speedMessagePlayed = true;
+                    } else if (this.timeLeft <= 60 && !this.accuracyMessagePlayed){ // 60 seconds left
+                        this.accuracyMessage.play(false);
+                        this.accuracyMessagePlayed = true;
+                    }
                 }
-
+                
                 if(!this.isPaused){
                     this.countdownTimeLeft--;
                     if (!this.currentVolumeStage) {

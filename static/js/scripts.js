@@ -42,27 +42,6 @@ function processAudioFiles(statusElement, pathElement){
     });
 }
 
-function setNextTest(){
-    fetch('/set_next_test', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.message);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
 function completeTask(taskId) {
     fetch('/complete_task', { 
         method: 'POST',
@@ -85,7 +64,6 @@ function sendStatus() {
 function updateCondition(parentDiv, event) {
     const selectElement = document.querySelector(`#${parentDiv} select`);
     const selectedCondition = selectElement.value;
-    // let currentEventMarker = `${event}_${selectedCondition}`
     localStorage.setItem('currentEventMarker', event);
     localStorage.setItem('currentCondition', selectedCondition);
     console.log(selectedCondition);
@@ -181,18 +159,7 @@ async function stopRecording(){
         console.error('Recording Error:', error);
     }
 }
-function getTranscription() {
-    try {
-        const response = fetch('/get_test_transcription', {
-            method: 'POST'
-        })
-        const data = response.json();
-        console.log(data.transcription);
-        return data.transcription;
-    } catch (error) {
-        console.error('Error getting transcription:', error);
-    }
-}
+
 async function processSERTest() {
     try {
         const response = await fetch('/process_ser_test', {
@@ -204,6 +171,7 @@ async function processSERTest() {
         console.error('SER Test Error:', error);
     }
 }
+
 function getSERQuestion(){
     fetch('/get_ser_question', {
         method: 'GET'
@@ -217,6 +185,7 @@ function getSERQuestion(){
         return "Couldn't get question"; 
     });
 }
+
 async function submitSERAnswer(){
     fetch("/process_ser_answer", { method: "POST" })
         .then(response => {
@@ -259,6 +228,7 @@ function setDevice() {
     })
     .catch(error => alert('Error:' + error));
 }
+
 function toggleVis(divID) {
     const element = document.getElementById(divID);
     if (element.style.display === "none") {
@@ -269,6 +239,7 @@ function toggleVis(divID) {
         element.disabled = true;
     }
 }
+
 function shutdownServer(){
     fetch('/shutdown', {
         method: 'POST'
@@ -279,6 +250,7 @@ function shutdownServer(){
     })
     .catch(error => alert('Error:' + error));
 }
+
 function fetchAudioDevices(){
     fetch('/get_audio_devices')
     .then(response => response.json())
@@ -298,70 +270,6 @@ function fetchAudioDevices(){
     })
     .catch(error => alert('Error:' + error));
 }
-
-// NOT SURE WHAT THIS IS BUT LEAVE FOR NOW
-function handleOtherOption() {
-    const otherOption = document.getElementById('otherOption');
-    const otherText = document.getElementById('otherTextbox');
-    if (otherOption.checked) {
-        otherText.style.display = 'block'; 
-    } else {
-        otherText.style.display = 'none';  
-    }
-}
-var restTime = 3;
-// function compareToBaseline(divID) {
-//     divID.style.display = 'block';
-//     divID.innerText = "Comparing to baseline... Please wait.";  
-//     fetch('/baseline_comparison', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         }
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error(`Error: ${response.statusText}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         let baselineElevatedCount = 0;
-//         let liveElevatedCount = 0;
-
-//         Object.keys(data).forEach(key => {
-//             const result = data[key];
-//             // Check if result is valid and not null/undefined/NaN
-//             if (!result || result.status === null || result.status === "NaN" || result.status === undefined) {
-//                 console.warn(`Skipping ${key} due to invalid data:`, result);
-//                 return;
-//             }
-//             if (result.status === "Elevated") {
-//                 liveElevatedCount++;
-//             } else if (result.status === "Lowered") {
-//                 baselineElevatedCount++;
-//             } else if (result.status === "Same") {
-//                 baselineElevatedCount++;
-//                 liveElevatedCount++;
-//             }
-//             console.log(data);
-//         });
-//         if (baselineElevatedCount > liveElevatedCount) {
-//             restTime = 3;
-//             divID.innerText = `Baseline comparison complete. Subject is below baseline. Rest time: ${restTime} minutes.`;
-//         } else if (liveElevatedCount > baselineElevatedCount) {
-//             restTime = 5;
-//             divID.innerText = `Baseline comparison complete. Subject is above baseline. Rest time: ${restTime} minutes.`;
-//         } else {
-//             restTime = 3;
-//             divID.innerText = `Baseline comparison complete. Subject is within baseline. Rest time: ${restTime} minutes.`;
-//         }
-//     })
-//     .catch(error => {
-//         console.error('Error comparing to baseline:', error);
-//         divID.innerText = "Error comparing to baseline. Please try again.";
-//     });
-// }
 
 async function startEmotibit(){
     fetch('/start_emotibit', {
@@ -389,56 +297,6 @@ async function startEmotibit(){
         });
 }
 
-// function startBaseline() {
-//     fetch('/start_biometric_baseline', {
-//         method: 'POST'
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error('Network response was not ok ' + response.statusText);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log(data.status);
-//         biometricStatusMessage.style.display = 'block';
-//         biometricStatusMessage.innerText = data.status;
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//     });
-// }
-
-// function stopBaseline() {
-//     fetch("/stop_biometric_baseline", {
-//         method: "POST",
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log(data.status);
-//         biometricStatusMessage.style.display = 'block';
-//         biometricStatusMessage.innerText = data.status;
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//     });
-// }
-
-function playTickSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine'; 
-    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime); 
-    oscillator.connect(audioContext.destination);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.001); 
-}
-
 function playBeep() {
     const beepContext = new AudioContext();
     const oscillator = beepContext.createOscillator();
@@ -451,6 +309,5 @@ function playBeep() {
     oscillator.start();
     setTimeout(() => {
         oscillator.stop();
-        // audioContext.close();
     }, 300); 
 }
