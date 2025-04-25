@@ -82,6 +82,9 @@
             const status3 = document.getElementById('audio3-status');
             const status4 = document.getElementById('audio4-status');
 
+            const answerPeriod = 90000; // 90 seconds
+            const beepAlertPeriod = answerPeriod - 15000; // 75 seconds
+
             player1.addEventListener('play', function() {
                 status1.innerHTML = 'Introduction is now playing...';
             });
@@ -110,7 +113,7 @@
             });
 
             player3.addEventListener('ended', function() {
-                status3.innerHTML = 'Recording started... 3 minute timer started.';
+                status3.innerHTML = 'Recording started... 90 second timer started.';
                 recordTaskAudio(eventMarker, condition, 'start', 1, status3); 
                 playBeep();
                 setTimeout(function() {
@@ -122,12 +125,12 @@
                             clearInterval(interval);
                         }
                     }, 500); 
-                }, 165000); 
+                }, beepAlertPeriod); 
 
                 setTimeout(() => {
                     recordTaskAudio(eventMarker, condition, 'stop', 1, status3);
                     player4.play();  
-                }, 180000);  
+                }, answerPeriod);  
             });
 
             player4.addEventListener('play', function() {
@@ -147,14 +150,14 @@
                             clearInterval(interval);
                         }
                     }, 1000); 
-                }, 175000); 
+                }, beepAlertPeriod); 
 
                 setTimeout(() => {
                     recordTaskAudio(eventMarker, condition, 'stop', 2, status4);
                     setCondition('None');
                     setEventMarker('subject_idle');
                     status4.innerText = "Recording has stopped. Task is complete.";
-                }, 180000);  
+                }, answerPeriod);  
             });
         });
     </script> 
