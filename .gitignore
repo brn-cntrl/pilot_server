@@ -15,7 +15,6 @@
 /tests/
 /cache/
 /static/videos/*
-/static/prs_audio/*
 /static/room_observation_audio/*
 !/static/videos/.gitkeep
 !static/css/

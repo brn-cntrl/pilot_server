@@ -456,7 +456,7 @@ def process_answer() -> Response:
             if test_manager.check_answer(transcription, correct_answer):
                 result = 'correct'
                 test_manager.current_question_index += 1
-                
+
                 if test_manager.current_question_index >= len(questions):
                     test_manager.current_question_index = 0
                     print(f"Question index is {test_manager.current_question_index} and length of question file is {len(questions)}.")
@@ -1031,7 +1031,7 @@ def prs():
 
                         currentIndex++;
                     } else {
-                        setEventMaker('subject_idle');
+                        setEventMarker('subject_idle');
                         setCondition('None');
                         console.log("All audio segments completed.");
                     }
