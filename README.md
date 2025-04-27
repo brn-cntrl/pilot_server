@@ -2,74 +2,32 @@
 
 ## A command center for running all applications during experiment
 
-**Dependencies to run the server**
-* Flask
-* Pyaudio (for handling audio device)
-* Portaudio 
-* Audonnx (SER model to TBD)
-* Boto3
-* Python OSC
-
-**Please note** that all installation will soon be handled with PyInstaller. Currently, there are a number of files and folders missing from this repository, which are necessary for proper operation but which slow things down for git. I will upload these when they are needed or otherwise provide them through GDrive.
-
 **Installation**
 
-Install Flask: 
+**NOTE:** The best way to install ffmpeg and Portaudio on Mac is with HomeBrew. 
 
-    pip install flask
 To install Homebrew, run the following command in Terminal:
 
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 Install portaudio with:
 
     brew install portaudio
-Install pyaudio with:
+Install ffmpeg with:
 
-    pip install pyaudio
+    brew install ffmpeg
+Install whisper with:
 
-**NOTE:** The best way to install Pyaudio and Portaudio on Mac is with HomeBrew. 
+    pip install git+https://github.com/openai/whisper.git
+Install all other packages with:
 
-### Transcription and SER
+    pip install -r requirements.txt
+Retrieve the SER model here: https://drive.google.com/drive/folders/1w3-QJEl_pzuIkiOuDUejkFp9x8Mfs4LF?usp=drive_link
 
-**Install Dependencies**
+Place the SER_MODEL folder at the root of the server: /EXP_SERVER/.
 
-* Install Audonnx with:
+Retrieve the video files here: https://drive.google.com/drive/folders/1nBtfuXfNhhzsi4oFjVRUnYrbLneVJI7c?usp=drive_link
 
-        pip install audonnx
-
-* Install SpeechRecognition for Python with: 
-
-        pip install SpeechRecognition
-
-**NOTE** The classifier used for SER is included in this repository. The use of the classifier and audonnx is likely to change once a more accurate SER classifier is identified.
-
-* Install Python-OSC with:
-        
-        pip install python-osc
-
-
-### AWS Client 
-**Installation**
-
-Install the AWS SDK with: 
-
-    pip install boto3
-
-Download the the AWS CLI package with: 
-
-    curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-
-Install the AWS CLI with: 
-
-    sudo installer -pkg ./AWSCLIV2.pkg -target /
-
-**Setup AWS Credentials**
-
-* In terminal, run: aws configure
-* Enter the AWS access key (to be provided)
-* Enter the AWS secret access key (to be provided)
-* Enter the default region name (us-west-2)
-* Leave default output as None
+Place the videos folder inside the static folder of the server: /EXP_SERVER/static/.
 
 **Instructions for server**
 
@@ -100,10 +58,6 @@ You should see the following result in Terminal:
 
 The subject.py class handles all subject data collected during the experiment
 
-**AWS Handler**
-
-The aws_handler.py class manages the uploading of subject data to the XR lab's AWS server.
-
 **Recording Manager**
 
 The recording_manager.py class handles all recording threads and audio input settings.
@@ -112,12 +66,20 @@ The recording_manager.py class handles all recording threads and audio input set
 
 The test_manager.py class handles all testing procedures. The test questions are stored in external JSON files:
 
-    SER_questions.json
+    test_files/SER_questions.json
 
-    task_1_data.json
+    test_files/task_1_data.json
 
-    task_2_data.json
+    test_files/task_2_data.json
 
 **EmotiBit Streamer**
 
-The emotibit_streamer.py class handles all communication with the EmotiBit Oscilliscope app. The app must be running and connected to the EmotiBit device in order for data to begin streaming. The data is sent over OSC and the emotibit_streamer class starts the OSC server in a separate thread. **Please Note**: The Flask server must be run with the debug flag set to False in order for the OSC server to find an open port.
+The emotibit_streamer_2.py class handles all communication with the EmotiBit Oscilliscope app. The app must be running and connected to the EmotiBit device in order for data to begin streaming. The data is sent over OSC and the emotibit_streamer class starts the OSC server in a separate thread. **Please Note**: The Flask server must be run with the debug flag set to False in order for the OSC server to find an open port.
+
+**Form Manager**
+
+The form_manager.py class handles all functionality related to surveys and google forms including prefilling each survey with the ID of the current user. It requires the following files:
+
+    surveys/surveys.json
+    subject_data/subjects.json
+
