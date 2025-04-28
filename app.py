@@ -11,7 +11,6 @@ import pyaudio
 import signal 
 import re
 import string
-import speech_recognition as sr
 import random
 import base64
 from transcription_manager import TranscriptionManager
@@ -694,22 +693,9 @@ def test_audio() -> Response:
     global recording_manager
     try:
         recording_manager.stop_recording()
-        transcription = transcribe_audio(recording_manager.recording_file)
-        
-        if transcription.startswith("Google Speech Recognition could not understand"):
-            return jsonify({'result': 'error', 'result': 'error', 'message': "Sorry, I could not understand the response."}), 400
-        
-        if transcription.startswith("Could not request results"):
-            return jsonify({'result': 'error', 'message': "Could not request results from Google Speech Recognition service."}), 400
-                           
-        else:
-            return jsonify({'result': transcription})
-    
-    except sr.UnknownValueError:
-        return jsonify({'status': 'error', 'message': "Sorry, I could not understand the response."}), 400
-    
-    except sr.RequestError as e:
-        return jsonify({'status': 'error', 'message': f"Could not request results from Google Speech Recognition service; {e}"}), 500
+        transcription = transcribe_audio(recording_manager.recording_file)    
+      
+        return jsonify({'result': transcription})
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")

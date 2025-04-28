@@ -98,8 +98,29 @@
     <div id="mainTasksDiv" style="display:none;">
         <div class="testModule" style="display:block;">
             <p>After completing a task, please wait for instructions before advancing to the next task.</p>
-            <button class="toggle">Practice Test</button>
-            <div class="innerModule test-container" id="test-container-1" style="display:none;">
+            <button class="toggle" style="display:block;">Password</button>
+            <div class="innerModule" style="display:block;">
+                <p>Please let the experimenter know you have completed the last section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwdTest1" autocomplete="off">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotificationTest1" style="display:none; color: red;">Incorrect Password.</div><br>
+            </div><br>
+            
+            <button class="toggle nextButton" style="display:none;">SART Task 1</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <ul>
+                    <li>The test supervisor will now assist you with the first SART.</li>
+                    <li>Complete the tasks as directed.</li>
+                    <li>Press "Task Complete" when you have finished the task.</li>
+                </ul>
+                <button class="taskComplete" onclick="completeTask('sart_1')">Task Complete</button>
+            </div><br>
+
+            <button class="toggle nextButton" style="display:none;">Practice Test</button>
+            <div class="innerModule test-container nextDiv" id="test-container-1" style="display:none;">
                 <p>Instructions</p>
                 <div><ul>
                     <li>Start with the number 20. For your first answer, subtract 5 from 20. Continue subtracting 5 from each new result until the screen prompts you to stop.</li>
@@ -162,30 +183,36 @@
                 <div id="pwdErrorNotification2" style="display:none; color: red;">Incorrect Password.</div><br>
             </div><br>
 
-            <!-- <button class="toggle nextButton" style="display:none;">Screen / VR Task 1</button>
-            <div class="innerModule nextDiv" style="display:none;">
-                <p>The test supervisor will now assist you with the VR headset.</p> 
-                <button class="taskComplete">Task Complete</button>
-            </div><br> -->
-            
-            <button class="toggle nextButton" style="display:none;">IAT Task 1</button>
+            <button class="toggle nextButton" style="display:none;">SART Task 2</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <ul>
-                    <li>The test supervisor will now assist you with the first IAT.</li>
+                    <li>The test supervisor will now assist you with the next SART.</li>
                     <li>Complete the tasks as directed.</li>
                     <li>Press "Task Complete" when you have finished the task.</li>
                 </ul>
-                <button class="taskComplete" onclick="completeTask('iat_1')">Task Complete</button>
+                <button class="taskComplete" onclick="completeTask('sart_2')">Task Complete</button>
             </div><br>
 
-            <!-- <button class="toggle nextButton" style="display:none;">PRS Survey 1</button>
+            <button class="toggle nextButton" style="display:none;">Password</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed the last section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwdSART3" autocomplete="off">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotificationSART3" style="display:none; color: red;">Incorrect Password.</div><br>
+            </div><br>
+
+            <button class="toggle nextButton" style="display:none;">SART Task 3</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <ul>
-                    <li>The test supervisor will now assist you with the next section of the test.</li>
-                    <li>Please press "Task Complete" when you return</li>
+                    <li>The test supervisor will now assist you with the next SART.</li>
+                    <li>Complete the tasks as directed.</li>
+                    <li>Press "Task Complete" when you have finished the task.</li>
                 </ul>
-                <button class="taskComplete">Task Complete</button>
-            </div><br>   -->
+                <button class="taskComplete" onclick="completeTask('sart_3')">Task Complete</button>
+            </div><br>
 
             <button class="toggle nextButton" style="display:none;">Break 1</button>
             <div class="innerModule nextDiv" id="break1Div" style="display:none">
@@ -197,6 +224,27 @@
                 <button class="taskComplete" onclick="completeTask('break_1')">Break Complete</button>
             </div><br>
             
+            <button class="toggle nextButton" style="display:none;">Password</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed the last section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwdSART4" autocomplete="off">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotificationSART4" style="display:none; color: red;">Incorrect Password.</div><br>
+            </div><br>
+
+            <button class="toggle nextButton" style="display:none;">SART Task 4</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <ul>
+                    <li>The test supervisor will now assist you with the next SART.</li>
+                    <li>Complete the tasks as directed.</li>
+                    <li>Press "Task Complete" when you have finished the task.</li>
+                </ul>
+                <button class="taskComplete" onclick="completeTask('sart_4')">Task Complete</button>
+            </div><br>
+
             <button class="toggle nextButton" style="display:none;">Test 2</button>
             <div class="innerModule nextDiv test-container" id="test-container-2" style="display:none;">
                 <p>Instructions</p>
@@ -233,14 +281,35 @@
                 <div id="pwdErrorNotification3" style="display:none; color: red;">Incorrect Password.</div><br>
             </div><br>
 
-            <button class="toggle nextButton" style="display:none;">IAT Task 2</button>
+            <button class="toggle nextButton" style="display:none;">SART Task 5</button>
             <div class="innerModule nextDiv" style="display:none;">
                 <ul>
-                    <li>The test supervisor will now assist you with the second IAT.</li>
+                    <li>The test supervisor will now assist you with the next SART.</li>
                     <li>Complete the tasks as directed.</li>
                     <li>Press "Task Complete" when you have finished the task.</li>
                 </ul>
-                <button class="taskComplete" onclick="completeTask('iat_2')">Task Complete</button>
+                <button class="taskComplete" onclick="completeTask('sart_5')">Task Complete</button>
+            </div><br>
+
+            <button class="toggle nextButton" style="display:none;">Password</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <p>Thank you for filling out the pre-test information. Please let the experimenter know you have completed this section.</p>
+                <form action="/submit_pwd" method="POST" id="experimenterPwdSART6" autocomplete="off">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" id="password"><br><br>
+                    <button type="submit">Submit Password</button>
+                </form>
+                <div id="pwdErrorNotificationSART6" style="display:none; color: red;">Incorrect Password.</div><br>
+            </div><br>
+
+            <button class="toggle nextButton" style="display:none;">SART Task 6</button>
+            <div class="innerModule nextDiv" style="display:none;">
+                <ul>
+                    <li>The test supervisor will now assist you with the next SART.</li>
+                    <li>Complete the tasks as directed.</li>
+                    <li>Press "Task Complete" when you have finished the task.</li>
+                </ul>
+                <button class="taskComplete" onclick="completeTask('sart_6')">Task Complete</button>
             </div><br>
 
             <button class="toggle nextButton" style="display:none">Break 2</button>
@@ -271,12 +340,20 @@
         const mainTasksDiv = document.getElementById('mainTasksDiv');
         const survey1Button = document.getElementById('survey1Button');
         const survey1Div = document.getElementById('survey1Div');
+        const pwdErrorNotificationSART3 = document.getElementById('pwdErrorNotificationSART3');
+        const experimenterPwdSART3 = document.getElementById('experimenterPwdSART3');
         const pwdErrorNotification1 = document.getElementById('pwdErrorNotification1');
         const experimenterPwd1 = document.getElementById('experimenterPwd1');
         const pwdErrorNotification2 = document.getElementById('pwdErrorNotification2');
         const experimenterPwd2 = document.getElementById('experimenterPwd2');
         const pwdErrorNotification3 = document.getElementById('pwdErrorNotification3');
         const experimenterPwd3 = document.getElementById('experimenterPwd3');
+        const pwdErrorNotificationTest1 = document.getElementById('pwdErrorNotificationTest1');
+        const experimenterPwdTest1 = document.getElementById('experimenterPwdTest1');
+        const pwdErrorNotificationSART4 = document.getElementById('pwdErrorNotificationSART4');
+        const experimenterPwdSART4 = document.getElementById('experimenterPwdSART4');
+        const pwdErrorNotificationSART6 = document.getElementById('pwdErrorNotificationSART6');
+        const experimenterPwdSART6 = document.getElementById('experimenterPwdSART6');
         const nameForm = document.getElementById('nameForm')
         const submitButton = document.getElementById('submitButton');
         const notification1 = document.getElementById('notification1');
@@ -478,6 +555,26 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            experimenterPwdSART3.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwdSART3, pwdErrorNotificationSART3);
+            });
+
+            experimenterPwdSART4.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwdSART4, pwdErrorNotificationSART4);
+            });
+
+            experimenterPwdSART6.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwdSART6, pwdErrorNotificationSART6);
+            });
+
+            experimenterPwdTest1.addEventListener('submit', function(event){
+                event.preventDefault();
+                submitPassword(experimenterPwdTest1, pwdErrorNotificationTest1);
+            });
+
             experimenterPwd1.addEventListener('submit', function(event){
                 event.preventDefault();
                 submitPassword(experimenterPwd1, pwdErrorNotification1);

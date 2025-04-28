@@ -66,8 +66,21 @@
 
     <p id="test_transcription" style="display:none; color:green;">Subject has completed the test transcription.</p>
     <p id="ser_baseline" style="display:none; color:green;">Subject has completed the SER baseline task.</p>
+
+    <button class="toggle">SART Task 1</button><br>
+    <div class="innerModule" style="display:none;">
+        <button id="sart1" class="SARTButton">Start Task</button><br>
+    </div><br>
+    <p id="sart_1" style="display:none; color:green;">Subject has completed the first SART task.</p>
+
     <p id="practice_test" style="display:none; color:green;">Subject has completed the practice stress task.</p>
     <p id="test_1" style="display:none; color:green;">Subject has completed the first stress task.</p>
+
+    <button class="toggle">SART Task 2</button><br>
+    <div class="innerModule" style="display:none;">
+        <button id="sart2" class="SARTButton">Start Task</button><br><br>
+    </div><br>
+    <p id="sart_2" style="display:none; color:green;">Subject has completed the second SART task.</p>
 
     <h2>Experimental Tasks</h2>
     <button class="toggle">Begin Tasks</button><br>
@@ -113,14 +126,25 @@
             <!-- <p id="breakInstructions1" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT, Break 1, and Stress Task #2</p> -->
         </div><br>
 
-        <button class="toggle">IAT Task 1</button><br>
+        <button class="toggle">SART Task 3</button><br>
         <div class="innerModule" style="display:none;">
-            <button id="iat1" class="IATButton">Start Task</button><br>
+            <button id="sart3" class="SARTButton">Start Task</button><br><br>
         </div><br>
-
-        <p id="iat_1" style="display:none; color:green;">Subject has completed the first IAT task.</p>
+        <p id="sart_3" style="display:none; color:green;">Subject has completed the third SART task.</p>
         <p id="break_1" style="display:none; color:green;">Subject has completed the first break.</p>
+
+        <button class="toggle">SART Task 4</button><br>
+        <div class="innerModule" style="display:none;">
+            <button id="sart4" class="SARTButton">Start Task</button><br><br>
+        </div><br>
+        <p id="sart_4" style="display:none; color:green;">Subject has completed the fourth SART task.</p>
         <p id="test_2" style="display:none; color:green;">Subject has completed the second stress task.</p>
+
+        <button class="toggle">SART Task 5</button><br>
+        <div class="innerModule" style="display:none;">
+            <button id="sart5" class="SARTButton">Start Task</button><br><br>
+        </div><br>
+        <p id="sart_5" style="display:none; color:green;">Subject has completed the fifth SART task.</p>
 
         <button class="toggle">Task 2 (General Recording)</button><br>
         <div class="innerModule" id="taskGenDiv2" style="display:none">
@@ -163,12 +187,12 @@
             <!-- <p id="breakInstructions2" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT #2 and Break 2</p> -->
         </div><br>
 
-        <button class="toggle">IAT Task 2</button><br>
+        <button class="toggle">SART Task 6</button><br>
         <div class="innerModule" style="display:none;">
-            <button id="iat2" class="IATButton">Start Task</button><br><br>
+            <button id="sart6" class="SARTButton">Start Task</button><br><br>
         </div><br>
+        <p id="sart_6" style="display:none; color:green;">Subject has completed the sixth SART task.</p>
 
-        <p id="iat_2" style="display:none; color:green;">Subject has completed the second IAT task.</p>
         <p id="break_2" style="display:none; color:green;">Subject has completed the second break.</p>
     </div>
 
@@ -367,7 +391,7 @@
         const emotibitStatus = document.querySelectorAll('.emotibitStatus');
         const stopVernierButtons = document.querySelectorAll('.stopVernier');
         const vernierStatus = document.querySelectorAll('.vernierStatus');
-        const startIATButtons = document.querySelectorAll('.IATButton');
+        const startSARTButtons = document.querySelectorAll('.SARTButton');
 
         const eventSource = new EventSource('/stream');
         eventSource.onmessage = function(event) {
@@ -688,17 +712,18 @@
             });
 
             baselineButton.addEventListener("click", function() {
-                if (baselineButton.innerText == "Start Collecting Baseline") {
-                    setEventMarker('biometric_baseline');
+                setEventMarker('biometric_baseline');
+                setCondition('None');
+                biometricStatusMessage.innerText = "Collecting baseline data, please wait...";
+                baselineButton.disabled = true;
+                
+                setTimeout(function() {
+                    setEventMarker('subject_idle');
                     setCondition('None');
-                    // startBaseline();
-                    
-                    baselineButton.innerText = "Stop Collecting Baseline";
-                } else {
-                    setEventMarker('subject_idle')
-                    // stopBaseline();
                     baselineButton.innerText = "Start Collecting Baseline";
-                }
+                    baselineButton.disabled = false;
+                    biometricStatusMessage.innerText = "Baseline data collection complete.";
+                }, 120000); // 2 minutes
             });
 
             roomObservationButtons.forEach(button => {
@@ -707,14 +732,26 @@
                 });
             });
 
-            startIATButtons.forEach(button => {
+            startSARTButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     if (this.innerText === 'Start Task') {
-                        if (this.id === 'iat1') {
-                            setEventMarker('iat_task_1');
+                        if (this.id === 'sart1') {
+                            setEventMarker('sart_task_1');
                             setCondition('None');
-                        } else if (this.id === 'iat2') {
-                            setEventMarker('iat_task_2');
+                        } else if (this.id === 'sart2') {
+                            setEventMarker('sart_task_2');
+                            setCondition('None');
+                        } else if (this.id === 'sart3') {
+                            setEventMarker('sart_task_3');
+                            setCondition('None');
+                        } else if (this.id === 'sart4') {
+                            setEventMarker('sart_task_4');
+                            setCondition('None');
+                        } else if (this.id === 'sart5') {
+                            setEventMarker('sart_task_5');
+                            setCondition('None');
+                        } else if (this.id === 'sart6') {
+                            setEventMarker('sart_task_6');
                             setCondition('None');
                         }
                         this.innerText = 'Stop Task';
@@ -867,23 +904,6 @@
                     playBeep();
                 }
             }
-            
-
-            // convertEmotibitData.addEventListener('click', function() {
-            //     postProcessingStatus.innerText = "Converting EmotiBit data to CSV...";
-            //     fetch('/convert_emotibit_data', {
-            //         method: 'POST'
-            //     })
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         postProcessingStatus.innerText = data.message;
-            //         console.log(data.message);
-            //     })
-            //     .catch(error => {
-            //         postProcessingStatus.innerText = data.error;
-            //         console.error('Error:', error);
-            //     });
-            // });
 
             stopServerButtons.forEach(button => {
                 button.addEventListener('click', function() {
