@@ -21,19 +21,6 @@
     <button class="toggle">Experiment/Trial Information</button><br>
     <div class="innerModule" style="display:block;">
         <h3>Experiment/Trial Information</h3>
-        <p>Instructions</p>
-        <ul>
-            <li>Enter the name of the experiment and the name of the trial in the fields below.</li>
-            <li>Click "Submit" to save the experiment and trial names.</li>
-            <li><span class="required">IMPORTANT:</span> This information must be entered before starting the experiment</li>
-        </ul>
-
-        <p>Pre-Study</p>
-        <ul>
-            <li>Connect Emotibit to computer.</li>
-            <li>Make sure Scarlett audio interface is correctly set up and connected.</li>
-        </ul><br> 
-
         <form id="experimentNameForm" action="/submit_experiment" method="POST" autocomplete="off">
             <label for="experiment_name">Experiment Name:</label>
             <input type="text" id="experiment_name" name="experiment_name" required><br><br>
@@ -44,16 +31,12 @@
         <div id="notification1" style="display:none; color: green;"></div>
         <div id="errorNotification1" style="display:none; color: red;"></div>
 
-        <p id="postSubmitMessage" style="display:none;">Now you will put the Emotibit, mic, and respiration belt on the subject. Please read the provided script as you place the devices.</p>
+        <!-- <p id="postSubmitMessage" style="display:none;">Now you will put the Emotibit, mic, and respiration belt on the subject. Please read the provided script as you place the devices.</p> -->
     </div><br>
 
-    <button class=toggle>Subject Instructions</button><br>
+    <button class=toggle>Subject Dashboard</button><br>
     <div class="innerModule" style="display:block">
-        <h3>Subject Instructions</h3>
         <button id="launchSubjectGUI">Launch Subject Dashboard</button><br>
-        <p>The subject will now fill out the Participant Information, Demographic, and PSS-4 surveys. Launch the Subject Dashboard and move it to their screen.</p>
-        <p>Please read the provided instructions to the subject:</p>
-        <p>“Now, I am going to have you fill out a few forms. They will not require too much typing, but you can just use your other hand [gesture to dominant hand, not wearing Emotibit] when you need to type. Make sure you click “Submit” at the end of each Google Form before clicking 'Task Complete' for that section.”</p>
         <p id="subject_info" style="display:none; color: green;">Subject has submitted the Information Form.</p>
         <p id="survey_1" style="display:none; color: green;">Subject has submitted the Demographic Form.</p>
         <p id="survey_2" style="display:none; color: green;">Subject has submitted the PSS-10 Form.</p>
@@ -61,16 +44,7 @@
 
     <button class="toggle">Device Setup</button><br>
     <div class="innerModule" style="display:none;">
-        <h3>Device Setup</h3>
-        <p>Checklist</p>
-        <ul>
-            <li>Ensure the subject is fitted with the microphone and headphones.</li>
-            <li>Ensure the audio interface and microphones are connected and powered on.</li>
-            <li>Ensure the Vernier Belt is fitted to the subject.</li>
-            <li>Ensure the Vernier Belt is switched on and that the BlueTooth light is active.</li>
-            <li>Click "Start Respiratory Belt" to begin streaming the Vernier Belt data.</li>
-            <li><span class="required">IMPORTANT:</span> The subject must click "Task Complete" when the task is finished.</li>
-        </ul><br>
+        <h3>Device Startup</h3>
         <button id="startEmotibitButton">Start EmotiBit</button><br>
         <p class="emotibitStatus"></p>
         <button id="startVernierButton">Start Respiratory Belt</button><br>
@@ -79,29 +53,13 @@
 
     <button class="toggle">Biometrics Baseline</button><br>
     <div class="innerModule" style="display:none;">
-        <h4>Instructions for EmotiBit Baseline</h4>
-        <ul>
-            <li>Ensure the Emotibit is well-fitted.</li>
-            <li>Press "Start Collecting Baseline" to start the EmotiBit streamer and begin collecting baseline data.</li>
-        </ul>
         <button id="startBiometricBaseline">Start Collecting Baseline</button>
         <p id="biometricStatusMessage"></p>
     </div><br>
 
     <button class="toggle">Test Audio</button><br>
     <div class="innerModule" style="display:none;">
-        <h4>Instructions</h4>
-        <ul>
-            <li>Please select your audio input or microphone.</li>
-            <li>Test microphone: When subject is fitted with microphone monitor the audio signal in system audio settings.</li>
-            <li>Monitor the signal and adjust microphone as needed.</li>
-            <li>Fit subject with AirPods.</li>
-            <li>Test headphones: When subject is fitted with AirPods, click "Test Audio Output" below.</li>
-        </ul><br>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
-
-        <p>The subject will now test audio input, do the SER basline task, and the first stress task. Make sure you are ready to transition efficiently into the first experimental condition once the subject finishes the stress task. Switch to the Subject Dashboard window and return control to the subject.</p>
-
         <label for="audioDevices">Select Audio Input Device:</label><br><br>
         <select id="audioDevices" onchange="setDevice()"></select><br><br>
     </div><br>
@@ -116,20 +74,9 @@
     <div class="testModule" style="display:none;">
         <h3>Experimental Tasks</h3>
         <!-- Task for continuous recording -->
-        <p>Once the subject has finished with the first stress task, they will inform you. Walk them to the first experimental condition. </p>
         <button class="toggle">Task 1 (General Recording)</button><br>
         <div class="innerModule" id='taskGenDiv1' style="display:none">
-            <h4>Task Instructions</h4>
-            <ul>
-                <li><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</li>
-                <li>General Recording is continuous for the length of the task</li>
-                <li>Select condition from the drop menu below before beginning task.</li>
-                <li>Press "Start Recording" to begin the task.</li>
-                <li>Press "Stop Recording" when the task is completed.</li>
-                <li>After the task is completed, press "Calculate Rest Time."</li>
-                <li>The subject must click "Task Completed" when the task is finished.</li>
-            </ul><br>
-            
+            <p><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</p>
             <select onchange="updateCondition('taskGenDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -137,20 +84,12 @@
                 <option value="virtual_plants">Virtual / Plants</option>
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
-
             <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-            <!-- <button id="compareTask1Button" class="compareToBaseline">Calculate Rest Time</button><br><br>
-            <p id="compareTask1status"></p> -->
         </div><br>
 
         <button class="toggle">Task 1</button><br>
         <div class="innerModule" id="taskDiv1" style="display:none">
-            <h4>Task Instructions</h4>
-            <ul>
-                <li>Select condition from the drop menu below before beginning the task.</li>
-                <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
-            </ul><br>
             <select onchange="updateCondition('taskDiv1', 'task_1')">
                 <option value="no_condition" selected>Select Condition</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -163,15 +102,6 @@
 
         <button class="toggle">PRS Task 1</button><br>
         <div class="innerModule" id='prsDiv1' style="display:none">
-            <h4>PRS Instructions</h4>
-            <ul>
-                <li>Select condition from the drop menu below before beginning the task.</li>
-                <!-- <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li> -->
-                <li>Press "Start Task" to open the PRS task window</li>
-                <li>Continue with the instructions at the top of the PRS page.</li>
-                <!-- <li>After the task is completed, return here and click "Calculate Rest Time."</li> -->
-                <!-- <li>The subject must click "Task Completed" when the task is finished.</li> -->
-            </ul>
             <select onchange="updateCondition('prsDiv1', 'prs_1')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -180,18 +110,11 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
             <button id="startPRSTask1">Start Task</button><br>
-            <p id="breakInstructions1" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT, Break 1, and Stress Task #2</p>
-
+            <!-- <p id="breakInstructions1" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT, Break 1, and Stress Task #2</p> -->
         </div><br>
 
         <button class="toggle">IAT Task 1</button><br>
         <div class="innerModule" style="display:none;">
-            <h4>IAT Instructions</h4>
-            <ul>
-                <li>Direct the subject to the IAT task.</li>
-                <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
-                <li>Click "Stop Task" when the task is complete. The event marker will be set to "subject_idle".</li>
-            </ul><br>
             <button id="iat1" class="IATButton">Start Task</button><br>
         </div><br>
 
@@ -199,19 +122,9 @@
         <p id="break_1" style="display:none; color:green;">Subject has completed the first break.</p>
         <p id="test_2" style="display:none; color:green;">Subject has completed the second stress task.</p>
 
-        <p>Once the subject has finished with the second stress task, they will inform you. Walk them to the second experimental condition.</p>
-
         <button class="toggle">Task 2 (General Recording)</button><br>
         <div class="innerModule" id="taskGenDiv2" style="display:none">
-            <h4>Task Instructions</h4>
-            <ul>
-                <li><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</li>
-                <li>General Recording is continuous for the length of the task</li>
-                <li>Select condition from the drop menu below before beginning task.</li>
-                <li>Press "Start Recording" to begin the task.</li>
-                <li>Press "Stop Recording" when the task is completed.</li>
-            </ul><br>
-
+            <p><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</p>
             <select onchange="updateCondition('taskGenDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -226,12 +139,6 @@
 
         <button class="toggle" id="taskButton2">Task 2</button><br>
         <div class="innerModule" id="taskDiv2" style="display:none">
-            <h4>Task Instructions</h4>
-            <ul>
-                <li>Select condition from the drop menu below before beginning the task.</li>
-                <li>Click "Go to Task" and follow the instructions at the top of the page.</li>
-                <li>Make sure the subject clicks "Task Completed" when the task is finished.</li>
-            </ul>
             <select onchange="updateCondition('taskDiv2', 'task_2')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -245,12 +152,6 @@
 
         <button class="toggle">PRS Task 2</button><br>
         <div class="innerModule" id="prsDiv2" style="display:none">
-            <h4>PRS Instructions</h4>
-            <ul>
-                <!-- <li>Have the subject put on the VR headset and read the instructions on their screen before starting the task.</li> -->
-                <li>Press "Start Task" to open the PRS task window</li>
-                <li>Continue with the instructions there.</li>
-            </ul>
             <select onchange="updateCondition('prsDiv2', 'prs_2')">
                 <option value="no_condition" selected>Select an option</option>
                 <option value="physical_plants">Physical / Plants</option>
@@ -259,17 +160,11 @@
                 <option value="virtual_no_plants">Virtual / No Plants</option>
             </select><br><br>
             <button id="startPRSTask2">Start Task</button><br>
-            <p id="breakInstructions2" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT #2 and Break 2</p>
+            <!-- <p id="breakInstructions2" style="display:none;">After the PRS is complete, you will move with the subject back into the break room. They will then complete the IAT #2 and Break 2</p> -->
         </div><br>
 
         <button class="toggle">IAT Task 2</button><br>
         <div class="innerModule" style="display:none;">
-            <h4>IAT Instructions</h4>
-            <ul>
-                <li>Direct the subject to the IAT task.</li>
-                <li><span class="required">IMPORTANT:</span> Click "Start Task" to set the event marker to "iat_task".</li>
-                <li>Click "Stop Task" when the task is complete. The event marker will be set to "subject_idle".</li>
-            </ul><br>
             <button id="iat2" class="IATButton">Start Task</button><br><br>
         </div><br>
 
@@ -283,10 +178,6 @@
         <button class="toggle">Exit Survey</button><br>
         <div class="innerModule" style="display:none;">
             <h4>Exit Survey</h4>
-            <p>Instructions</p>
-            <ul>
-                <li>Instruct the subject to fill out the exit survey before completing the experiment.</li>
-            </ul>
             <p id="exit_survey" style="display:none; color:green;">Subject has completed the exit survey.</p>
         </div><br>
        
@@ -467,8 +358,8 @@
         const openEmotibitDialog = document.getElementById('openEmotibitDialog');
         const startPRSTaskButton1 = document.getElementById('startPRSTask1');
         const startPRSTaskButton2 = document.getElementById('startPRSTask2');
-        const breakInstructions1 = document.getElementById('breakInstructions1');
-        const breakInstructions2 = document.getElementById('breakInstructions2');
+        // const breakInstructions1 = document.getElementById('breakInstructions1');
+        // const breakInstructions2 = document.getElementById('breakInstructions2');
 
         const roomObservationButtons = document.querySelectorAll('.openRoomObservationTask');
         const stopServerButtons = document.querySelectorAll('.stopServer');
@@ -757,7 +648,7 @@
                 event.preventDefault();
                 console.log("Form submission intercepted!");
                 const formData = new FormData(form);
-                const postSubmitMessage = document.getElementById('postSubmitMessage');
+                // const postSubmitMessage = document.getElementById('postSubmitMessage');
                 fetch("/submit_experiment", {
                     method: 'POST',
                     body: formData,
@@ -775,7 +666,7 @@
                     notification.style.display = "block";
                     errorNotification.style.display = "none";
                     notification.innerText = data.message;
-                    postSubmitMessage.style.display = "block";
+                    // postSubmitMessage.style.display = "block";
                 })
                 .catch(error => {
                     notification.style.display = "none";
@@ -841,11 +732,11 @@
             // });
 
             startPRSTaskButton1.addEventListener('click', function() {
-                breakInstructions1.style.display = 'block';
+                // breakInstructions1.style.display = 'block';
                 window.open('/prs', '_blank', 'width=800, height=600');
             });
             startPRSTaskButton2.addEventListener('click', function() {
-                breakInstructions2.style.display = 'block';
+                // breakInstructions2.style.display = 'block';
                 window.open('/prs', '_blank', 'width=800, height=600');
             });
         });
