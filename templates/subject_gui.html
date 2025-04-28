@@ -201,7 +201,7 @@
             <div class="innerModule nextDiv test-container" id="test-container-2" style="display:none;">
                 <p>Instructions</p>
                 <div><ul>
-                    <li>Start with the number 1,059. For your first answer, subtract 13 from 1,059. Continue subtracting 13 from each new result until the screen prompts you to stop.</li>
+                    <li>Start with the number 1,059. For your first answer, subtract 17 from 1,059. Continue subtracting 17 from each new result until the screen prompts you to stop.</li>
                     <li>Speak each answer aloud using single digit responses for best result (e.g. "One, Nine, Six" for 196) and press the "Submit" button to check your answer.</li>
                     <li>If your answer is incorrect, the screen will inform you and prompt you to restart from 1,059.</li>
                     <li>Try to be as accurate and fast as possible while completing the task. Answers might take a few seconds to process.</li>
@@ -703,8 +703,9 @@
                 this.timeUp = false;
                 this.testEnded = false;
                 this.testStarted = false;
-                this.numToSubtract = "13";
-
+                
+                this.numToSubtract = null;
+                
                 // Fields for timer and countdown clocks
                 this.isPaused;
                 this.initialTime = 300;  // 300 = 5 minutes
@@ -718,8 +719,10 @@
                     this.numToSubtract = "5";
                 } else if (this.testNumber === 1){
                     this.restartNumber = "1,009";
+                    this.numToSubtract = "13";
                 } else {
                     this.restartNumber = "1,059";
+                    this.numToSubtract = "17";
                 }
 
                 // Sounds
