@@ -5,13 +5,13 @@ print("GoDirect v"+str(godirect.get_version()))
 print("\nSearching...", flush=True, end ="")
 device = godirect.get_device(threshold=-100)
 # gdx = gdx.gdx()
-# gdx.select_sensors([0,1])
-sensors = device.list_sensors()
-print("Sensors found: "+str(sensors))
+# gdx.select_sensors([0,1]
 
 if device != None and device.open(auto_start=False):
 	print("connecting.\n")
 	print("Connected to "+device.name)
+	sensors = device.list_sensors()
+	print("Sensors found: "+str(sensors))
 	device.start(period=1000)
 	print('start')
 	
