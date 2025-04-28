@@ -11,7 +11,7 @@ if device != None and device.open(auto_start=False):
 	print("connecting.\n")
 	print("Connected to "+device.name)
 	sensor_list = device.list_sensors()
-	print("Sensors found: "+sensor_list)
+	print("Sensors found: "+ str(sensor_list))
 	device.start(period=1000)
 	print('start')
 	
@@ -20,7 +20,7 @@ if device != None and device.open(auto_start=False):
 	if device.read():
 		for sensor in sensors:
 			print(sensor.sensor_description)
-			
+
 	print("Connected to "+device.name)
 	print("Reading 100 measurements")
 	for i in range(0,100):
