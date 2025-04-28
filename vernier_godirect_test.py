@@ -5,7 +5,7 @@ print("GoDirect v"+str(godirect.get_version()))
 print("\nSearching...", flush=True, end ="")
 device = godirect.get_device(threshold=-100)
 gdx = gdx.gdx()
-gdx.select_sensors([1,2])
+gdx.select_sensors([0,1])
 
 if device != None and device.open(auto_start=False):
 	print("connecting.\n")
