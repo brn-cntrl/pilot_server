@@ -10,6 +10,7 @@ Installation of the godirect package is required using 'pip3 install godirect'
 """
 
 from godirect import GoDirect
+from gdx import gdx
 import asyncio
 import logging
 from timestamp_manager import TimestampManager
@@ -116,6 +117,9 @@ class VernierManager:
         self._device = self._godirect.get_device(threshold=-100)
 
         if self._device != None and self._device.open(auto_start=False):
+            sensor_list = self._device.list_sensors()
+            print("Sensors found: "+ str(sensor_list))
+            self._device.enable_sensors([1,2])
             self._device.start(period=100) 
             print("Connecting to Vernier device...")
             print("Connected to " + self._device.name)
@@ -148,7 +152,7 @@ class VernierManager:
                         if rr_value is not None:
                             self._current_row["RR"] = rr_value
                         else:
-                            print("Error reading respiratory rate sensor.")
+                            print("Error reading respiration rate sensor.")
 
                     sensor.clear()
 
@@ -228,7 +232,7 @@ class VernierManager:
             new_data = np.zeros(1, dtype=self.dataset.dtype)  
             new_data[0]['timestamp'] = row.get('timestamp', '')  
             new_data[0]['force'] = row.get('force', np.nan)
-            # new_data[0]['RR'] = row.get('RR', np.nan)
+            new_data[0]['RR'] = row.get('RR', np.nan)
             new_data[0]['event_marker'] = row.get('event_marker', '')
             new_data[0]['condition'] = row.get('condition', '')
 
