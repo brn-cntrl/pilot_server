@@ -1,9 +1,10 @@
 from godirect import GoDirect
+from gdx import gdx
 godirect = GoDirect(use_ble=True, use_usb=True)
 print("GoDirect v"+str(godirect.get_version()))
 print("\nSearching...", flush=True, end ="")
 device = godirect.get_device(threshold=-100)
-# device.enable_sensors([1,2])
+gdx.select_sensors([1,2])
 
 if device != None and device.open(auto_start=False):
 	print("connecting.\n")
