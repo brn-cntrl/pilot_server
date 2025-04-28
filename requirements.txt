@@ -12,3 +12,4 @@ transformers==4.48.0
 h5py==3.7.0
 psycopg2-binary==2.9.10
 godirect==1.1.4
+inflect==7.5.0
