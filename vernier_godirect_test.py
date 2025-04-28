@@ -12,6 +12,7 @@ if device != None and device.open(auto_start=False):
 	print("Connected to "+device.name)
 	sensor_list = device.list_sensors()
 	print("Sensors found: "+ str(sensor_list))
+	device.enable_sensors([1,2,3,4])
 	device.start(period=1000)
 	print('start')
 	
