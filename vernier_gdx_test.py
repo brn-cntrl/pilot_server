@@ -2,7 +2,7 @@ from gdx import gdx
 gdx = gdx.gdx()
 
 
-gdx.open(connection='ble')   # change to 'ble' for Bluetooth connection
+gdx.open(connection='usb')   # change to 'ble' for Bluetooth connection
 
 print('Device information: ')
 print('-------------------')
