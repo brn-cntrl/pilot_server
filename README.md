@@ -15,6 +15,9 @@ Install portaudio with:
 Install ffmpeg with:
 
     brew install ffmpeg
+Install postgreSQL with:
+
+    brew install postgresql@15 
 Install whisper with:
 
     pip install git+https://github.com/openai/whisper.git
