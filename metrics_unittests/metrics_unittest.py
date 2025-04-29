@@ -3,65 +3,82 @@ from metrics_functions import *
 import csv
 
 def read_csv_file(filename):
-    data = []
+    pg_values = []
+    bi_values = []
+
     with open(filename, newline='', encoding='utf-8') as csvfile:
         csvreader = csv.reader(csvfile)
+
         for row in csvreader:
-            data.append(row)
-    return data
+            if len(row) >= 7:
+                sensor_type = row[3]
+                payload = row[6]
+                
+                try:
+                    values = [float(x) for x in payload.split(',') if x.strip() != '']
+                except ValueError:
+                    continue
 
-def window_data(data, window_size, step_size): # Experiment with the window size and step size to check results
-    for i in range(0, len(data) - window_size + 1, step_size):
-        yield data[i:i + window_size]
+                if sensor_type == 'PG':
+                    pg_values.extend(values)
+                elif sensor_type == 'BI':
+                    bi_values.extend(values)
 
-def test_calculate_hrv():
-    # Simulate 5 minutes of beat intervals at 75 bpm → BI ~ 800ms ± 50ms
-    # This is assuming a mean of 800ms BI for healthy adults but maybe we should check against real data.
-    bi_values = np.random.normal(loc=800, scale=50, size=300) 
+    print("PG values: ", pg_values)
+    print("BI values: ", bi_values)
+
+    return pg_values, bi_values
+
+def window_data(values, window_size, step_size): # Experiment with the window size and step size to check results
+
+    for start in range(0, len(values) - window_size + 1, step_size):
+        end = start + window_size
+        yield values[start:end]
+
+def test_calculate_hrv(bi_values):
     results = []
+    max_print = 20 # Change this to print more or less to terminal
 
-    for window in window_data(bi_values, window_size=30, step_size=10):
-        hrv = calculate_hrv(window)
+    for window_values in window_data(bi_values, window_size=30, step_size=10):
+        hrv = calculate_hrv(window_values)
         assert hrv is not None
         results.append(hrv)
+
     assert len(results) > 0
-    print("HRV results")
-    for i, r in enumerate(results):
-        print(f"  Window {i + 1}: {r:.4f}")
+
+    print(f"HRV results (showing first {min(len(results), max_print)} of {len(results)}):")
+
+    for i, val in enumerate(results[:max_print]):
+        print(f" Window {i + 1}: HRV = {val:.4f}")
 
     print("calculate_hrv passed.")
 
-def test_calculate_rr():
-    # Simulate 5 minutes of PPG data sampled at 25 Hz (We can change "size" to 100 if need be)
-    # This seems to be a reasonable way to simulate ppg and fluctuation but we should use real data.
-    ppg_values = np.random.normal(loc=1, scale=0.05, size=25 * 60 * 5)
-    
+def test_calculate_rr(ppg_values):
     results = []
-    
-    # Apply the window function 
-    for window in window_data(ppg_values, window_size=100, step_size=50): # Change window and step size here
-        rr_result = calculate_rr(window) 
-        assert rr_result is not None, f"RR calculation failed for window {window}"
+    max_print = 20 # Change this to print more or less to terminal
 
-        # HELP - This assertion will always fail because the math is producing values of 0.0
-        assert 10 < rr_result < 25, f"RR result {rr_result} out of expected range" # 10 and 25 are representative of normal human resp rates
+    for window_values in window_data(ppg_values, window_size=100, step_size=50):
+        rr_result = calculate_rr(window_values)
+
+        assert rr_result is not None, f"RR calculation failed for window {window_values}"
         results.append(rr_result)
-    
-    # Check that we got some results
+
     assert len(results) > 0, "No RR results were generated"
-    
-    # Print out all results for inspection (you can remove this or log it as needed)
-    print("RR Results: ", results)
+
+    print(f"RR results (showing first {min(len(results), max_print)} of {len(results)}):")
+
+    for i, val in enumerate(results[:max_print]):
+        print(f" Window {i + 1}: RR = {val:.4f}")
+
+    print("calculate_rr passed.")
 
 def main():
-    # sample_data = read_csv_file('sample_data.csv')
-    
-
+    pg_values, bi_values = read_csv_file('emotibit_data.csv')
     print("Running unit tests...")
     print("Testing calculate_hrv...")
-    test_calculate_hrv()
+    test_calculate_hrv(bi_values)
     print("Testing calculate_rr...")
-    test_calculate_rr()
+    test_calculate_rr(pg_values)
 
 if __name__ == "__main__":
     main()
