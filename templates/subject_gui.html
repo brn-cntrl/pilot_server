@@ -829,7 +829,7 @@
                 this.correctSound = new AudioPlayer(sharedAudioContext);
                 this.incorrectSound = new AudioPlayer(sharedAudioContext);
                 this.restartSound = new AudioPlayer(sharedAudioContext);
-                
+
                 this.speedMessagePlayed = false;
                 this.accuracyMessagePlayed = false;
 
@@ -846,13 +846,18 @@
                 this.correctSound.setVolume(.4);
                 this.incorrectSound.setVolume(.4);
 
-                if (this.testNumber == 1){
+                if (this.testNumber == 0){
+                    await this.restartSound.load('/static/test_audio/Practice_Test_Restart.mp3');
+                } else if (this.testNumber == 1){
+                    await this.restartSound.load('/static/test_audio/Test1_Restart.mp3');
                     await this.speedMessage.load('/static/test_audio/speed_1.mp3/');
                     await this.accuracyMessage.load('/static/test_audio/accuracy_1.mp3/');
                 } else if (this.testNumber == 2) {
+                    await this.restartSound.load('/static/test_audio/Test2_Restart.mp3');
                     await this.speedMessage.load('/static/test_audio/speed_2.mp3/');
                     await this.accuracyMessage.load('static/test_audio/accuracy_2.mp3/');
                 }
+                this.restartSound.setVolume(.8);
                 this.speedMessage.setVolume(.8);
                 this.accuracyMessage.setVolume(.8);
             }
@@ -1072,7 +1077,6 @@
 
                 if (this.processedStatus === 'complete') {
                     // This block handles the eventuality that all questions have been answered.
-
                     this.stopClock();
                     this.clearCountdownStatus();
                     this.tickingSound.stop();
@@ -1093,6 +1097,8 @@
                 }
 
                 if (this.timeUp) {
+                    this.incorrectSound.play(false);
+                    this.restartSound.play(false);
                     this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
@@ -1103,6 +1109,7 @@
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
                 } else if (this.processedResult === 'incorrect') {
                     this.incorrectSound.play(false);
+                    this.restartSound.play(false);
                     this.resultContainer.style.color = "red";
                     this.resultContainer.innerText = `Incorrect. Please start again from ${this.restartNumber}.`;
                     this.testStatusContainer.innerText = "Recording... Speak your answer and submit when ready.";
