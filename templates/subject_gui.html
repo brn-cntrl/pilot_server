@@ -738,6 +738,8 @@
 
         var restTime = 5;
         var restTimeMillis = restTime * 60 * 1000;
+        var timerStarted1 = false;
+        var timerStarted2 = false;
 
         document.addEventListener("DOMContentLoaded", function(){
 
@@ -746,23 +748,31 @@
             var timeout1, timeout2;
             setCondition('None');
             
-            function stopVideo(video, messageId, timeoutVar) {
-                clearTimeout(timeoutVar); 
+            function stopVideo(video, messageId, timerFlag) {
                 return setTimeout(function() {
                     video.pause();
                     setEventMarker('subject_idle');
                     document.getElementById(messageId).innerHTML = "Your break has ended. Click 'Break Complete' to continue.";
+                    timerFlag = false;
                 }, restTimeMillis);
             }
 
             video1.addEventListener("play", function() {
-                setEventMarker('break_1');
-                timeout1 = stopVideo(video1, "restMessage1", timeout1);
+                if(!timerStarted1){
+                    setEventMarker('break_1');
+                    clearTimeout(timeout1);
+                    timeout1 = stopVideo(video1, "restMessage1", timerStarted1);
+                    timerStarted1 = true;
+                }
             });
 
             video2.addEventListener("play", function() {
-                setEventMarker('break_2');
-                timeout2 = stopVideo(video2, "restMessage2", timeout2);
+                if(!timerStarted2){
+                    setEventMarker('break_2');
+                    clearTimeout(timeout2);
+                    timeout2 = stopVideo(video2, "restMessage2", timerStarted2);
+                    timerStarted2 = true;
+                }
             });
         });
 
