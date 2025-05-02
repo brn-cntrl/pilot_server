@@ -179,7 +179,7 @@ def set_event_marker():
         vernier_manager.event_marker = event_marker
 
         # DEBUG
-        print("Event marker set to: ", emotibit_streamer.event_marker)
+        print("Event marker set to: ", event_marker)
 
         return jsonify({'status': 'Event marker set.'})
     
@@ -1017,7 +1017,11 @@ def prs():
 
                         currentIndex++;
                     } else {
-                        setEventMarker('subject_idle');
+                        if (eventMarker === 'prs_1') {
+                            setEventMarker('sart_3');
+                        } else if (eventMarker === 'prs_2') {
+                            setEventMarker('sart_6');
+                        }
                         setCondition('None');
                         console.log("All audio segments completed.");
                     }
