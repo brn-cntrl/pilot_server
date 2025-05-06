@@ -50,6 +50,14 @@ class VernierManager:
         # self._force_values = deque(maxlen=self._fs * self._window_seconds)
 
     @property
+    def device_started(self):
+        return self._device_started
+    
+    @device_started.setter
+    def device_started(self, value):
+        self._device_started = value
+
+    @property
     def streaming(self):
         return self._streaming
     
@@ -86,14 +94,6 @@ class VernierManager:
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
-    def reset_data_files(self):
-        if self._crashed:
-            current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.h5")
-            self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.csv")
-
-            self.initialize_hdf5_file()
-
     def set_filenames(self, subject_id):
         self._subject_id = subject_id
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -110,8 +110,14 @@ class VernierManager:
             if not self.hdf5_filename:
                 print("HDF5 filename not set.")
                 return
+
+            if self._crashed:
+                # Rename the file
+                current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")  
+                self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.h5")
             
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
+
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
                     ('timestamp', h5py.string_dtype(encoding='utf-8')),
@@ -131,18 +137,7 @@ class VernierManager:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
-    def reset(self):
-        ### Add code for resetting the hdf5 file
-        try:
-            if self._device:
-                self._device.stop()
-                self._device.close()
-                print("Device stopped and closed.")
-            else:
-                print("No device to stop or close.")
-        except Exception as e:
-            print(f"Error stopping or closing device: {e}")
-
+    def reset(self) -> None:
         try:
             if self._godirect:
                 self._godirect.quit()
@@ -163,11 +158,11 @@ class VernierManager:
         self._device = None
         self.dataset = None
         self._sensors = None
-        self._device_started = False
         self._godirect = None
         self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
         self.streaming = False
         self.running = False
+        self.hdf5_file = None
 
     def start(self):
         try:
@@ -182,7 +177,6 @@ class VernierManager:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        
         self._event_loop = loop
 
         try:
@@ -244,6 +238,7 @@ class VernierManager:
                 else:
                     print("Error reading from sensor.")
                     self.reset()
+                    # TODO close the hdf5 file and create csv file
                     self._crashed = True
                     self._num_crashes += 1
                     return
@@ -251,6 +246,7 @@ class VernierManager:
             except (BleakError, AttributeError) as e:
                 print(f"Bluetooth read error: {e}")
                 self.reset()
+                # TODO close the hdf5 file and create csv file
                 self._crashed = True
                 self._num_crashes += 1
                 print("[INFO] Device disconnected.")
@@ -259,6 +255,7 @@ class VernierManager:
             except Exception as e:
                 print(f"An error occurred: {e}")
                 self.reset()
+                # TODO close the hdf5 file and create csv file
                 self._crashed = True
                 self._num_crashes += 1
                 return
@@ -268,6 +265,7 @@ class VernierManager:
             if self.thread is not None and self.thread.is_alive():
                 print("Stopping existing thread...")
                 self.running = False
+                self.streaming = False
                 self.thread.join()
                 print("Thread stopped.")
             
@@ -286,20 +284,21 @@ class VernierManager:
                  
     def stop(self):
         try:
-            self.running = False
-            self.streaming = False
-            # if self.thread is not None and self.thread.is_alive():
-            #     self.thread.join()
-            #     print("Thread stopped.")
-
             if self._device_started:
+                if self.thread is not None and self.thread.is_alive():
+                    self.thread.join()
+                    print("Thread stopped.")
+
                 try:
                     self._device.stop()
                     self._device.close()
+
                 except Exception as e:
                     print(f"Error stopping or closing device. Device is likely disconnected: {e}")
 
                 self._device_started = False
+                self.running = False
+                self.streaming = False
 
                 try:
                     print("\nDisconnected from "+self._device.name)
@@ -307,7 +306,7 @@ class VernierManager:
                     self.quit()
                 
                 except Exception as e:
-                    print(f"Error quitting GoDirect. Device likely disconnected.: {e}")
+                    print(f"Error quitting GoDirect. Device already disconnected: {e}")
 
                 print("Closing HDF5 file...")
                 self.close_h5_file()
@@ -315,7 +314,9 @@ class VernierManager:
                 print("Converting to CSV...")
                 self.hdf5_to_csv()
                 print("HDF5 converted to CSV.")
-
+            else:
+                print("Device has not started yet.")
+    
         except Exception as e:
             print(f"An error occurred: {e}")
 

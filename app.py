@@ -1101,9 +1101,12 @@ def start_vernier() -> None:
 def stop_vernier() -> None:
     global vernier_manager
     try:
-        vernier_manager.stop()
-        print("Vernier server stopped.")
-        return jsonify({'message': 'Respiratory belt stopped.'}), 200
+        if vernier_manager.device_started:
+            vernier_manager.stop()
+            print("Vernier server stopped.")
+            return jsonify({'message': 'Vernier manager stopped.'}), 200
+        else:
+            return jsonify({'message': 'Vernier device is not active.'}), 400
         
     except Exception as e:
         print(f"An error occurred while trying to stop Vernier stream: {str(e)}")
