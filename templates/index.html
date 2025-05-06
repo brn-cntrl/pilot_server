@@ -60,8 +60,8 @@
     <button class="toggle">Test Audio</button><br>
     <div class="innerModule" style="display:none;">
         <button id="testAudioOutput">Test Audio Output</button><br><br>
-        <label for="audioDevices">Select Audio Input Device:</label><br><br>
-        <select id="audioDevices" onchange="setDevice()"></select><br><br>
+        <!-- <label for="audioDevices">Select Audio Input Device:</label><br><br>
+        <select id="audioDevices" onchange="setDevice()"></select><br><br> -->
     </div><br>
 
     <p id="test_transcription" style="display:none; color:green;">Subject has completed the test transcription.</p>
@@ -371,7 +371,7 @@
         const recTaskGen2 = document.getElementById('task_2_recording');
         const baselineButton = document.getElementById("startBiometricBaseline");
         // const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
-        const audioDevicesDropdown = document.getElementById('audioDevices');
+        // const audioDevicesDropdown = document.getElementById('audioDevices');
         const notification3 = document.getElementById('notification3');
         const errorNotification3 = document.getElementById('errorNotification3');
         const notification4 = document.getElementById('notification4');
@@ -778,11 +778,11 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', (event) => {
-            console.log('Fetching audio devices...');
-            fetchAudioDevices();
-            audioDevicesDropdown.addEventListener('change', setDevice);
-        });
+        // document.addEventListener('DOMContentLoaded', (event) => {
+        //     console.log('Fetching audio devices...');
+        //     fetchAudioDevices();
+        //     audioDevicesDropdown.addEventListener('change', setDevice);
+        // });
 
         document.addEventListener('DOMContentLoaded', function() {
             testAudioOutput.addEventListener('click', function() {
