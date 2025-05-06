@@ -32,6 +32,7 @@ class VernierManager:
         self.timestamp_manager = TimestampManager()
         self._event_marker = "start_up"
         self._condition = 'None'
+        self._subject_id = None
         self.hdf5_file = None
         self.hdf5_filename = None
         self.csv_filename = None
@@ -43,6 +44,7 @@ class VernierManager:
         self._device_started = False
         self._event_loop = None
         self._crashed = False
+        self._num_crashes = 0
         # self._fs = 10
         # self._window_seconds = 30   
         # self._force_values = deque(maxlen=self._fs * self._window_seconds)
@@ -84,7 +86,16 @@ class VernierManager:
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
 
+    def reset_data_files(self):
+        if self._crashed:
+            current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.h5")
+            self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.csv")
+
+            self.initialize_hdf5_file()
+
     def set_filenames(self, subject_id):
+        self._subject_id = subject_id
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.h5")
         self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.csv")
@@ -122,7 +133,6 @@ class VernierManager:
 
     def reset(self):
         ### Add code for resetting the hdf5 file
-
         try:
             if self._device:
                 self._device.stop()
@@ -151,6 +161,7 @@ class VernierManager:
 
         self._event_loop = None
         self._device = None
+        self.dataset = None
         self._sensors = None
         self._device_started = False
         self._godirect = None
@@ -233,12 +244,14 @@ class VernierManager:
                     print("Error reading from sensor.")
                     self.reset()
                     self._crashed = True
+                    self._num_crashes += 1
                     return
                 
             except (BleakError, AttributeError) as e:
                 print(f"Bluetooth read error: {e}")
                 self.reset()
                 self._crashed = True
+                self._num_crashes += 1
                 print("[INFO] Device disconnected.")
                 return
             
@@ -246,6 +259,7 @@ class VernierManager:
                 print(f"An error occurred: {e}")
                 self.reset()
                 self._crashed = True
+                self._num_crashes += 1
                 return
 
     def run(self):
