@@ -413,6 +413,7 @@
 
         document.addEventListener('DOMContentLoaded', function(){
             startVernierButton.addEventListener('click', function(){
+                startVernierButton.disabled = true;
                 vernierStatus.forEach(status => {
                     status.innerText = "Starting respiratory belt, please wait...";
                 });
@@ -433,6 +434,7 @@
                     vernierStatus.forEach(status => {
                         status.innerText = data.message;
                     });
+                    startVernierButton.disabled = false;
                 })
                 .catch(error => {
                     vernierStatus.forEach(status => {

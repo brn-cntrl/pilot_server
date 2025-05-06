@@ -23,6 +23,7 @@ import time
 import h5py
 import numpy as np
 import scipy.signal as signal
+from bleak import BleakClient, BleakError
 
 class VernierManager:
     def __init__(self):
@@ -37,12 +38,22 @@ class VernierManager:
         self.data_folder = None
         self.thread = None
         self._running = False
+        self._streaming = False
         self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
         self._device_started = False
-
+        self._event_loop = None
+        self._crashed = False
         # self._fs = 10
         # self._window_seconds = 30   
         # self._force_values = deque(maxlen=self._fs * self._window_seconds)
+
+    @property
+    def streaming(self):
+        return self._streaming
+    
+    @streaming.setter
+    def streaming(self, value):
+        self._streaming = value
 
     @property 
     def running(self):
@@ -109,89 +120,180 @@ class VernierManager:
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
-    def start(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        self._godirect = GoDirect(use_ble=True, use_usb=True)
-        print("GoDirect v"+str(self._godirect.get_version()))
-        print("\nSearching...", flush=True, end ="")
-        self._device = self._godirect.get_device(threshold=-100)
+    def reset(self):
+        ### Add code for resetting the hdf5 file
 
-        if self._device != None and self._device.open(auto_start=False):
-            sensor_list = self._device.list_sensors()
-            print("Sensors found: "+ str(sensor_list))
-            self._device.enable_sensors([1,2])
-            self._device.start(period=100) 
-            print("Connecting to Vernier device...")
-            print("Connected to " + self._device.name)
-            self._sensors = self._device.get_enabled_sensors()
-            self._device_started = True
+        try:
+            if self._device:
+                self._device.stop()
+                self._device.close()
+                print("Device stopped and closed.")
+            else:
+                print("No device to stop or close.")
+        except Exception as e:
+            print(f"Error stopping or closing device: {e}")
+
+        try:
+            if self._godirect:
+                self._godirect.quit()
+                print("GoDirect quit.")
+            else:
+                print("No GoDirect instance to quit.")
+        except Exception as e:
+            print(f"Error quitting GoDirect: {e}")
+
+        try:
+            if self._event_loop and not self._event_loop.is_closed():
+                self._event_loop.close()
+                print("Event loop closed.")
+        except Exception as e:
+            print(f"Error closing event loop: {e}")
+
+        self._event_loop = None
+        self._device = None
+        self._sensors = None
+        self._device_started = False
+        self._godirect = None
+        self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
+        self.streaming = False
+        self.running = False
+
+    def start(self):
+        try:
+            loop = asyncio.get_event_loop
+            if loop.is_closed():
+                print("Existing event loop is closed. Creating a new one.")
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                      
+        except RuntimeError as e:
+            print(f"Error getting event loop: {e}")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        self._event_loop = loop
+
+        try:
+            self._godirect = GoDirect(use_ble=True, use_usb=True)
+            print("GoDirect v"+str(self._godirect.get_version()))
+            print("\nSearching...", flush=True, end ="")
+            self._device = self._godirect.get_device(threshold=-100)
+
+            if self._device != None and self._device.open(auto_start=False):
+                sensor_list = self._device.list_sensors()
+                print("Sensors found: "+ str(sensor_list))
+                self._device.enable_sensors([1,2])
+                self._device.start(period=100) 
+                print("Connecting to Vernier device...")
+                print("Connected to " + self._device.name)
+                self._sensors = self._device.get_enabled_sensors()
+                self._device_started = True
+
+        except Exception as e:
+            print(f"Error starting GoDirect device: {e}")
+            self._device = None
+            self._sensors = None
+            self._device_started = False
+            return
 
     def collect_data(self):
         if not self.running:
             print("Go Direct device stopped.")
             return
         
-        while self.running:
-            if self._device.read():
-                ts = self.timestamp_manager.get_timestamp("iso")
-                self._current_row["timestamp"] = ts
-                self._current_row["event_marker"] = self.event_marker
-                self._current_row["condition"] = self.condition
+        while self.streaming:
+            try:
+                if self._device.read():
+                    ts = self.timestamp_manager.get_timestamp("iso")
+                    self._current_row["timestamp"] = ts
+                    self._current_row["event_marker"] = self.event_marker
+                    self._current_row["condition"] = self.condition
 
-                for sensor in self._sensors:
-                    if sensor.sensor_description == "Force":
-                        force_value = sensor.values[0] if sensor.values else None
-                        if force_value is not None:
-                            self._current_row["force"] = force_value
-                        else:
-                            print("Error reading force sensor.")
+                    for sensor in self._sensors:
+                        if sensor.sensor_description == "Force":
+                            force_value = sensor.values[0] if sensor.values else None
+                            if force_value is not None:
+                                self._current_row["force"] = force_value
+                            else:
+                                print("Error reading force sensor.")
 
-                    elif sensor.sensor_description == "Respiration Rate":
-                        rr_value = sensor.values[0] if sensor.values else None
+                        elif sensor.sensor_description == "Respiration Rate":
+                            rr_value = sensor.values[0] if sensor.values else None
 
-                        if rr_value is not None:
-                            self._current_row["RR"] = rr_value
-                        else:
-                            print("Error reading respiration rate sensor.")
+                            if rr_value is not None:
+                                self._current_row["RR"] = rr_value
+                            else:
+                                print("Error reading respiration rate sensor.")
 
-                    sensor.clear()
+                        sensor.clear()
 
-                self.write_to_hdf5(self._current_row)
+                    self.write_to_hdf5(self._current_row)
 
-            else:
-                print("Error reading from sensor.")
-                break
-
-            # time.sleep(.11)
+                else:
+                    print("Error reading from sensor.")
+                    self.reset()
+                    self._crashed = True
+                    return
+                
+            except (BleakError, AttributeError) as e:
+                print(f"Bluetooth read error: {e}")
+                self.reset()
+                self._crashed = True
+                print("[INFO] Device disconnected.")
+                return
+            
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                self.reset()
+                self._crashed = True
+                return
 
     def run(self):
-        if self.thread is None or not self.thread.is_alive():
+        try:
+            if self.thread is not None and self.thread.is_alive():
+                print("Stopping existing thread...")
+                self.running = False
+                self.thread.join()
+                print("Thread stopped.")
+            
             if self._device_started:
                 self.running = True
+                self.streaming = True
                 self.thread = Thread(target=self.collect_data, daemon=True)
                 self.thread.start()
                 print("Vernier manager running...")
+
             else:
                 print("Device has not started yet.")
-        else:
-            print("Thread is already running.")
-            
+
+        except Exception as e:
+            print(f"An error occurred while starting the thread: {e}")
+                 
     def stop(self):
         try:
-            if hasattr(self, 'thread') and self.thread.is_alive():
-                self.running = False
+            self.running = False
+            self.streaming = False
+            if self.thread is not None and self.thread.is_alive():
                 self.thread.join()
                 print("Thread stopped.")
 
             if self._device_started:
-                self._device.stop()
-                self._device.close()
+                try:
+                    self._device.stop()
+                    self._device.close()
+                except Exception as e:
+                    print(f"Error stopping or closing device. Device is likely disconnected: {e}")
+
                 self._device_started = False
 
-                print("\nDisconnected from "+self._device.name)
-                print("Quitting GoDirect...")
-                self.quit()
+                try:
+                    print("\nDisconnected from "+self._device.name)
+                    print("Quitting GoDirect...")
+                    self.quit()
                 
+                except Exception as e:
+                    print(f"Error quitting GoDirect. Device likely disconnected.: {e}")
+
                 print("Closing HDF5 file...")
                 self.close_h5_file()
                 print("HDF5 file closed.")
@@ -204,13 +306,6 @@ class VernierManager:
 
     def quit(self):
         self._godirect.quit()
-
-    # def collect_baseline(self):
-    #     if self._collecting_baseline:
-    #         print("Already collecting baseline data.")
-    #     else:
-    #         self.event_marker = "respiratory_baseline"
-    #         self._collecting_baseline = True
 
     def _resize_dataset(self, new_size):
         """Resize the HDF5 dataset while ensuring thread synchronization."""
