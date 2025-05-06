@@ -60,3 +60,13 @@ emotibit_unittest.py
 surveys.json
 templates/prsTest.html
 timestamp_tester.py
+SER_processor.py
+gdx_getting_started_usb.py
+init_database.py
+metrics_unittests 2.zip
+metrics_unittests.zip
+process_db_tables.py
+test.js
+test_files/task_2_data_bak.json
+test_folder/
+whisper-test.py
