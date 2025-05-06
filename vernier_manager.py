@@ -288,9 +288,9 @@ class VernierManager:
         try:
             self.running = False
             self.streaming = False
-            if self.thread is not None and self.thread.is_alive():
-                self.thread.join()
-                print("Thread stopped.")
+            # if self.thread is not None and self.thread.is_alive():
+            #     self.thread.join()
+            #     print("Thread stopped.")
 
             if self._device_started:
                 try:
