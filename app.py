@@ -1095,6 +1095,7 @@ def start_vernier() -> None:
 
     except Exception as e:
         print(f"An error occurred while trying to start Vernier stream: {str(e)}")
+        return jsonify({'error': 'Error starting Vernier stream.'}), 400
 
 @app.route('/stop_vernier', methods=['POST'])
 def stop_vernier() -> None:
