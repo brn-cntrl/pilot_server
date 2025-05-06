@@ -1101,7 +1101,7 @@ def start_vernier() -> None:
 def stop_vernier() -> None:
     global vernier_manager
     try:
-        if vernier_manager.running:
+        if vernier_manager.streaming:
             vernier_manager.stop()
             print("Vernier server stopped.")
             return jsonify({'message': 'Respiratory belt stopped.'}), 200
