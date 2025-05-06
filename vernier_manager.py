@@ -171,16 +171,17 @@ class VernierManager:
 
     def start(self):
         try:
-            loop = asyncio.get_event_loop
-            if loop.is_closed():
+            loop = asyncio.get_event_loop()
+            if hasattr(loop, "is_closed") and loop.is_closed():
                 print("Existing event loop is closed. Creating a new one.")
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                      
+
         except RuntimeError as e:
             print(f"Error getting event loop: {e}")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+
         
         self._event_loop = loop
 
