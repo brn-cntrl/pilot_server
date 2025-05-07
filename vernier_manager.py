@@ -255,7 +255,7 @@ class VernierManager:
 
                 else:
                     print("Error reading from sensor.")
-                    reset_needed = True
+                    
                     # TODO close the hdf5 file and create csv file
                     self._crashed = True
                     self._num_crashes += 1
