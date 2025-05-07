@@ -295,6 +295,9 @@ class VernierManager:
                  
     def stop(self) -> str:
         try:
+            self.running = False
+            self._streaming = False
+            print("Stopping Vernier manager...")
             if self._device_started:
                 if self.thread is not None and self.thread.is_alive():
                     self.thread.join()
@@ -306,10 +309,6 @@ class VernierManager:
 
                 except Exception as e:
                     print(f"Error stopping or closing device. Device is likely disconnected: {e}")
-
-                self._device_started = False
-                self.running = False
-                self._streaming = False
 
                 try:
                     print("\nDisconnected from "+self._device.name)
@@ -325,6 +324,7 @@ class VernierManager:
                     print("Stop is converting HDF5 to CSV...")
                     self.hdf5_to_csv()
                 
+                self._device_started = False
                 print("Vernier manager stopped.")
                 return "Vernier manager stopped."
             else:
@@ -333,7 +333,8 @@ class VernierManager:
                 
         except Exception as e:
             print(f"An error occurred: {e}")
-
+            return f"An error occurred: {e}"
+        
     def _resize_dataset(self, new_size):
         """Resize the HDF5 dataset while ensuring thread synchronization."""
         try:

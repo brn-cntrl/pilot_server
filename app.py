@@ -1105,6 +1105,7 @@ def start_vernier() -> None:
 def stop_vernier() -> None:
     global vernier_manager
     try:
+        print("Stopping Vernier stream from app...")
         stop_result = vernier_manager.stop()
         print(stop_result)
         return jsonify({'message': stop_result}), 200
