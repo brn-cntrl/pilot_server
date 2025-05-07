@@ -225,7 +225,6 @@ class VernierManager:
             return
         
         while self._streaming:
-            reset_needed = False
             try:
                 if self._device.read():
                     ts = self.timestamp_manager.get_timestamp("iso")
@@ -259,27 +258,15 @@ class VernierManager:
                     # TODO close the hdf5 file and create csv file
                     self._crashed = True
                     self._num_crashes += 1
+                    self.reset()
                     return
-                
-            except (BleakError, AttributeError) as e:
-                print(f"Bluetooth read error: {e}")
-                reset_needed = True
-                self._crashed = True
-                self._num_crashes += 1
-                print("[INFO] Device disconnected.")
-                return
             
             except Exception as e:
                 print(f"An error occurred: {e}")
-                reset_needed = True
                 self._crashed = True
                 self._num_crashes += 1
+                self.reset()
                 return
-            
-            finally:
-                print("Resetting all necessary variables...")
-                if reset_needed:
-                    self.reset()
 
     def run(self):
         try:
