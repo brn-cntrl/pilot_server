@@ -107,7 +107,8 @@ class VernierManager:
                 # Rename the file
                 current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")  
                 self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.h5")
-            
+                self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{self._subject_id}_respiratory_data_{self._num_crashes}.csv")
+                
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
 
             if 'data' not in self.hdf5_file:  
