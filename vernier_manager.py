@@ -253,7 +253,7 @@ class VernierManager:
                     self.write_to_hdf5(self._current_row)
 
                 else:
-                    print("Error reading from sensor.")
+                    print("DEVICE HAS DISCONNECTED - RESTART VERNIER MANAGER.")
                     
                     # TODO close the hdf5 file and create csv file
                     self._crashed = True
@@ -263,6 +263,7 @@ class VernierManager:
             
             except Exception as e:
                 print(f"An error occurred: {e}")
+                print("DEVICE HAS CRASHED - RESTART VERNIER MANAGER.")
                 self._crashed = True
                 self._num_crashes += 1
                 self.reset()
