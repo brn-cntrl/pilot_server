@@ -45,9 +45,9 @@ class VernierManager:
         self._event_loop = None
         self._crashed = False
         self._num_crashes = 0
-        # self._fs = 10
-        # self._window_seconds = 30   
-        # self._force_values = deque(maxlen=self._fs * self._window_seconds)
+        self._godirect = None
+        self._dataset = None
+        self._file_opened = False
 
     @property
     def device_started(self):
@@ -56,14 +56,6 @@ class VernierManager:
     @device_started.setter
     def device_started(self, value):
         self._device_started = value
-
-    @property
-    def streaming(self):
-        return self._streaming
-    
-    @streaming.setter
-    def streaming(self, value):
-        self._streaming = value
 
     @property 
     def running(self):
@@ -126,22 +118,38 @@ class VernierManager:
                     ('event_marker', h5py.string_dtype(encoding='utf-8')),
                     ('condition', h5py.string_dtype(encoding='utf-8'))
                 ])
-                self.dataset = self.hdf5_file.create_dataset(
+                self._dataset = self.hdf5_file.create_dataset(
                     'data', shape=(0,), maxshape=(None,), dtype=dtype
                 )
             else:
-                self.dataset = self.hdf5_file['data']  
+                self._dataset = self.hdf5_file['data']  
 
+            self._file_opened = True
             print("HDF5 file created for emotibit data: ", self.hdf5_filename)
 
         except Exception as e:
             print(f"Error initializing HDF5 file: {e}")
 
     def reset(self) -> None:
+        # Immediately close the HDF5 file and convert it to CSV
         try:
-            if self._godirect:
+            print("Reset is closing HDF5 file...")
+            self.close_h5_file()
+            self._file_opened = False
+
+            try:
+                print("Reset is converting HDF5 to CSV...")
+                self.hdf5_to_csv()
+            except Exception as inner_e:
+                print(f"Error converting HDF5 to CSV: {inner_e}")
+        except Exception as e:
+            print(f"Error closing HDF5 file: {e}")
+            
+        # Quit the GoDirect instance and close the event loop
+        try:
+            if self._godirect is not None:
                 self._godirect.quit()
-                print("GoDirect quit.")
+                print("GoDirect has quit.")
             else:
                 print("No GoDirect instance to quit.")
         except Exception as e:
@@ -154,31 +162,37 @@ class VernierManager:
         except Exception as e:
             print(f"Error closing event loop: {e}")
 
+        # Reset all variables except for _device_started, subject_id, and data_folder
+        self._device_started = False
         self._event_loop = None
         self._device = None
-        self.dataset = None
+        self._dataset = None
         self._sensors = None
         self._godirect = None
         self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
-        self.streaming = False
+        self._streaming = False
         self.running = False
         self.hdf5_file = None
 
-    def start(self):
+    def start(self) -> str:
         try:
             loop = asyncio.get_event_loop()
             if hasattr(loop, "is_closed") and loop.is_closed():
-                print("Existing event loop is closed. Creating a new one.")
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+                raise RuntimeError("Event loop is closed.")
 
         except RuntimeError as e:
             print(f"Error getting event loop: {e}")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
+            print("Creating a new event loop...")
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+            except Exception as inner_e:
+                print(f"Error creating new event loop: {inner_e}")
+                return "Error"
+            
         self._event_loop = loop
-
+        
         try:
             self._godirect = GoDirect(use_ble=True, use_usb=True)
             print("GoDirect v"+str(self._godirect.get_version()))
@@ -200,14 +214,15 @@ class VernierManager:
             self._device = None
             self._sensors = None
             self._device_started = False
-            return
+            return "Error"
 
     def collect_data(self):
         if not self.running:
             print("Go Direct device stopped.")
             return
         
-        while self.streaming:
+        while self._streaming:
+            reset_needed = False
             try:
                 if self._device.read():
                     ts = self.timestamp_manager.get_timestamp("iso")
@@ -237,7 +252,7 @@ class VernierManager:
 
                 else:
                     print("Error reading from sensor.")
-                    self.reset()
+                    reset_needed = True
                     # TODO close the hdf5 file and create csv file
                     self._crashed = True
                     self._num_crashes += 1
@@ -245,8 +260,7 @@ class VernierManager:
                 
             except (BleakError, AttributeError) as e:
                 print(f"Bluetooth read error: {e}")
-                self.reset()
-                # TODO close the hdf5 file and create csv file
+                reset_needed = True
                 self._crashed = True
                 self._num_crashes += 1
                 print("[INFO] Device disconnected.")
@@ -254,24 +268,31 @@ class VernierManager:
             
             except Exception as e:
                 print(f"An error occurred: {e}")
-                self.reset()
-                # TODO close the hdf5 file and create csv file
+                reset_needed = True
                 self._crashed = True
                 self._num_crashes += 1
                 return
+            
+            finally:
+                print("Resetting all necessary variables...")
+                if reset_needed:
+                    self.reset()
 
     def run(self):
         try:
+            # Check if the thread exists and is alive
+            # If it is, stop the existing thread
             if self.thread is not None and self.thread.is_alive():
                 print("Stopping existing thread...")
                 self.running = False
-                self.streaming = False
+                self._streaming = False
                 self.thread.join()
                 print("Thread stopped.")
             
+            # If the device has started, start a new thread
             if self._device_started:
                 self.running = True
-                self.streaming = True
+                self._streaming = True
                 self.thread = Thread(target=self.collect_data, daemon=True)
                 self.thread.start()
                 print("Vernier manager running...")
@@ -282,7 +303,7 @@ class VernierManager:
         except Exception as e:
             print(f"An error occurred while starting the thread: {e}")
                  
-    def stop(self):
+    def stop(self) -> str:
         try:
             if self._device_started:
                 if self.thread is not None and self.thread.is_alive():
@@ -298,37 +319,37 @@ class VernierManager:
 
                 self._device_started = False
                 self.running = False
-                self.streaming = False
+                self._streaming = False
 
                 try:
                     print("\nDisconnected from "+self._device.name)
                     print("Quitting GoDirect...")
-                    self.quit()
+                    self._godirect.quit()
                 
                 except Exception as e:
                     print(f"Error quitting GoDirect. Device already disconnected: {e}")
 
-                print("Closing HDF5 file...")
-                self.close_h5_file()
-                print("HDF5 file closed.")
-                print("Converting to CSV...")
-                self.hdf5_to_csv()
-                print("HDF5 converted to CSV.")
+                if self._file_opened:
+                    print("Stop is closing HDF5 file...")
+                    self.close_h5_file()
+                    print("Stop is converting HDF5 to CSV...")
+                    self.hdf5_to_csv()
+                
+                print("Vernier manager stopped.")
+                return "Vernier manager stopped."
             else:
-                print("Device has not started yet.")
-    
+                print("Device has not started. If device has crashed or lost connection, please restart the manager.")
+                return "Device has not started. If device has crashed or lost connection, please restart the manager."
+                
         except Exception as e:
             print(f"An error occurred: {e}")
-
-    def quit(self):
-        self._godirect.quit()
 
     def _resize_dataset(self, new_size):
         """Resize the HDF5 dataset while ensuring thread synchronization."""
         try:
-            current_size = self.dataset.shape[0]
+            current_size = self._dataset.shape[0]
             if new_size > current_size:
-                self.dataset.resize(new_size, axis=0)
+                self._dataset.resize(new_size, axis=0)
 
         except Exception as e:
             print(f"Error resizing dataset: {e}")
@@ -336,20 +357,20 @@ class VernierManager:
     def write_to_hdf5(self, row: dict) -> None:
         """Write the incoming dictionary to the HDF5 dataset as a single row."""
         try:
-            if self.hdf5_file is None or self.dataset is None:
+            if self.hdf5_file is None or self._dataset is None:
                 print("HDF5 file or dataset is not initialized.")
                 return
 
-            new_data = np.zeros(1, dtype=self.dataset.dtype)  
+            new_data = np.zeros(1, dtype=self._dataset.dtype)  
             new_data[0]['timestamp'] = row.get('timestamp', '')  
             new_data[0]['force'] = row.get('force', np.nan)
             new_data[0]['RR'] = row.get('RR', np.nan)
             new_data[0]['event_marker'] = row.get('event_marker', '')
             new_data[0]['condition'] = row.get('condition', '')
 
-            new_size = self.dataset.shape[0] + 1
+            new_size = self._dataset.shape[0] + 1
             self._resize_dataset(new_size)  
-            self.dataset[-1] = new_data[0]
+            self._dataset[-1] = new_data[0]
 
         except Exception as e:
             print(f"Error writing to HDF5: {e}")
@@ -358,11 +379,13 @@ class VernierManager:
         if self.hdf5_file:
             self.hdf5_file.flush()
             self.hdf5_file.close()
-            return "HDF5 file closed."
+            print(f"HDF5 file '{self.hdf5_filename}' closed.")
+            return 
         else:
-            return "No HDF5 file to close."  
+            print("HDF5 file is already closed or isn't initialized.")
+            return  
         
-    def hdf5_to_csv(self) -> str:
+    def hdf5_to_csv(self):
         """
         Convert an HDF5 file to a CSV file.
         Dependencies:
@@ -398,12 +421,13 @@ class VernierManager:
                     else:
                         chunk_df.to_csv(self.csv_filename, mode='a', header=False, index=False)
             
+            print("CSV file created successfully.")
             print(f"HDF5 file '{self.hdf5_filename}' successfully converted to CSV file '{self.csv_filename}'.")
-            return "Conversion successful."
+            return 
         
         except FileNotFoundError:
             print(f"Error: The HDF5 file '{self.hdf5_filename}' was not found.")
-            return "HDF5 file not found"
+            return 
         except Exception as e:
             print(f"Error converting HDF5 to CSV: {e}")
-            return "Conversion failed."
+            return 
