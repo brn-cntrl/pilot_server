@@ -89,8 +89,8 @@ class VernierManager:
     def set_filenames(self, subject_id):
         self._subject_id = subject_id
         current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.h5")
-        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data.csv")
+        self.hdf5_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data_{self._num_crashes}.h5")
+        self.csv_filename = os.path.join(self.data_folder, f"{current_date}_{subject_id}_respiratory_data_{self._num_crashes}.csv")
 
     def initialize_hdf5_file(self):
         # current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
