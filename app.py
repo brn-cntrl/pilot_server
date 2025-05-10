@@ -714,12 +714,13 @@ def set_device() -> Response:
     Route for setting the audio device for the session.
     """
     data = request.get_json()
-    device_index = int(data.get('device_index'))
+    device_index = int(data.get('device_index')) - 1
     p = pyaudio.PyAudio()
 
     if device_index is not None:
         try:
             info = p.get_device_info_by_index(device_index)
+            print(info)
             if info:
                 device_index = info['index']
                 recording_manager.set_device(info['index'])
