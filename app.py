@@ -707,35 +707,50 @@ def get_audio_devices() -> Response:
     audio_devices = recording_manager.get_audio_devices()
     return jsonify(audio_devices)
 
+# @app.route('/set_device', methods=['POST'])
+# def set_device() -> Response:
+#     global recording_manager
+#     """
+#     Route for setting the audio device for the session.
+#     """
+#     data = request.get_json()
+#     device_index = int(data.get('device_index'))
+#     p = pyaudio.PyAudio()
+
+#     if device_index is not None:
+#         try:
+#             info = p.get_device_info_by_index(device_index)
+#             print(info)
+#             if info:
+#                 device_index = info['index']
+#                 recording_manager.set_device(info['index'])
+#                 p.terminate()
+#                 print(f'Device index set to: {device_index}')
+#                 return jsonify({'message': 'Device index set.'})
+#             else:
+#                 p.terminate()
+#                 return jsonify({'message': 'Device index not found.'}), 400
+            
+#         except Exception as e:
+#             return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
+#     else:
+#         p.terminate()
+#         return jsonify({'message': 'Device index not provided.'}), 400
 @app.route('/set_device', methods=['POST'])
 def set_device() -> Response:
     global recording_manager
-    """
-    Route for setting the audio device for the session.
-    """
     data = request.get_json()
-    device_index = int(data.get('device_index')) - 1
-    p = pyaudio.PyAudio()
+    try:
+        device_index = int(data.get('device_index'))
+    except (TypeError, ValueError):
+        return jsonify({'message': 'Invalid device index'}), 400
 
-    if device_index is not None:
-        try:
-            info = p.get_device_info_by_index(device_index)
-            print(info)
-            if info:
-                device_index = info['index']
-                recording_manager.set_device(info['index'])
-                p.terminate()
-                print(f'Device index set to: {device_index}')
-                return jsonify({'message': 'Device index set.'})
-            else:
-                p.terminate()
-                return jsonify({'message': 'Device index not found.'}), 400
-            
-        except Exception as e:
-            return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
-    else:
-        p.terminate()
-        return jsonify({'message': 'Device index not provided.'}), 400
+    try:
+        recording_manager.set_device(device_index)
+        return jsonify({'message': 'Device index set.'})
+    except Exception as e:
+        return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
+
 
 @app.route('/record_task_audio', methods=['POST'])
 def record_task_audio():

@@ -130,6 +130,11 @@ class RecordingManager():
     ##################################################################
     def set_device(self, index) -> None:
         self.device_index = index
-        print(f"Device set to {self.audio_devices[index]['name']}")
+        name = None
+        for device in self.audio_devices:
+            if device['index'] == index:
+                name = device['name']
+                break
+        print(f"Device set to {name if name else 'Unknown (index not in audio_devices list)'}")
 
     ##################################################################

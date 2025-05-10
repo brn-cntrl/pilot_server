@@ -251,24 +251,30 @@ function shutdownServer(){
     .catch(error => alert('Error:' + error));
 }
 
-function fetchAudioDevices(){
+function fetchAudioDevices() {
     fetch('/get_audio_devices')
-    .then(response => response.json())
-    .then(data => {
-        console.log(data)
-        const audioDevicesDropdown = document.getElementById('audioDevices');
-        data.forEach(device => {
-            const option = document.createElement('option');
-            option.value = device.index;
-            option.text = device.name;
-            audioDevicesDropdown.appendChild(option);
-        });
-        // Handle for only one device
-        if(data.length === 1){
-            setDevice();
-        }
-    })
-    .catch(error => alert('Error:' + error));
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            const audioDevicesDropdown = document.getElementById('audioDevices');
+            
+            // Clear existing options
+            audioDevicesDropdown.innerHTML = '';
+
+            // Populate dropdown with devices
+            data.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.index;
+                option.text = device.name;
+                audioDevicesDropdown.appendChild(option);
+            });
+
+            // If only one device is available, auto-select it
+            if (data.length === 1) {
+                setDevice(); // Automatically sets the single available device
+            }
+        })
+        .catch(error => alert('Error: ' + error));
 }
 
 async function startEmotibit(){
