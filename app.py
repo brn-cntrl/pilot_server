@@ -62,10 +62,13 @@ def process_audio_files() -> Response:
     global subject_manager, audio_file_manager, ser_manager
    
     data_rows = []
+
+    # TODO: CHECK TO SEE IF THE METADATA IS NEEDED FOR THIS CSV
     subject_id = subject_manager.subject_id
     audio_folder = audio_file_manager.audio_folder
     experiment_name = subject_manager.experiment_name
     trial_name = subject_manager.trial_name
+
     date = datetime.datetime.now().strftime("%Y-%m-%d")
 
     emotion1 = None
@@ -508,10 +511,12 @@ def submit_experiment() -> Response:
     
     subject_manager.experiment_name = form_manager.clean_string(experiment_name)
     subject_manager.trial_name = form_manager.clean_string(trial_name)
-    
+    subject_manager.categories = request.form.getlist('categories')
+
     # DEBUG
     print("Subject Experiment: ", subject_manager.experiment_name)
     print("Subject Trial: ", subject_manager.trial_name)
+    print("Categories: ", subject_manager.categories)
 
     return jsonify({'message': 'Experiment and trial names submitted.'}), 200
 
@@ -987,7 +992,7 @@ def prs():
 
                 function startRecordingForSegment(audioElement, baseName) {
                     const statusElement = audioElement.parentElement.querySelector(".recording-status");
-                    statusElement.innerText = "Recording started...";
+                    statusElement.innerText = `Recording started for ${baseName}...`;
                     try {
                         emarker = eventMarker + "_" + baseName;
                         setEventMarker(emarker);

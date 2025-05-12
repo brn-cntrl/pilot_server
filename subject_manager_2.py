@@ -16,7 +16,7 @@ class SubjectManager:
         self._experiment_name = None
         self._trial_name = None
         self._subject_folder = None
-
+        self._categories = None
         # Only held in RAM and not stored.
         self._subject_first_name = None 
         self._subject_last_name = None
@@ -62,6 +62,14 @@ class SubjectManager:
     def trial_name(self, value: str) -> None:
         self._trial_name = value
     
+    @property
+    def categories(self) -> list[str]:
+        return self._categories
+    
+    @categories.setter
+    def categories(self, value: list[str]) -> None:
+        self._categories = value
+
     @property
     def subject_folder(self) -> str:
         return self._subject_folder
@@ -120,6 +128,7 @@ class SubjectManager:
                 writer.writerow([f"Experiment Name: {self.experiment_name}"])
                 writer.writerow([f"Trial Name: {self.trial_name}"])
                 writer.writerow([f"Subject ID: {self.subject_id}"])
+                writer.writerow([f"Categories: {self.categories}"])
                 writer.writerow([f"PID: {self.PID}"])
                 writer.writerow([f"Class Name: {self.class_name}"])  
                 writer.writerow(self.headers)  
@@ -131,7 +140,7 @@ class SubjectManager:
             data (dict): Dictionary containing the data to be appended, where keys are column names and values are the corresponding data.
             Expected format: {'Timestamp': str, 'Event_Marker': str, 'Transcription': str, 'SER_Emotion': str, 'SER_Confidence': str}
         """
-        metadata_rows = 5
+        metadata_rows = 6
 
         try:
             with open(self.csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:

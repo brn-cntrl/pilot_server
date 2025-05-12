@@ -26,12 +26,22 @@
             <input type="text" id="experiment_name" name="experiment_name" required><br><br>
             <label for="trial_name">Trial Name:</label>
             <input type="text" id="trial_name" name="trial_name" required><br><br>
+
+            <!-- Checkboxes -->
+            <label>Categories (optional):</label><br><br>
+            <input type="checkbox" id="option1" name="categories" value="N">
+            <label for="option1">N</label><br>
+            <input type="checkbox" id="option2" name="categories" value="A">
+            <label for="option2">A</label><br>
+            <input type="checkbox" id="option3" name="categories" value="D">
+            <label for="option3">D</label><br>
+            <input type="checkbox" id="option4" name="categories" value="P">
+            <label for="option4">P</label><br><br>
+
             <button type="submit">Submit</button>
         </form><br>
         <div id="notification1" style="display:none; color: green;"></div>
         <div id="errorNotification1" style="display:none; color: red;"></div>
-
-        <!-- <p id="postSubmitMessage" style="display:none;">Now you will put the Emotibit, mic, and respiration belt on the subject. Please read the provided script as you place the devices.</p> -->
     </div><br>
 
     <button class=toggle>Subject Dashboard</button><br>
@@ -672,9 +682,8 @@
 
             form.addEventListener("submit", function(event){
                 event.preventDefault();
-                console.log("Form submission intercepted!");
                 const formData = new FormData(form);
-                // const postSubmitMessage = document.getElementById('postSubmitMessage');
+
                 fetch("/submit_experiment", {
                     method: 'POST',
                     body: formData,
