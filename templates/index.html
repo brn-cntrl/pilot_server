@@ -67,11 +67,15 @@
         <p id="biometricStatusMessage"></p>
     </div><br>
 
-    <button class="toggle">Test Audio</button><br>
+    <button class="toggle">Audio</button><br>
     <div class="innerModule" style="display:none;">
+        <button id="resetAudioButton">Reset Audio System</button>
+        <p>Reset only if system audio crashes.</p>
+        <p id="audioStatus"></p>
         <button id="testAudioOutput">Test Audio Output</button><br><br>
         <label for="audioDevices">Select Audio Input Device:</label><br><br>
         <select id="audioDevices" onchange="setDevice()"></select><br><br>
+
     </div><br>
 
     <p id="test_transcription" style="display:none; color:green;">Subject has completed the test transcription.</p>

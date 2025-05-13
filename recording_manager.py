@@ -12,6 +12,7 @@ class RecordingManager():
     audio_processor.py file.
     """
     def __init__(self, recording_file) -> None: 
+        self.audio = pyaudio.PyAudio()
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
         self.stream_ready_event = threading.Event()
@@ -21,8 +22,8 @@ class RecordingManager():
         self.device_index = 0
         self.audio_devices = self.fetch_audio_devices()
         self._timestamp = None
+        self._end_timestamp = None
         self.timestamp_manager = TimestampManager()
-
         print("Recording manager initialized...")
         print(f"Recording manager's temporary recording file set to {self.recording_file}")
 
@@ -37,6 +38,14 @@ class RecordingManager():
     def timestamp(self, value) -> None:
         self._timestamp = value
     
+    @property
+    def end_timestamp(self) -> str:
+        return self._end_timestamp
+    
+    @end_timestamp.setter
+    def end_timestamp(self, value) -> None:
+        self._end_timestamp = value
+
     @property
     def recording_file(self) -> str:
         return self._recording_file
@@ -73,11 +82,21 @@ class RecordingManager():
         self.recording_started_event.clear()
         self.stream_ready_event.clear()
         self.stream_is_active = False
-        print("Recording thread stopped")
+        self.end_timestamp = self.timestamp_manager.get_timestamp("iso")
+        print(f"Recording stopped at {self.end_timestamp}")
+
+    def reset_audio_system(self):
+        try:
+            if self.audio is not None:
+                self.audio.terminate()
+            self.audio = pyaudio.PyAudio()
+            print("Audio system reset successfully.")
+
+        except Exception as e:
+                    print(f"Error resetting audio system: {e}")
 
     def record_thread(self) -> None:
-        audio = pyaudio.PyAudio()
-        stream = audio.open(format=pyaudio.paInt16, 
+        stream = self.audio.open(format=pyaudio.paInt16, 
                             channels=1, 
                             rate=44100, 
                             input=True, 
@@ -96,11 +115,11 @@ class RecordingManager():
         
         stream.stop_stream()
         stream.close()
-        audio.terminate()
+        # self.audio.terminate()
 
         with wave.open(self.recording_file, 'wb') as wf:
             wf.setnchannels(1)
-            wf.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+            wf.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
             wf.setframerate(44100)
             wf.writeframes(b''.join(frames))
 
@@ -117,12 +136,13 @@ class RecordingManager():
     
     ## System call to get audio devices
     def fetch_audio_devices(self) -> list:
-        p = pyaudio.PyAudio()
-        audio_devices = [{'index': i, 'name': p.get_device_info_by_index(i)['name']}
-                        for i in range(p.get_device_count())
-                        if p.get_device_info_by_index(i)['maxInputChannels'] > 0]
+        if self.audio is None:
+            self.audio = pyaudio.PyAudio()
         
-        p.terminate()
+        audio_devices = [{'index': i, 'name': self.audio.get_device_info_by_index(i)['name']}
+                        for i in range(self.audio.get_device_count())
+                        if self.audio.get_device_info_by_index(i)['maxInputChannels'] > 0]
+        
         return audio_devices
 
     ##################################################################

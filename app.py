@@ -309,6 +309,8 @@ def process_ser_answer() -> Response:
 
     try:
         ts = recording_manager.timestamp
+        end_time = recording_manager.end_timestamp
+        print(f"Stop time from recording manager: {end_time}")
         id = subject_manager.subject_id
 
         file_name = f"{id}_{ts}_ser_baseline_question_{test_manager.current_ser_question_index}.wav"
@@ -316,8 +318,7 @@ def process_ser_answer() -> Response:
         # DEBUG
         print(f"Audio File Name: {file_name}")
 
-        # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-        subject_manager.append_data({'Timestamp': ts, 'Event_Marker': 'ser_baseline', 'Condition': 'None', 'Audio_File': file_name, 'Transcription': None, 'SER_Emotion': None, 'SER_Confidence': None})
+        subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': 'ser_baseline', 'Condition': 'None', 'Audio_File': file_name})
         audio_file_manager.save_audio_file(file_name)
 
         return jsonify({'status': 'Answer processed successfully.'})
@@ -425,6 +426,7 @@ def process_answer() -> Response:
 
             if test_manager.current_test_index != 0:
                 ts = recording_manager.timestamp
+                end_time = recording_manager.end_timestamp
                 file_name = f"{id}_{ts}_{current_test_name}_question_{test_manager.current_question_index}.wav"
 
                 print("Saving file...")
@@ -432,7 +434,7 @@ def process_answer() -> Response:
 
                 print("Saving data...")
                 # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-                subject_manager.append_data({'Timestamp': ts, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Audio_File': file_name})
 
                 return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.', 'result': 'None'})
             else:
@@ -443,6 +445,7 @@ def process_answer() -> Response:
 
             if test_manager.current_test_index != 0:
                 ts = recording_manager.timestamp
+                end_time = recording_manager.end_timestamp
                 file_name = f"{id}_{ts}_{current_test_name}_question_{test_manager.current_question_index}.wav"
 
                 print("Saving file...")
@@ -450,7 +453,7 @@ def process_answer() -> Response:
 
                 print("Saving data...")
                 # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-                subject_manager.append_data({'Timestamp': ts, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
 
             correct_answer = questions[test_manager.current_question_index]['answer']
             result = 'incorrect'
@@ -678,6 +681,21 @@ def shutdown() -> Response:
 ##################################################################
 ## Audio Routes
 ##################################################################
+@app.route('/reset_audio', methods=['POST'])
+def reset_audio() -> Response:
+    """
+    Reset the audio system by terminating the current PyAudio instance and creating a new one.
+    This function is useful for reinitializing the audio system in case of issues or changes in configuration.
+    Returns:
+        Response: A JSON response indicating the success of the operation.
+    """
+    global recording_manager
+    try:
+        recording_manager.reset_audio_system()
+        return jsonify({'message': 'Audio system reset successfully. Please test input and output before preceding.'}), 200
+    except Exception as e:
+        return jsonify({'message': f'Error resetting audio system: {str(e)}'}), 400
+    
 @app.route('/test_audio', methods=['POST'])
 def test_audio() -> Response:
     """
@@ -712,35 +730,6 @@ def get_audio_devices() -> Response:
     audio_devices = recording_manager.get_audio_devices()
     return jsonify(audio_devices)
 
-# @app.route('/set_device', methods=['POST'])
-# def set_device() -> Response:
-#     global recording_manager
-#     """
-#     Route for setting the audio device for the session.
-#     """
-#     data = request.get_json()
-#     device_index = int(data.get('device_index'))
-#     p = pyaudio.PyAudio()
-
-#     if device_index is not None:
-#         try:
-#             info = p.get_device_info_by_index(device_index)
-#             print(info)
-#             if info:
-#                 device_index = info['index']
-#                 recording_manager.set_device(info['index'])
-#                 p.terminate()
-#                 print(f'Device index set to: {device_index}')
-#                 return jsonify({'message': 'Device index set.'})
-#             else:
-#                 p.terminate()
-#                 return jsonify({'message': 'Device index not found.'}), 400
-            
-#         except Exception as e:
-#             return jsonify({'message': f'Error setting device index: {str(e)}'}), 400
-#     else:
-#         p.terminate()
-#         return jsonify({'message': 'Device index not provided.'}), 400
 @app.route('/set_device', methods=['POST'])
 def set_device() -> Response:
     global recording_manager
@@ -796,12 +785,13 @@ def record_task_audio():
         elif action == 'stop':
             recording_manager.stop_recording()
             ts = recording_manager.timestamp
+            end_time = recording_manager.end_timestamp
             id = subject_manager.subject_id
 
             file_name = f"{id}_{ts}_{event_marker}.wav"
 
             # Header structure: 'Timestamp', 'Event_Marker', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-            subject_manager.append_data({'Timestamp': ts, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': file_name})
+            subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': file_name})
             audio_file_manager.save_audio_file(file_name)
 
             return jsonify({'message': 'Recording stopped.'}), 200
@@ -820,6 +810,9 @@ def record_task() -> Response:
         - If the action is 'start', it returns a success message. The "start_recording" route is called from the client.
         - If the action is 'stop', it stops the recording, splits the audio into segments, generates
             timestamps, transcribes the audio, predicts emotions, and stores the results in the subject data.
+    NOTE: This function will split audio into segments set by "segment_duration". The Time_Stopped field
+        in the subject data will therefore be the starting timestamp + the segment duration. It WILL NOT necessarily correspond
+        to times in which the subject was speaking.
     Returns:
         - Response: A JSON response indicating the result of the action with an appropriate HTTP status code.
     Raises:
@@ -872,9 +865,10 @@ def record_task() -> Response:
                 key = os.path.splitext(os.path.basename(segment))[0].split('_')[-1]
                 print(f"Segment: {segment}, Key: {key}")
 
-            timestamps = generate_timestamps(current_time_unix, 20, "tmp/")
+            segment_duration = 20
+            timestamps = generate_timestamps(current_time_unix, segment_duration, "tmp/")
 
-            task_data = [{'Timestamp': ts, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': fn} 
+            task_data = [{'Timestamp': ts, 'Time_Stopped': ts+segment_duration, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': fn} 
                     for ts, fn, in zip(timestamps, audio_segments)]
             
             for data in task_data:
@@ -1223,8 +1217,16 @@ def check_answer(transcription, correct_answers) -> bool:
     return any(word in correct_answers for word in transcription.split())
 
 def shutdown_server() -> None:
+    global emotibit_streamer, recording_manager, vernier_manager
+
+    if recording_manager.audio is not None:
+        recording_manager.audio.terminate()
+        
     if emotibit_streamer.server_thread is not None:
         emotibit_streamer.stop()
+
+    if vernier_manager.device_started and vernier_manager.running:
+        vernier_manager.stop()
 
     time.sleep(1)
     pid = os.getpid()
