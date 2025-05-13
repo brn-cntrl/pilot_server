@@ -396,6 +396,7 @@
         const openEmotibitDialog = document.getElementById('openEmotibitDialog');
         const startPRSTaskButton1 = document.getElementById('startPRSTask1');
         const startPRSTaskButton2 = document.getElementById('startPRSTask2');
+        const resetAudioButton = document.getElementById('resetAudioButton');
         // const breakInstructions1 = document.getElementById('breakInstructions1');
         // const breakInstructions2 = document.getElementById('breakInstructions2');
 
@@ -406,7 +407,7 @@
         const stopVernierButtons = document.querySelectorAll('.stopVernier');
         const vernierStatus = document.querySelectorAll('.vernierStatus');
         const startSARTButtons = document.querySelectorAll('.SARTButton');
-
+        
         const eventSource = new EventSource('/stream');
         eventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
@@ -426,6 +427,29 @@
         };
 
         document.addEventListener('DOMContentLoaded', function(){
+            resetAudioButton.addEventListener('click', function(){
+                let audioStatus = document.getElementById('audioStatus');
+                fetch('/reset_audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    audioStatus.innerText = data.message;
+                })
+                .catch(error => {
+                    audioStatus.innerText = "An error occurred while resetting the audio system.";
+                });
+            });
+
             startVernierButton.addEventListener('click', function(){
                 startVernierButton.disabled = true;
                 vernierStatus.forEach(status => {
