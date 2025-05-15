@@ -10,7 +10,7 @@ class SubjectManager:
         self.txt_file_path = None
         self.PID = None
         self.class_name = None
-        self.headers = ['Timestamp', 'Time_Stopped', 'Event_Marker', 'Condition', 'Audio_File']
+        self.headers = ['Timestamp', 'Time_Stopped', 'Event_Marker', 'Condition', 'Audio_File', 'Transcription']
         self._balance = 0
         self.data_root = "subject_data"
         self._experiment_name = None

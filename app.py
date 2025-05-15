@@ -434,7 +434,7 @@ def process_answer() -> Response:
 
                 print("Saving data...")
                 # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Audio_File': file_name})
+                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Condition': 'None', 'Audio_File': file_name, 'Transcription': transcription})
 
                 return jsonify({'status': 'times_up.', 'message': 'Test complete. Answer recorded and logged.', 'result': 'None'})
             else:
@@ -453,7 +453,7 @@ def process_answer() -> Response:
 
                 print("Saving data...")
                 # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
-                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Audio_File': file_name,'Transcription': transcription, 'SER_Emotion': None, 'SER_Confidence': None})
+                subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Condition': 'None', 'Audio_File': file_name,'Transcription': transcription})
 
             correct_answer = questions[test_manager.current_question_index]['answer']
             result = 'incorrect'
