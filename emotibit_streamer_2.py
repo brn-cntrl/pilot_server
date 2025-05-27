@@ -28,13 +28,10 @@ class EmotiBitStreamer:
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
         self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
-        # self.last_received = {key: None for key in ["EDA", "HR", "BI", "HRV", "PG", "RR"]}
-        self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
-        # self.baseline_buffer = []
+        # self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
         self.data_buffer = deque(maxlen=3000)
         self._event_marker = 'startup'
         self._condition = 'None'
-        # self.collecting_baseline = False
         self.dispatcher = dispatcher.Dispatcher()
         self.dispatcher.map("/EmotiBit/0/*", self.generic_handler)
         self.server = osc_server.ThreadingOSCUDPServer((self._ip, self._port), self.dispatcher)
@@ -45,12 +42,9 @@ class EmotiBitStreamer:
         self.csv_filename = None
         self.csv_writer = None
         self.lock = threading.Lock()
-        # Variables for h5 file
         self.hdf5_filename = None
         self.hdf5_file = None
         self.dataset = None
-        # self._baseline_collected = False
-        # self._processing_baseline = False
         self._time_started = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         atexit.register(self.stop)
         print("Emotibit Initialized... ")
@@ -159,6 +153,9 @@ class EmotiBitStreamer:
         if self.hdf5_file:
             self.hdf5_file.flush()
             self.hdf5_file.close()
+            self.hdf5_file = None  
+            self.dataset = None    
+
             return "HDF5 file closed."
         else:
             return "No HDF5 file to close."
@@ -169,13 +166,16 @@ class EmotiBitStreamer:
             self.shutdown_event.set()
             self.server.shutdown()
             self.server.server_close()
-            self.server_thread.join()
+            self.server_thread.join(timeout=3.0)
             self.server_thread = None
             self.is_streaming = False
             print("EmotiBit OSC server stopped successfully.")
             print("Closing EmotiBit H5 file...")
-            self.close_h5_file()
-            print("EmotiBit H5 file closed.")
+
+            with self.lock:  # Ensure thread-safe access to the HDF5 file
+                self.close_h5_file()
+                print("EmotiBit H5 file closed.")
+
             print("Converting EmotiBit H5 to CSV...")
             self.hdf5_to_csv()
             print("EmotiBit H5 file converted to CSV.")
@@ -188,6 +188,11 @@ class EmotiBitStreamer:
     ###########################################
     def generic_handler(self, address: str, *args) -> None:
         """Generic handler for all incoming OSC messages."""
+        if not self.is_streaming:
+            # Bail out if stopping
+            print("EmotiBitStreamer is not currently streaming. Please start the server first.")
+            return
+        
         if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
             self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
@@ -212,10 +217,6 @@ class EmotiBitStreamer:
             self.current_row["PG"] = value
 
         if any(self.current_row[key] is not None for key in ["EDA", "HR", "BI", "PG"]):
-            # if self.event_marker == "biometric_baseline" and not self.baseline_collected:
-            #     self.baseline_buffer.append(self.current_row)
-            # elif self.event_marker != "startup" and self.event_marker != "biometric_baseline" and not self.processing_baseline:
-            #     self.data_buffer.append(self.current_row)
             self.write_to_hdf5(self.current_row)
 
     ###########################################
@@ -224,26 +225,27 @@ class EmotiBitStreamer:
 
     def write_to_hdf5(self, row: dict) -> None:
         """Write the incoming dictionary to the HDF5 dataset as a single row."""
-        try:
-            if self.hdf5_file is None or self.dataset is None:
-                print("HDF5 file or dataset is not initialized.")
-                return
+        with self.lock:  # Ensure thread-safe access to the dataset
+            try:
+                if self.hdf5_file is None or self.dataset is None:
+                    print("HDF5 file or dataset is not initialized.")
+                    return
 
-            new_data = np.zeros(1, dtype=self.dataset.dtype)  
-            new_data[0]['timestamp'] = row.get('timestamp', '')  
-            new_data[0]['EDA'] = row.get('EDA', np.nan)
-            new_data[0]['HR'] = row.get('HR', np.nan)
-            new_data[0]['BI'] = row.get('BI', np.nan)
-            new_data[0]['PG'] = row.get('PG', np.nan)
-            new_data[0]['event_marker'] = row.get('event_marker', '')
-            new_data[0]['condition'] = row.get('condition', '')
+                new_data = np.zeros(1, dtype=self.dataset.dtype)  
+                new_data[0]['timestamp'] = row.get('timestamp', '')  
+                new_data[0]['EDA'] = row.get('EDA', np.nan)
+                new_data[0]['HR'] = row.get('HR', np.nan)
+                new_data[0]['BI'] = row.get('BI', np.nan)
+                new_data[0]['PG'] = row.get('PG', np.nan)
+                new_data[0]['event_marker'] = row.get('event_marker', '')
+                new_data[0]['condition'] = row.get('condition', '')
 
-            new_size = self.dataset.shape[0] + 1
-            self._resize_dataset(new_size)  
-            self.dataset[-1] = new_data[0]
+                new_size = self.dataset.shape[0] + 1
+                self._resize_dataset(new_size)  
+                self.dataset[-1] = new_data[0]
 
-        except Exception as e:
-            print(f"Error writing to HDF5: {e}")
+            except Exception as e:
+                print(f"Error writing to HDF5: {e}")
 
     def _resize_dataset(self, new_size):
         """Resize the HDF5 dataset while ensuring thread synchronization."""
