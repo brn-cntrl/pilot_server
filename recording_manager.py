@@ -13,7 +13,7 @@ class RecordingManager():
     """
     def __init__(self, recording_file) -> None: 
         self.audio = pyaudio.PyAudio()
-        self.sample_rate = self.audio.get_default_input_device_info()['defaultSampleRate']
+        self.sample_rate = int(self.audio.get_default_input_device_info()['defaultSampleRate'])
         print(f"Default Sample Rate: {self.sample_rate}")
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
@@ -195,7 +195,7 @@ class RecordingManager():
             return
         
         self.device_index = index
-        self.sample_rate = self.audio.get_device_info_by_index(index)['defaultSampleRate']
+        self.sample_rate = int(self.audio.get_device_info_by_index(index)['defaultSampleRate'])
         print(f"Device Sample Rate: {self.sample_rate}")
 
         name = None
