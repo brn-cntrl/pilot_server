@@ -13,6 +13,8 @@ class RecordingManager():
     """
     def __init__(self, recording_file) -> None: 
         self.audio = pyaudio.PyAudio()
+        self.sample_rate = self.audio.get_default_input_device_info()['defaultSampleRate']
+        print(f"Default Sample Rate: {self.sample_rate}")
         self.stop_event = threading.Event()
         self.recording_started_event = threading.Event()
         self.stream_ready_event = threading.Event()
@@ -76,9 +78,24 @@ class RecordingManager():
 
         print("Recording thread started")   
 
+    def _validate_device_index(self) -> None:
+        """Ensure device_index points to a valid input device"""
+        if not self.audio_devices:
+            print("Warning: No audio input devices found")
+            return
+            
+        valid_indices = [device['index'] for device in self.audio_devices]
+        if self.device_index not in valid_indices:
+            print(f"Warning: Device index {self.device_index} not valid, using first available device")
+            self.device_index = valid_indices[0] if valid_indices else 0
+
     def stop_recording(self) -> None:
         self.stop_event.set()
-        self.recording_thread.join()
+
+        # Prevent hanging.
+        if self.recording_thread:
+            self.recording_thread.join(timeout=5.0)
+
         self.recording_started_event.clear()
         self.stream_ready_event.clear()
         self.stream_is_active = False
@@ -90,18 +107,28 @@ class RecordingManager():
             if self.audio is not None:
                 self.audio.terminate()
             self.audio = pyaudio.PyAudio()
+            self.audio_devices = self.fetch_audio_devices()
             print("Audio system reset successfully.")
 
         except Exception as e:
                     print(f"Error resetting audio system: {e}")
 
     def record_thread(self) -> None:
-        stream = self.audio.open(format=pyaudio.paInt16, 
-                            channels=1, 
-                            rate=44100, 
-                            input=True, 
-                            input_device_index=self.device_index,
-                            frames_per_buffer=1024)
+        # Validate device before attempting to open stream
+        try:
+            self._validate_device_index()
+
+            stream = self.audio.open(format=pyaudio.paInt16, 
+                                channels=1, 
+                                rate=self.sample_rate, 
+                                input=True, 
+                                input_device_index=self.device_index,
+                                frames_per_buffer=1024)
+        
+        except Exception as e:
+            print(f"Error opening audio stream: {e}")
+            self.stream_ready_event.set() # TODO: CHECK THE VALIDITY OF THIS
+            return
         
         self.stream_ready_event.set()
 
@@ -110,20 +137,28 @@ class RecordingManager():
         self.recording_started_event.set()
 
         while not self.stop_event.is_set():
-            data = stream.read(1024)
-            frames.append(data)
+            try:
+                data = stream.read(1024)
+                frames.append(data)
+            except Exception as e:
+                print(f"Error reading from audio stream: {e}")
+                break
         
-        stream.stop_stream()
-        stream.close()
-        # self.audio.terminate()
+        try:
+            stream.stop_stream()
+            stream.close()    
+        except Exception as e:
+            print(f"Error closing stream: {e}")
 
-        with wave.open(self.recording_file, 'wb') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
-            wf.setframerate(44100)
-            wf.writeframes(b''.join(frames))
-
-        print(f"Recording stopped, saved to {self.recording_file}")
+        try:
+            with wave.open(self.recording_file, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
+                wf.setframerate(44100)
+                wf.writeframes(b''.join(frames))
+                print(f"Recording stopped, saved to {self.recording_file}")
+        except Exception as e:
+            print(f"Error writing to wave file: {e}")
 
     ##################################################################
     ## GETTERS
@@ -139,18 +174,32 @@ class RecordingManager():
         if self.audio is None:
             self.audio = pyaudio.PyAudio()
         
-        audio_devices = [{'index': i, 'name': self.audio.get_device_info_by_index(i)['name']}
-                        for i in range(self.audio.get_device_count())
-                        if self.audio.get_device_info_by_index(i)['maxInputChannels'] > 0]
-        
+        try:
+            audio_devices = [{'index': i, 'name': self.audio.get_device_info_by_index(i)['name']}
+                            for i in range(self.audio.get_device_count())
+                            if self.audio.get_device_info_by_index(i)['maxInputChannels'] > 0]
+        except Exception as e:
+            print(f"Error fetching audio devices: {e}")
+            audio_devices = []
+
         return audio_devices
 
     ##################################################################
     ## SETTERS
     ##################################################################
     def set_device(self, index) -> None:
+        valid_indices = [device['index'] for device in self.audio_devices]
+
+        if index not in valid_indices:
+            print(f"Invalid device index {index}. Valid indices: {valid_indices}")
+            return
+        
         self.device_index = index
+        self.sample_rate = self.audio.get_device_info_by_index(index)['defaultSampleRate']
+        print(f"Device Sample Rate: {self.sample_rate}")
+
         name = None
+        
         for device in self.audio_devices:
             if device['index'] == index:
                 name = device['name']

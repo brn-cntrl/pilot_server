@@ -224,7 +224,7 @@ class VernierManager:
             print("Go Direct device stopped.")
             return
         
-        while self._streaming:
+        while self._streaming and self.running:
             try:
                 if self._device.read():
                     ts = self.timestamp_manager.get_timestamp("iso")
