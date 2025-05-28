@@ -40,20 +40,16 @@ class TranscriptionManager:
         except FileNotFoundError:
             print(f"Model {model_name} not found. Please ensure that the model is in the correct directory and that the model name is correct.")
 
-    def transcribe_audio(self, audio_file):
-        """
-        Transcribes the given audio file using the Whisper model.
-        Args:
-            audio_file (str): The path to the audio file to be transcribed.
-        Returns:
-            None: The transcription result is stored in the instance variable `self.result`.
-        """
-
-        with self.lock:
-            audio = whisper.load_audio(audio_file)
-            result = self.model.transcribe(audio)
-            self.result = result["text"]
-
+    # def transcribe_audio(self, audio_file):
+    #     """
+    #     Transcribes the given audio file using the Whisper model.
+    #     Args:
+    #         audio_file (str): The path to the audio file to be transcribed.
+    #     Returns:
+    #         None: The transcription result is stored in the instance variable `self.result`.
+    #     """
+    #     result = self.model.transcribe(audio_file)
+        
     def transcribe(self, audio_file):
         """
         Starts the transcription process for the given audio file.
@@ -65,8 +61,4 @@ class TranscriptionManager:
             str: The transcription result of the audio file.
         """
 
-        thread = threading.Thread(target=self.transcribe_audio, args=(audio_file,))
-        thread.start()
-        thread.join()
-        with self.lock:
-            return self.result
+        return self.model.transcribe(audio_file)["text"]
