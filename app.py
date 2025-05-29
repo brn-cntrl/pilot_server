@@ -1135,6 +1135,7 @@ def start_emotibit() -> None:
     global emotibit_streamer
     try:
         if subject_manager.subject_id is None:
+            print("EmotiBit subject ID not set.")
             return jsonify({'message': 'Subject information is not set.'}), 400
         
         print("Initializing EmobiBit data H5 file...")

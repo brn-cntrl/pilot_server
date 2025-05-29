@@ -463,20 +463,26 @@
                     body: JSON.stringify({})
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
+                    return response.json().then(data => {
+                        if (!response.ok) {
+                            // Throw with server-provided error message
+                            throw new Error(data.message || 'Unknown error');
+                        }
+                        return data;
+                    });
                 })
                 .then(data => {
                     vernierStatus.forEach(status => {
+                        status.style.display = 'block';
                         status.innerText = data.message;
                     });
                     startVernierButton.disabled = false;
                 })
                 .catch(error => {
                     vernierStatus.forEach(status => {
-                        status.innerText = "An error occurred.";
+                        status.style.display = 'block';
+                        status.innerText = error.message || 'Error starting Vernier stream.';
+                        startVernierButton.disabled = false;
                     });
                 });
             });

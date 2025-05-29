@@ -282,10 +282,13 @@ async function startEmotibit(){
             method: 'POST'
         })
         .then (response => {
-            if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-            }
-            return response.json();
+            return response.json().then(data => {
+                if (!response.ok) {
+                    // Throw with server-provided error message
+                    throw new Error(data.message || 'Unknown error');
+                }
+                return data;
+            });
         })
         .then(data => {
             console.log(data.message);
@@ -298,7 +301,7 @@ async function startEmotibit(){
             console.error('Error starting EmotiBit stream:', error);
             emotibitStatus.forEach(status => {
                 status.style.display = 'block';
-                status.innerText = "Error starting EmotiBit stream.";
+                status.innerText = error.message || 'Error starting EmotiBit stream.';
             });
         });
 }
