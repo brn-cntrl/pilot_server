@@ -228,8 +228,9 @@ class VernierManager:
         while self._streaming and self.running:
             try:
                 if self._device.read():
-                    ts = self.timestamp_manager.get_timestamp("iso")
                     tsu = self.timestamp_manager.get_timestamp("unix")
+                    ts = datetime.fromtimestamp(tsu).isoformat()
+                    
                     self._current_row["timestamp_unix"] = tsu
                     self._current_row["timestamp"] = ts
                     self._current_row["event_marker"] = self.event_marker

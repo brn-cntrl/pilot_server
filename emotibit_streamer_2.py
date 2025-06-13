@@ -192,12 +192,12 @@ class EmotiBitStreamer:
             # Bail out if stopping
             print("EmotiBitStreamer is not currently streaming. Please start the server first.")
             return
-        
-        if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
-            self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
         if not hasattr(self, 'timestamp_unix') or self.timestamp_unix != self.timestamp_manager.get_timestamp("unix"):
             self.timestamp_unix = self.timestamp_manager.get_timestamp('unix')
+
+        if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
+            self.current_timestamp = datetime.fromtimestamp(self.timestamp_unix).isoformat()
 
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
             self.current_row = {key: None for key in ["timestamp_unix", "timestamp", "EDA", "HR", "BI", "PG", "event_marker", "condition"]}
