@@ -24,10 +24,10 @@ class TimestampManager:
         with self.lock:
             self.current_timestamp = datetime.now()
 
-    def get_raw_timestamp(self):
+    def get_dt_timestamp(self):
         """Returns the current timestamp as a datetime object."""
         with self.lock:
-            return self.current_timestamp.timestamp()
+            return self.current_timestamp
         
     def get_iso_timestamp(self):
         """Returns the current timestamp."""
@@ -55,5 +55,9 @@ class TimestampManager:
         
         if type == "iso":
             return self.current_timestamp.isoformat()
+        elif type == "dt":
+            return self.current_timestamp
+        elif type == "unix":
+            return self.current_timestamp.timestamp()
             
-        return self.current_timestamp  # Default to raw
+        return self.current_timestamp.isoformat()

@@ -27,8 +27,7 @@ class EmotiBitStreamer:
         self._port = port
         self.timestamp_manager = TimestampManager()
         self.is_streaming = False
-        self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
-        # self.data_window = {key: deque(maxlen=500) for key in ["BI", "PPG:GRN"]}  # Sliding window for derived metrics
+        self.current_row = {key: None for key in ["timestamp_unix", "timestamp", "EDA", "HR", "BI", "HRV", "PG", "RR", "event_marker", "condition"]}
         self.data_buffer = deque(maxlen=3000)
         self._event_marker = 'startup'
         self._condition = 'None'
@@ -107,6 +106,7 @@ class EmotiBitStreamer:
             self.hdf5_file = h5py.File(self.hdf5_filename, 'a')  
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
+                    ('timestamp_unix', 'f8'),  # Unix timestamp in milliseconds
                     ('timestamp', h5py.string_dtype(encoding='utf-8')),
                     ('EDA', 'f4'),
                     ('HR', 'f4'),
@@ -196,13 +196,17 @@ class EmotiBitStreamer:
         if not hasattr(self, 'current_timestamp') or self.current_timestamp != self.timestamp_manager.get_timestamp("iso"):
             self.current_timestamp = self.timestamp_manager.get_timestamp("iso")
 
+        if not hasattr(self, 'timestamp_unix') or self.timestamp_unix != self.timestamp_manager.get_timestamp("unix"):
+            self.timestamp_unix = self.timestamp_manager.get_timestamp('unix')
+
         if not hasattr(self, 'current_row') or self.current_row["timestamp"] != self.current_timestamp:
-            self.current_row = {key: None for key in ["timestamp", "EDA", "HR", "BI", "PG", "event_marker", "condition"]}
+            self.current_row = {key: None for key in ["timestamp_unix", "timestamp", "EDA", "HR", "BI", "PG", "event_marker", "condition"]}
         
         stream_type = address.split('/')[-1]
         timestamp = self.current_timestamp
+        timestamp_unix = self.timestamp_unix
         value = args[0]
-
+        self.current_row["timestamp_unix"] = timestamp_unix
         self.current_row["timestamp"] = timestamp
         self.current_row["event_marker"] = self.event_marker
         self.current_row["condition"] = self.condition
@@ -232,6 +236,7 @@ class EmotiBitStreamer:
                     return
 
                 new_data = np.zeros(1, dtype=self.dataset.dtype)  
+                new_data[0]['timestamp_unix'] = row.get('timestamp_unix', '')
                 new_data[0]['timestamp'] = row.get('timestamp', '')  
                 new_data[0]['EDA'] = row.get('EDA', np.nan)
                 new_data[0]['HR'] = row.get('HR', np.nan)

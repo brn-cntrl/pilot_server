@@ -40,7 +40,7 @@ class VernierManager:
         self.thread = None
         self._running = False
         self._streaming = False
-        self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
+        self._current_row = {"timestamp_unix": None, "timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
         self._device_started = False
         self._event_loop = None
         self._crashed = False
@@ -113,6 +113,7 @@ class VernierManager:
 
             if 'data' not in self.hdf5_file:  
                 dtype = np.dtype([
+                    ('timestamp_unix', 'f8'),
                     ('timestamp', h5py.string_dtype(encoding='utf-8')),
                     ('force', 'f4'),
                     ('RR', 'f4'),
@@ -170,7 +171,7 @@ class VernierManager:
         self._dataset = None
         self._sensors = None
         self._godirect = None
-        self._current_row = {"timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
+        self._current_row = {"timestamp_unix": None, "timestamp": None, "force": None, "RR": None, "event_marker": self._event_marker, "condition": self._condition}
         self._streaming = False
         self.running = False
         self.hdf5_file = None
@@ -228,6 +229,8 @@ class VernierManager:
             try:
                 if self._device.read():
                     ts = self.timestamp_manager.get_timestamp("iso")
+                    tsu = self.timestamp_manager.get_timestamp("unix")
+                    self._current_row["timestamp_unix"] = tsu
                     self._current_row["timestamp"] = ts
                     self._current_row["event_marker"] = self.event_marker
                     self._current_row["condition"] = self.condition
@@ -354,6 +357,7 @@ class VernierManager:
                 return
 
             new_data = np.zeros(1, dtype=self._dataset.dtype)  
+            new_data[0]['timestamp_unix'] = row.get('timestamp_unix', np.nan)
             new_data[0]['timestamp'] = row.get('timestamp', '')  
             new_data[0]['force'] = row.get('force', np.nan)
             new_data[0]['RR'] = row.get('RR', np.nan)

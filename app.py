@@ -452,7 +452,7 @@ def process_answer() -> Response:
                 audio_file_manager.save_audio_file(file_name)
 
                 print("Saving data...")
-                # Header structure: 'Timestamp', 'Event_Marker', 'Audio_File', 'Transcription', 'SER_Emotion', 'SER_Confidence'
+                # Header structure: 'Timestamp', Time_Stopped', 'Event_Marker', 'Condition', 'Audio_File', 'Transcription'
                 subject_manager.append_data({'Timestamp': ts, 'Time_Stopped': end_time, 'Event_Marker': current_test_name, 'Condition': 'None', 'Audio_File': file_name,'Transcription': transcription})
 
             correct_answer = questions[test_manager.current_question_index]['answer']
@@ -827,9 +827,9 @@ def record_task() -> Response:
         event_marker = data.get('event_marker')
         condition = data.get('condition')
         action = data.get('action')
-        current_time_unix = timestamp_manager.get_timestamp()
-        print(f"Current time in unix: {current_time_unix}")
+        
         if action == 'start':
+            current_time_dt= timestamp_manager.get_timestamp('dt')
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
             emotibit_streamer.condition = condition
@@ -866,7 +866,7 @@ def record_task() -> Response:
                 print(f"Segment: {segment}, Key: {key}")
 
             segment_duration = 20
-            timestamps = generate_timestamps(current_time_unix, segment_duration, "tmp/")
+            timestamps = generate_timestamps(current_time_dt, segment_duration, "tmp/")
 
             task_data = [{'Timestamp': ts, 'Time_Stopped': ts+segment_duration, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': fn} 
                     for ts, fn, in zip(timestamps, audio_segments)]
@@ -1233,20 +1233,22 @@ def shutdown_server() -> None:
     pid = os.getpid()
     os.kill(pid, signal.SIGINT)
 
-def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp/") -> list:
+def generate_timestamps(start_time_dt, segment_duration=20, output_folder="tmp/") -> list:
     """
-    Generates a list of ISO 8601 formatted start timestamps for each audio segment file
-    in the specified output folder, assuming they were created sequentially.
+    Generate ISO 8601-formatted start timestamps for each audio segment file in the output folder.
+
     Args:
-        - start_time_unix (int): Unix timestamp of the start of the recording.
-        - segment_duration (int): Duration of each segment in seconds.
-        - output_folder (str): Folder containing the segment files.
+        start_time_dt (datetime.datetime or str): The starting time of the recording, as a datetime object or ISO string.
+        segment_duration (int): Duration of each audio segment in seconds.
+        output_folder (str): Directory containing the audio segment files.
+
     Returns:
-        - List of start timestamps in ISO 8601 format for each segment.
+        list: List of ISO 8601-formatted start timestamps (as strings), one for each segment file found.
     """
     print("Generating timestamps...")
-    if isinstance(start_time_unix, datetime.datetime):
-        start_time_unix = int(start_time_unix.timestamp())
+    # Generates unix format timestamps
+    if isinstance(start_time_dt, datetime.datetime):
+        start_time_unix = int(start_time_dt.timestamp())
 
     segment_files = sorted(
         [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],
@@ -1255,6 +1257,7 @@ def generate_timestamps(start_time_unix, segment_duration=20, output_folder="tmp
     print(segment_files)
 
     segment_timestamps = []
+
     start_time_unix = datetime.datetime.fromtimestamp(start_time_unix, tz=datetime.timezone.utc)
     for i in range(len(segment_files)):
         timestamp = start_time_unix + datetime.timedelta(seconds=i * segment_duration)
