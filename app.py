@@ -767,7 +767,7 @@ def record_task_audio():
     event_marker = data.get('event_marker')
     condition = data.get('condition')
     event_marker = f"{event_marker}_{question}"
-
+    
     try:
         if action == 'start':
             recording_manager.start_recording()
@@ -829,7 +829,6 @@ def record_task() -> Response:
         action = data.get('action')
         
         if action == 'start':
-            current_time_dt= timestamp_manager.get_timestamp('dt')
             recording_manager.start_recording()
             emotibit_streamer.event_marker = event_marker
             emotibit_streamer.condition = condition
@@ -866,10 +865,21 @@ def record_task() -> Response:
                 print(f"Segment: {segment}, Key: {key}")
 
             segment_duration = 20
-            timestamps = generate_timestamps(current_time_dt, segment_duration, "tmp/")
+            start_time = recording_manager.timestamp
+            
+            timestamps = generate_timestamps(start_time, segment_duration, "tmp/")
 
-            task_data = [{'Timestamp': ts, 'Time_Stopped': ts+segment_duration, 'Event_Marker': event_marker, 'Condition': condition, 'Audio_File': fn} 
-                    for ts, fn, in zip(timestamps, audio_segments)]
+            task_data = []
+            for ts, fn in zip(timestamps, audio_segments):
+                ts_dt = datetime.datetime.fromisoformat(ts)
+                time_stopped_dt = ts_dt + datetime.timedelta(seconds=segment_duration)
+                task_data.append({
+                    'Timestamp': ts,
+                    'Time_Stopped': time_stopped_dt.isoformat(timespec='seconds'),
+                    'Event_Marker': event_marker,
+                    'Condition': condition,
+                    'Audio_File': fn
+                })
             
             for data in task_data:
                 subject_manager.append_data(data)
@@ -1245,28 +1255,31 @@ def generate_timestamps(start_time_dt, segment_duration=20, output_folder="tmp/"
     Returns:
         list: List of ISO 8601-formatted start timestamps (as strings), one for each segment file found.
     """
-    print("Generating timestamps...")
-    # Generates unix format timestamps
-    if isinstance(start_time_dt, datetime.datetime):
-        start_time_unix = int(start_time_dt.timestamp())
+    import datetime
+    import os
 
+    print("Generating timestamps...")
+
+    # If start_time_dt is a string, convert it to datetime
+    if isinstance(start_time_dt, str):
+        start_time_dt = datetime.datetime.fromisoformat(start_time_dt)
+
+    # List all .wav files except 'recording.wav', sorted by segment index at the end of the filename
     segment_files = sorted(
         [f for f in os.listdir(output_folder) if f.endswith('.wav') and f != 'recording.wav'],
         key=lambda x: int(x.split('_')[-1].split('.')[0]) if x.split('_')[-1].split('.')[0].isdigit() else float('inf')
     )
-    print(segment_files)
+    print("Segment files:", segment_files)
 
+    # Generate ISO timestamps for each segment start time
     segment_timestamps = []
-
-    start_time_unix = datetime.datetime.fromtimestamp(start_time_unix, tz=datetime.timezone.utc)
     for i in range(len(segment_files)):
-        timestamp = start_time_unix + datetime.timedelta(seconds=i * segment_duration)
-        print(f"i: {i}, start_time_unix: {start_time_unix}, segment_duration: {segment_duration}, timestamp: {timestamp}")
+        timestamp = start_time_dt + datetime.timedelta(seconds=i * segment_duration)
         segment_timestamps.append(timestamp.isoformat(timespec='seconds'))
 
     print(f"Generated timestamps: {segment_timestamps}")
-    print (segment_timestamps)
     return segment_timestamps
+
 
 ##################################################################
 ## Speech Recognition 
