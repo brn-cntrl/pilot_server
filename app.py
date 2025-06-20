@@ -83,7 +83,7 @@ def process_audio_files() -> Response:
         if file.endswith(".wav"):
             parts = file.split("_")
             if parts[0] == subject_id and len(parts) > 2:
-                transcription = transcribe_audio(os.path.join(audio_folder, file))
+                transcription = transcribe_audio(os.path.join(audio_folder, file), timeout_seconds=240)
                 emo_list = ser_manager.predict_emotion(os.path.join(audio_folder, file))
                 timestamp = parts[1]
 
