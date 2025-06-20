@@ -24,6 +24,7 @@ from audio_file_manager import AudioFileManager
 from form_manager import FormManager
 from timestamp_manager import TimestampManager
 from werkzeug.utils import secure_filename
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
 app = Flask(__name__)
 emotibit_thread = None
@@ -348,7 +349,7 @@ def confirm_transcription() -> Response:
     Stops the current recording, transcribes the audio, and returns the transcription result.
     This function performs the following steps:
     1. Stops the current audio recording using the recording_manager.
-    2. Transcribes the audio file using the audio_file_manager.
+    2. Transcribes the audio file.
     3. Updates the current answer in the test_manager with the transcribed text.
     4. Returns a JSON response with the transcription result, asking for confirmation.
 
@@ -370,7 +371,10 @@ def confirm_transcription() -> Response:
             test_manager.current_answer = "Time up."
         else:
             print("Recording stopped. Transcribing....")
+            
             test_manager.current_answer = transcribe_audio(audio_file_manager.recording_file)
+
+            
 
         if test_status == "testEnded":
             return jsonify({'transcription': test_manager.current_answer, 'status': 'test has ended', 'message': 'Answer recorded and processed by endTest function.'})
@@ -400,8 +404,7 @@ def process_answer() -> Response:
     """
 
     global recording_manager, subject_manager, audio_file_manager, test_manager
-    # print("stopping the recording")
-    # recording_manager.stop_recording()
+   
     current_test = test_manager.current_test_index
 
     if test_manager.current_test_index == 0:
@@ -1280,18 +1283,26 @@ def generate_timestamps(start_time_dt, segment_duration=20, output_folder="tmp/"
     print(f"Generated timestamps: {segment_timestamps}")
     return segment_timestamps
 
-
 ##################################################################
 ## Speech Recognition 
 ##################################################################
-def transcribe_audio(file) -> str:
-    global recording_manager, transcription_manager
-    try:
-        return transcription_manager.transcribe(file)
-           
-    except Exception as e:
-        print(f"An error occurred during transcription: {str(e)}")
-        return str(e)
+def transcribe_audio(file, timeout_seconds=15) -> str:
+    global transcription_manager
+    
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        try:
+            future = executor.submit(transcription_manager.transcribe, file)
+            result = future.result(timeout=timeout_seconds)
+
+            return result if result is not None else "Sorry, I could not understand the response."
+            
+        except FutureTimeoutError:
+            print(f"Transcription timed out after {timeout_seconds} seconds for file: {file}")
+            return "Sorry, I could not understand the response."
+            
+        except Exception as e:
+            print(f"An error occurred during transcription: {str(e)}")
+            return "Sorry, something went wrong with the transcription."
 
 def run_flask():
     app.run(debug=False, use_reloader=False)

@@ -101,7 +101,7 @@
     <div class="testModule" style="display:none;">
         <h3>Experimental Tasks</h3>
         <!-- Task for continuous recording -->
-        <button class="toggle">Task 1 (General Recording)</button><br>
+        <!-- <button class="toggle">Task 1 (General Recording)</button><br>
         <div class="innerModule" id='taskGenDiv1' style="display:none">
             <p><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</p>
             <select onchange="updateCondition('taskGenDiv1', 'task_1')">
@@ -113,7 +113,7 @@
             </select><br><br>
             <button id="task_1_recording">Start Recording</button><br><br>
             <p id="recordingStatus1" style="display:none;">Please wait...</p>
-        </div><br>
+        </div><br> -->
 
         <button class="toggle">Task 1</button><br>
         <div class="innerModule" id="taskDiv1" style="display:none">
@@ -160,7 +160,7 @@
         </div><br>
         <p id="sart_5" style="display:none; color:green;">Subject has completed the fifth SART task.</p>
 
-        <button class="toggle">Task 2 (General Recording)</button><br>
+        <!-- <button class="toggle">Task 2 (General Recording)</button><br>
         <div class="innerModule" id="taskGenDiv2" style="display:none">
             <p><span class="required">IMPORTANT:</span> If General Recording is chosen, do NOT perform any other recording tasks while it is active.</p>
             <select onchange="updateCondition('taskGenDiv2', 'task_2')">
@@ -173,7 +173,7 @@
 
             <button id="task_2_recording">Start Recording</button><br><br>
             <p id="recordingStatus2" style="display:none;">Please wait...</p>
-        </div><br>
+        </div><br> -->
 
         <button class="toggle" id="taskButton2">Task 2</button><br>
         <div class="innerModule" id="taskDiv2" style="display:none">
@@ -381,8 +381,8 @@
         const encryptionStatus = document.getElementById('encryptionStatus');
         // const postProcessingStatus = document.getElementById('postProcessingStatus');   
         const launchSubjectGUI = document.getElementById('launchSubjectGUI');
-        const recTaskGen1 = document.getElementById('task_1_recording');
-        const recTaskGen2 = document.getElementById('task_2_recording');
+        // const recTaskGen1 = document.getElementById('task_1_recording');
+        // const recTaskGen2 = document.getElementById('task_2_recording');
         const baselineButton = document.getElementById("startBiometricBaseline");
         // const compareBaselineButtons = document.querySelectorAll('.compareToBaseline');
         const audioDevicesDropdown = document.getElementById('audioDevices');
@@ -858,97 +858,97 @@
         });
 
         document.addEventListener('DOMContentLoaded', function(){
-            recTaskGen1.addEventListener('click', function() {
-                if (recTaskGen1.innerText == "Start Recording"){
-                    recTaskGen1.innerText = "Stop Recording";
-                    recordTask(recTaskGen1, 'start');
-                } else {
-                    recTaskGen1.innerText = "Start Recording";
-                    recordTask(recTaskGen1, 'stop');
-                }
-            });
+            // recTaskGen1.addEventListener('click', function() {
+            //     if (recTaskGen1.innerText == "Start Recording"){
+            //         recTaskGen1.innerText = "Stop Recording";
+            //         recordTask(recTaskGen1, 'start');
+            //     } else {
+            //         recTaskGen1.innerText = "Start Recording";
+            //         recordTask(recTaskGen1, 'stop');
+            //     }
+            // });
             
-            recTaskGen2.addEventListener('click', function() {
-                if (recTaskGen2.innerText == "Start Recording"){
-                    recTaskGen2.innerText = "Stop Recording";
-                    recordTask(recTaskGen2, 'start');
-                } else {
-                    recTaskGen2.innerText = "Start Recording";
-                    recordTask(recTaskGen2, 'stop');
-                }
-            });
+            // recTaskGen2.addEventListener('click', function() {
+            //     if (recTaskGen2.innerText == "Start Recording"){
+            //         recTaskGen2.innerText = "Stop Recording";
+            //         recordTask(recTaskGen2, 'start');
+            //     } else {
+            //         recTaskGen2.innerText = "Start Recording";
+            //         recordTask(recTaskGen2, 'stop');
+            //     }
+            // });
 
-            function recordTask(button, action){
-                const buttonId = button.id;
-                const statusId1 = document.getElementById("recordingStatus1");
-                const statusId2 = document.getElementById("recordingStatus2");
-                console.log(`Button ID: ${buttonId}`);
+            // function recordTask(button, action){
+            //     const buttonId = button.id;
+            //     const statusId1 = document.getElementById("recordingStatus1");
+            //     const statusId2 = document.getElementById("recordingStatus2");
+            //     console.log(`Button ID: ${buttonId}`);
 
-                const parentDiv = button.closest('div');
-                const selectedCondition = parentDiv.querySelector('select').value;
-                let eventMarker = buttonId;
-                let condition = selectedCondition;
+            //     const parentDiv = button.closest('div');
+            //     const selectedCondition = parentDiv.querySelector('select').value;
+            //     let eventMarker = buttonId;
+            //     let condition = selectedCondition;
 
-                if(action === 'start') {
-                    if (buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerText = 'Please wait...';
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerText = 'Please wait...';
-                    }
-                } else {;
-                    if (buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerText = 'Audio processing. Please wait...';
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerText = 'Audio processing. Please wait...';
-                    }
-                }
-                // DEBUG
-                console.log(`eventMarker: ${eventMarker}, action: ${action}`); 
+            //     if(action === 'start') {
+            //         if (buttonId == 'task_1_recording'){
+            //             statusId1.style.display = 'block';
+            //             statusId1.innerText = 'Please wait...';
+            //         } else if (buttonId == 'task_2_recording'){
+            //             statusId2.style.display = 'block';
+            //             statusId2.innerText = 'Please wait...';
+            //         }
+            //     } else {;
+            //         if (buttonId == 'task_1_recording'){
+            //             statusId1.style.display = 'block';
+            //             statusId1.innerText = 'Audio processing. Please wait...';
+            //         } else if (buttonId == 'task_2_recording'){
+            //             statusId2.style.display = 'block';
+            //             statusId2.innerText = 'Audio processing. Please wait...';
+            //         }
+            //     }
+            //     // DEBUG
+            //     console.log(`eventMarker: ${eventMarker}, action: ${action}`); 
 
-                fetch('/record_task', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        event_marker: eventMarker,
-                        condition: condition,
-                        action: action
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if(buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerText = data.message;
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerText = data.message;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    if(buttonId == 'task_1_recording'){
-                        statusId1.style.display = 'block';
-                        statusId1.innerText = data.message;
-                    } else if (buttonId == 'task_2_recording'){
-                        statusId2.style.display = 'block';
-                        statusId2.innerText = data.message;
-                    }
-                });
-                if (action === 'start'){
-                    playBeep();
-                }
-            }
+            //     fetch('/record_task', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({
+            //             event_marker: eventMarker,
+            //             condition: condition,
+            //             action: action
+            //         })
+            //     })
+            //     .then(response => {
+            //         if (!response.ok) {
+            //             throw new Error('Network response was not ok ' + response.statusText);
+            //         }
+            //         return response.json();
+            //     })
+            //     .then(data => {
+            //         if(buttonId == 'task_1_recording'){
+            //             statusId1.style.display = 'block';
+            //             statusId1.innerText = data.message;
+            //         } else if (buttonId == 'task_2_recording'){
+            //             statusId2.style.display = 'block';
+            //             statusId2.innerText = data.message;
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         if(buttonId == 'task_1_recording'){
+            //             statusId1.style.display = 'block';
+            //             statusId1.innerText = data.message;
+            //         } else if (buttonId == 'task_2_recording'){
+            //             statusId2.style.display = 'block';
+            //             statusId2.innerText = data.message;
+            //         }
+            //     });
+            //     if (action === 'start'){
+            //         playBeep();
+            //     }
+            // }
 
             stopServerButtons.forEach(button => {
                 button.addEventListener('click', function() {
