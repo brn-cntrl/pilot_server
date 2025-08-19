@@ -563,25 +563,125 @@ def upload_surveys_csv() -> Response:
 
 @app.route('/import_emotibit_csv', methods=['POST'])
 def import_emotibit_csv() -> Response:
+    """
+    Handles the import of EmotiBit CSV files via POST request.
+    This route allows uploading one or multiple EmotiBit CSV files associated with the current subject.
+    Files are saved to the data folder specified in the global `emotibit_streamer` object, with filenames
+    including the session start time and subject ID. If a file with the same name already exists, a counter
+    is appended to avoid overwriting.
+    Request:
+        - Method: POST
+        - Form Data:
+            - 'emotibit_file': Single file upload (for backward compatibility)
+            - 'emotibit_files': Multiple file upload (list of files)
+    Returns:
+        - 200 OK: On successful upload of one or more files. Returns JSON with file paths and upload details.
+        - 400 Bad Request: If no files are provided, subject information is not set, or all uploads fail.
+        - 200 OK: If some files succeed and some fail, returns details for both successes and errors.
+    Response JSON Example (success):
+        {
+            "message": "File(s) uploaded successfully.",
+            "file_path": "...",           # For single file
+            "file_paths": [...],          # For multiple files
+            "uploaded_files": [...],      # List of uploaded file details
+            "errors": [...]               # List of error messages (if any)
+        }
+    Response JSON Example (failure):
+        {
+            "errors": [...]
+        }
+    """
     global emotibit_streamer
+    
     if emotibit_streamer.data_folder is None:
         print("EmotiBit data folder not set.")
         return jsonify({'message': 'Subject information is not set.'}), 400
     
-    if 'emotibit_file' not in request.files:
-            return jsonify({'message': 'No file part.'}), 400
+    files = []
+    if 'emotibit_file' in request.files:
+        # Single file upload (backwards compatibility)
+        files = [request.files['emotibit_file']]
+    elif 'emotibit_files' in request.files:
+        files = request.files.getlist('emotibit_files')
+    else:
+        return jsonify({'message': 'No file part.'}), 400
+    
+    if not files:
+        return jsonify({'message': 'No files selected.'}), 400
+    
+    uploaded_files = []
+    errors = []
+    
+    for i, file in enumerate(files):
+        print(f"Processing file {i+1}: {file.filename}")
+        
+        if not file.filename or not file.filename.lower().endswith(".csv"):
+            errors.append(f"File '{file.filename}': Invalid file type. Only CSV files are allowed.")
+            continue
+        
+        if i == 0:
+            new_filename = f"{emotibit_streamer.time_started}_{subject_manager.subject_id}_emotibit_ground_truth.csv"
+        else:
+            new_filename = f"{emotibit_streamer.time_started}_{subject_manager.subject_id}_emotibit_ground_truth_{i+1}.csv"
+        
+        file_path = os.path.join(emotibit_streamer.data_folder, new_filename)
+        
+        counter = 1
+        original_path = file_path
+        while os.path.exists(file_path):
+            base_name = new_filename.rsplit('.csv', 1)[0]
+            if i == 0:
+                file_path = os.path.join(emotibit_streamer.data_folder, f"{base_name}_{counter}.csv")
+            else:
+                if f"_{i+1}" in base_name:
+                    base_name = base_name.replace(f"_{i+1}", "")
+                file_path = os.path.join(emotibit_streamer.data_folder, f"{base_name}_{i+1}_{counter}.csv")
+            counter += 1
+        
+        try:
+            file.save(file_path)
+            uploaded_files.append({
+                'original_name': file.filename,
+                'saved_name': os.path.basename(file_path),
+                'file_path': file_path
+            })
+            print(f"File saved: {file_path}")
+        except Exception as e:
+            errors.append(f"File '{file.filename}': Error saving file - {str(e)}")
+            print(f"Error saving file {file.filename}: {e}")
 
-    file = request.files['emotibit_file']
-    print("File received: ", file.filename)
-    if not file.filename or not file.filename.lower().endswith(".csv"):
-        return jsonify({"success": False, "error": "Invalid file type. Only CSV files are allowed."}), 400
+    if uploaded_files and not errors:
+        if len(uploaded_files) == 1:
+            return jsonify({
+                "success": True, 
+                "message": "File uploaded successfully.", 
+                "file_path": uploaded_files[0]['file_path']
+            }), 200
+        else:
+            file_paths = [f['file_path'] for f in uploaded_files]
+            return jsonify({
+                "success": True, 
+                "message": f"{len(uploaded_files)} files uploaded successfully.", 
+                "file_paths": file_paths,
+                "uploaded_files": uploaded_files
+            }), 200
     
-    new_filename = f"{emotibit_streamer.time_started}_{subject_manager.subject_id}_emotibit_ground_truth.csv"
-    file_path = os.path.join(emotibit_streamer.data_folder, new_filename)
+    elif uploaded_files and errors:
+        file_paths = [f['file_path'] for f in uploaded_files]
+        return jsonify({
+            "success": True, 
+            "message": f"{len(uploaded_files)} files uploaded successfully, {len(errors)} failed.", 
+            "file_paths": file_paths,
+            "uploaded_files": uploaded_files,
+            "errors": errors
+        }), 200
     
-    file.save(file_path)
-    
-    return jsonify({"success": True, "message": "File uploaded successfully.", "file_path": file_path}), 200
+    else:
+        return jsonify({
+            "success": False, 
+            "message": "All file uploads failed.", 
+            "errors": errors
+        }), 400
 
 @app.route('/submit', methods=['POST'])    
 def submit() -> Response:

@@ -244,7 +244,7 @@
             <button id="convertEmotibitData">Convert EmotiBit Data</button><br>
             <p id="postProcessingStatus"></p> -->
             <button id="openEmotibitDialog">Import EmotiBit Data</button><br>
-            <input type="file" id="emotibitFileInput" style="display: none;" onchange="selectEmotibitFile(event)" /><br>
+            <input type="file" id="emotibitFileInput" accept=".csv" multiple style="display: none;" onchange="selectEmotibitFile(event)" /><br>
             <p id="uploadEmotibitStatus"></p>
             <p id="emotibitFilePath"></p>
         </div><br>
@@ -554,30 +554,87 @@
             }
         }
 
-        function selectEmotibitFile(event) {
-            const file = event.target.files[0];
-            const formData = new FormData();
-            formData.append('emotibit_file', file);
-            fetch('/import_emotibit_csv', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.message) {
-                    uploadEmotibitStatus.innerText = data.message;
-                    uploadEmotibitStatus.style.display = "block";
-                    if (data.file_path) {
-                        emotibitFilePath.innerText = `EmotiBit CSV Location: ${data.file_path}`;
-                    }
-                } else {
-                    throw new Error('Invalid response structure');
-                }
-            })
-            .catch(error => {
-                uploadEmotibitStatus.innerText = "error uploading";
+        async function selectEmotibitFile(event) {
+            console.log('selectEmotibitFile called', event);
+            
+            if (!event || !event.target) {
+                console.error('Event or event.target is null');
+                uploadEmotibitStatus.innerText = "Error: Invalid event";
                 uploadEmotibitStatus.style.display = "block";
-            });
+                return;
+            }
+            
+            const files = event.target.files; 
+            
+            if (!files) {
+                console.error('event.target.files is null');
+                uploadEmotibitStatus.innerText = "Error: Cannot access files";
+                uploadEmotibitStatus.style.display = "block";
+                return;
+            }
+            
+            if (files.length === 0) {
+                uploadEmotibitStatus.innerText = "No files selected";
+                uploadEmotibitStatus.style.display = "block";
+                return;
+            }
+            
+            uploadEmotibitStatus.innerText = `Uploading ${files.length} file(s)...`;
+            uploadEmotibitStatus.style.display = "block";
+            
+            const results = [];
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('emotibit_file', file);
+                
+                try {
+                    uploadEmotibitStatus.innerText = `Uploading file ${i + 1} of ${files.length}: ${file.name}`;
+                    
+                    const response = await fetch('/import_emotibit_csv', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data && data.message) {
+                        results.push({
+                            filename: file.name,
+                            success: true,
+                            message: data.message,
+                            filePath: data.file_path
+                        });
+                        successCount++;
+                    } else {
+                        throw new Error('Invalid response structure');
+                    }
+                    
+                } catch (error) {
+                    results.push({
+                        filename: file.name,
+                        success: false,
+                        message: `Error uploading ${file.name}: ${error.message}`
+                    });
+                    errorCount++;
+                }
+            }
+            
+            const summaryMessage = `Upload complete: ${successCount} successful, ${errorCount} failed`;
+            uploadEmotibitStatus.innerText = summaryMessage;
+            
+            if (results.some(r => r.success && r.filePath)) {
+                const successfulPaths = results
+                    .filter(r => r.success && r.filePath)
+                    .map(r => `${r.filename}: ${r.filePath}`)
+                    .join('\n');
+                emotibitFilePath.innerText = `EmotiBit CSV Locations:\n${successfulPaths}`;
+            }
+            
+            console.log('Upload results:', results);
         }
 
         processAudio.addEventListener('click', function() {
