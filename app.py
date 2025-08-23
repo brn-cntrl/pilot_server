@@ -714,6 +714,7 @@ def submit() -> Response:
             subject_first_name = form_manager.clean_string(request.form.get('first_name'))
             subject_last_name = form_manager.clean_string(request.form.get('last_name'))
             subject_email = request.form.get('email').lower().strip().replace(" ", "_")
+            subject_assigned_id = request.form.get('assignedID')
 
             if not is_valid_email(subject_email):
                 return jsonify({'message': 'Invalid email address.'}), 400
@@ -726,7 +727,7 @@ def submit() -> Response:
             subject_manager.subject_email = subject_email 
             subject_PID = form_manager.clean_string(request.form.get('PID')) 
             subject_class = form_manager.clean_string(request.form.get('class'))
-            subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class})
+            subject_manager.set_subject({"id": subject_id, "PID": subject_PID, "class_name": subject_class, "assigned_id": subject_assigned_id})
 
             audio_file_manager.set_audio_folder(subject_manager.subject_folder)
             emotibit_streamer.set_data_folder(subject_manager.subject_folder)

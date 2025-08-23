@@ -21,6 +21,15 @@ class SubjectManager:
         self._subject_first_name = None 
         self._subject_last_name = None
         self._subject_email = None
+        self._subject_assigned_id = None
+
+    @property
+    def subject_assigned_id(self) -> str:
+        return self._subject_assigned_id
+    
+    @subject_assigned_id.setter
+    def subject_assigned_id(self, value: str) -> None:
+        self._subject_assigned_id = value
 
     @property
     def subject_first_name(self) -> str:
@@ -98,14 +107,13 @@ class SubjectManager:
         self.subject_id = subject_info["id"]
         self.PID = subject_info["PID"]
         self.class_name = subject_info["class_name"]
-        
+        self.subject_assigned_id = subject_info["assigned_id"]
+
         if not self.experiment_name or not self.trial_name:
             raise ValueError("Experiment name and trial name must be set before setting the subject.")
         
         else:
-            # Create a folder named for the subject name and ID if it doesn't exist
-          
-            folder_name = f"{datetime.now().isoformat()}_{self.subject_id}"
+            folder_name = f"{self.subject_assigned_id}_{datetime.now().isoformat()}_{self.subject_id}"
             self.subject_folder = os.path.join(self.data_root, self.experiment_name, self.trial_name, folder_name)
 
             if not os.path.exists(self.subject_folder):
