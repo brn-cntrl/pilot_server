@@ -1027,14 +1027,19 @@ def prs():
     - Instructions for the PRS task.
     - An introductory audio file.
     - A list of PRS audio files that are randomly shuffled.
+    - A wait message audio file that plays last.
     - Recording buttons for subject responses.
     Returns:
         str: Rendered HTML template with the introductory audio file and shuffled PRS audio files.
     """
     AUDIO_DIR = 'static/prs_audio'
     intro = "1-PRS-Intro.mp3"
-    prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro]
+    wait_message = "Wait_For_Instructions.mp3"
+    
+    # Exclude both intro and wait_message from the randomized PRS audio files
+    prs_audio_files = [f for f in os.listdir(AUDIO_DIR) if f.endswith('.mp3') and f != intro and f != wait_message]
     random.shuffle(prs_audio_files)
+    
     html_template = r"""
     <!DOCTYPE html>
     <html lang="en">
@@ -1050,9 +1055,9 @@ def prs():
         <h2>Instruction Text</h2>
         <ul>
             <li>For the next section of the experiment, we will be asking you to rate the extent to which a given statement describes your experience in this room.</li> 
-            <li>The scale will be from 0 to 6. An answer of 0 means “Not at all” and an answer of 6 means “Completely”.</li> 
+            <li>The scale will be from 0 to 6. An answer of 0 means "Not at all" and an answer of 6 means "Completely".</li> 
             <li>After each question, you can take as much time as you need to think about it before speaking your response aloud. Then, you will provide a reason for each rating you provide.</li> 
-            <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being “Not at all” and 6 being “Completely”.</li>
+            <li>The statements will begin now. As a reminder, you will answer with a number from 0 to 6, with 0 being "Not at all" and 6 being "Completely".</li>
             <li>Please provide a brief explanation for your answer after each question.</li>
         </ul><br>
         <div id="intro">
@@ -1062,6 +1067,13 @@ def prs():
                 Your browser does not support the audio element.
             </audio><br>
         </div><br>
+        
+        <!-- Wait message audio (hidden, will be played programmatically) -->
+        <audio id="wait-message-audio" style="display: none;">
+            <source src="{{ url_for('static', filename='prs_audio/' + wait_message) }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        
         <div id="container">
             {% for audio in audio_files %}
             <div class="audio-container">
@@ -1076,6 +1088,7 @@ def prs():
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const introAudio = document.getElementById("intro-audio-player");
+                const waitMessageAudio = document.getElementById("wait-message-audio");
                 const acontainer = document.getElementById("container");
                 let audioElements = Array.from(document.querySelectorAll("audio[data-audio-index]"));
                 let currentIndex = 0;
@@ -1130,6 +1143,26 @@ def prs():
                     playNextAudio();
                 }
 
+                function playWaitMessage() {
+                    console.log("Playing wait message...");
+                    waitMessageAudio.play();
+                    
+                    waitMessageAudio.onended = function () {
+                        console.log("Wait message finished.");
+                        completeTask();
+                    };
+                }
+
+                function completeTask() {
+                    if (eventMarker === 'prs_1') {
+                        setEventMarker('sart_3');
+                    } else if (eventMarker === 'prs_2') {
+                        setEventMarker('sart_6');
+                    }
+                    setCondition('None');
+                    console.log("All audio segments completed.");
+                }
+
                 function playNextAudio() {
                     if (currentIndex < audioElements.length) {
                         let audio = audioElements[currentIndex];
@@ -1146,13 +1179,8 @@ def prs():
 
                         currentIndex++;
                     } else {
-                        if (eventMarker === 'prs_1') {
-                            setEventMarker('sart_3');
-                        } else if (eventMarker === 'prs_2') {
-                            setEventMarker('sart_6');
-                        }
-                        setCondition('None');
-                        console.log("All audio segments completed.");
+                        // All randomized PRS audio files completed, now play wait message
+                        playWaitMessage();
                     }
                 }
 
@@ -1166,7 +1194,7 @@ def prs():
     </html>
 
     """
-    return render_template_string(html_template, intro=intro, audio_files=prs_audio_files)
+    return render_template_string(html_template, intro=intro, audio_files=prs_audio_files, wait_message=wait_message)
 
 @app.route('/room_observation')
 def room_observation() -> Response:

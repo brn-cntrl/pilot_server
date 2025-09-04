@@ -61,6 +61,17 @@
         <div class="meter"><div class="level"></div></div><br>
         <div id="audio4-status"></div>
     </div>
+
+    <div id="wait-message-audio">
+        <p>Wait Message</p>
+        <audio controls id="waitAudioPlayer">
+            <source src="{{ url_for('static', filename='room_observation_audio/Wait_For_Instructions.mp3') }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio><br>
+        <div class="meter"><div class="level"></div></div><br>
+        <div id="wait-audio-status"></div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const eventMarker = localStorage.getItem('currentEventMarker');
@@ -76,11 +87,13 @@
             const player2 = document.getElementById('audioPlayer2');
             const player3 = document.getElementById('audioPlayer3');
             const player4 = document.getElementById('audioPlayer4');
+            const waitPlayer = document.getElementById('waitAudioPlayer');
 
             const status1 = document.getElementById('audio1-status');
             const status2 = document.getElementById('audio2-status');
             const status3 = document.getElementById('audio3-status');
             const status4 = document.getElementById('audio4-status');
+            const waitStatus = document.getElementById('wait-audio-status');
 
             const answerPeriod = 90000; // 90 seconds
             const beepAlertPeriod = answerPeriod - 15000; // 75 seconds
@@ -154,10 +167,14 @@
 
                 setTimeout(() => {
                     recordTaskAudio(eventMarker, condition, 'stop', 2, status4);
-                    setCondition('None');
-                    setEventMarker('subject_idle');
-                    status4.innerText = "Recording has stopped. Task is complete.";
+                    waitPlayer.play();
                 }, answerPeriod);  
+            });
+
+            waitPlayer.addEventListener('play', function() {
+                setCondition('None');
+                setEventMarker('subject_idle');
+                waitStatus.innerHTML = 'Wait message is playing...';
             });
         });
     </script> 
