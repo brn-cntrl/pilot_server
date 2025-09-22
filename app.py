@@ -739,8 +739,9 @@ def submit() -> Response:
             pss10 = form_manager.get_custom_url("pss10", subject_manager.subject_id)
             exit_survey = form_manager.get_custom_url("exit", subject_manager.subject_id)
             demographics = form_manager.get_custom_url("demographics", subject_manager.subject_id)
+            ipr_survey = form_manager.get_custom_url("ipr", subject_manager.subject_id)
 
-            return jsonify({'message': 'User information submitted.', 'pss10': pss10, 'demographics': demographics, 'exit_survey': exit_survey}), 200
+            return jsonify({'message': 'User information submitted.', 'pss10': pss10, 'demographics': demographics, 'exit_survey': exit_survey, 'ipr_survey': ipr_survey}), 200
         
     except Exception as e:
         return jsonify({'message': 'Error processing request.'}), 400
