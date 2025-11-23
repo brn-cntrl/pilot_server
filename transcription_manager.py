@@ -40,7 +40,26 @@ class TranscriptionManager:
 
         except FileNotFoundError:
             print(f"Model {model_name} not found. Please ensure that the model is in the correct directory and that the model name is correct.")
-        
+
+    def reset(self):
+        """
+        Reset the transcription model to clear any cached state.
+        Useful between test sessions to prevent resource accumulation.
+        """
+        try:
+            with self.lock:
+                # Clear result
+                self.result = None
+                
+                # Reload model to clear any accumulated state
+                print("Resetting Whisper model...")
+                self.model = whisper.load_model("base")
+                self.model = self.model.float()
+                self.model = self.model.to("cpu")
+                print("Whisper model reset complete.")
+                
+        except Exception as e:
+            print(f"Error resetting Whisper model: {e}")
 
     def transcribe(self, audio_file):
         """

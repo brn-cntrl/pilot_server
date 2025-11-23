@@ -425,6 +425,7 @@ def process_answer() -> Response:
         if test_ended:
             recording_manager.stop_recording()
             print("Recording stopped. Transcribing....")
+            time.sleep(0.1)
             transcription = transcribe_audio(audio_file_manager.recording_file)
 
             if test_manager.current_test_index != 0:
@@ -484,7 +485,7 @@ def process_answer() -> Response:
 
 @app.route('/set_current_test', methods=['POST'])
 def set_current_test() -> Response:
-    global test_manager
+    global test_manager, transcription_manager
     test_number = request.get_json().get('test_number')
     if test_number is None:
         raise ValueError("Missing 'test_number' in request JSON")
@@ -492,12 +493,17 @@ def set_current_test() -> Response:
     try: 
         test_manager.current_test_index = int(test_number)
         test_manager.current_question_index = 0
+        
+        # Reset transcription manager between tests to clear accumulated state
+        if int(test_number) > 0:
+            transcription_manager.reset()
+        
         print(f"Test set to {test_number}.")
         print(f"Current Question Index: {test_manager.current_question_index}")
         return jsonify({'message': f'Test set to {test_number}.'}), 200
     
-    except ValueError:
-        return jsonify({'message': 'Invalid test number.'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/get_stream_active', methods=['GET'])
 def get_stream_active() -> Response:
@@ -1428,6 +1434,7 @@ def transcribe_audio(file, timeout_seconds=15) -> str:
             
         except FutureTimeoutError:
             print(f"Transcription timed out after {timeout_seconds} seconds for file: {file}")
+            executor.shutdown(wait=False, cancel_futures=True)  # Force cleanup
             return "Sorry, I could not understand the response."
             
         except Exception as e:

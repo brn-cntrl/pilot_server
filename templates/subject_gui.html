@@ -851,6 +851,8 @@
                 this.countdownTimeLeft = 10;
                 this.timerEnded = false;
                 this.currentVolumeStage = 0;
+                this.pendingTimerExpiration = false; //DEBUG
+                this.processingAbortController = null; //DEBUG
 
                 if(this.testNumber === 0){
                     this.restartNumber = "20";
@@ -1026,7 +1028,12 @@
 
             confirmTranscription(timeUp, callback){
                 console.log("Confirming transcription... timeUp = ", this.timeUp);
+                
+                const abortController = new AbortController();
+                const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
+                
                 fetch('/confirm_transcription', {
+                    signal: abortController.signal,
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1050,9 +1057,17 @@
                     }
                 })
                 .catch(error => {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') {
+                        console.log('Transcription confirmation timed out or aborted');
+                        this.testStatusContainer.innerText = "Connection issue - please try again.";
+                        this.submitAnswerButton.disabled = false;
+                        return;
+                    }
                     console.error('Error:', error);
                 })
                 .finally(() => {
+                    clearTimeout(timeoutId);
                     if(callback){
                         callback();
                     }
@@ -1065,6 +1080,7 @@
                 }
 
                 this.isProcessing = true;
+                this.processingAbortController = new AbortController();
 
                 if(!this.submitAnswerButton.disabled){
                     this.submitAnswerButton.disabled = true;
@@ -1075,6 +1091,7 @@
                 } 
 
                 fetch('/process_answer', {
+                    signal: this.processingAbortController.signal,
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ test_status: this.testEnded })
@@ -1095,6 +1112,12 @@
                     console.log(this.processedMessage);
                 })
                 .catch(error => {
+                    // Don't show error if request was aborted due to timer expiration
+                    if (error.name === 'AbortError') {
+                        console.log('Request aborted due to timer expiration');
+                        return;
+                    }
+                    
                     console.error('Error:', error);
                     this.testStatusContainer.innerText = "Something went wrong. Please repeat your answer.";
                     this.submitAnswerButton.disabled = false;
@@ -1104,6 +1127,15 @@
                 })
                 .finally(() => {
                     this.isProcessing = false;
+    
+                    // Check if timer expired while we were processing
+                    if (this.pendingTimerExpiration) {
+                        console.log("Processing complete - handling pending timer expiration");
+                        this.pendingTimerExpiration = false;
+                        this.handleTimerExpiration();
+                        return; // Don't call the normal callback
+                    }
+                    
                     if (callback){
                         callback();
                     }
@@ -1254,6 +1286,33 @@
 
                     if (this.countdownTimeLeft < 0) this.countdownTimeLeft = 0; // Clamp value
                     this.clockDisplay.innerText = `Time left: ${this.countdownTimeLeft}`;
+                    // if (this.countdownTimeLeft <= 0 && !this.timerEnded) { 
+                    //     this.pauseCountdown();
+                    //     console.log("disabling submit button.");
+                    //     this.submitAnswerButton.disabled = true;
+                    //     console.log("setting timerEnded to true.");
+                    //     this.timerEnded = true;
+                    //     this.timeUp = true;
+                    //     console.log("setting Time's up and start over messages.")
+                    //     this.clockStatus.innerText = "Time's up!";
+                    //     this.clockStatus.style.display = 'block';
+                    //     this.resultContainer.innerText = `Please start over at ${this.restartNumber}.`;
+
+                    //     if(!this.isProcessing){
+                    //         console.log("Calling confirmTranscription for test 1");
+                    //         this.confirmTranscription(true, () => {
+                    //             this.yesButton.style.display = 'none';
+                    //             this.yesButton.disabled = true;
+                    //             this.noButton.style.display = 'none';
+                    //             this.noButton.disabled = true;
+                    //             this.processAnswer(() => {
+                    //                 this.processResult();
+                    //             });
+                    //         });
+                    //     }
+                    // } 
+
+                    //DEBUG
                     if (this.countdownTimeLeft <= 0 && !this.timerEnded) { 
                         this.pauseCountdown();
                         console.log("disabling submit button.");
@@ -1266,19 +1325,19 @@
                         this.clockStatus.style.display = 'block';
                         this.resultContainer.innerText = `Please start over at ${this.restartNumber}.`;
 
-                        if(!this.isProcessing){
-                            console.log("Calling confirmTranscription for test 1");
-                            this.confirmTranscription(true, () => {
-                                this.yesButton.style.display = 'none';
-                                this.yesButton.disabled = true;
-                                this.noButton.style.display = 'none';
-                                this.noButton.disabled = true;
-                                this.processAnswer(() => {
-                                    this.processResult();
-                                });
-                            });
+                        if(this.isProcessing){
+                            // Mark that timer expired while processing
+                            this.pendingTimerExpiration = true;
+                            console.log("Timer expired while processing - marking as pending");
+                            // Abort the current processing if possible
+                            if(this.processingAbortController) {
+                                this.processingAbortController.abort();
+                            }
+                        } else {
+                            // Process immediately
+                            this.handleTimerExpiration();
                         }
-                    } 
+                    }
                 }
             }
             
@@ -1301,6 +1360,20 @@
                 this.pauseCountdown();
                 this.clockStatus.innerText = '';
                 this.clockStatus.style.display = 'none';
+            }
+            
+            //DEBUG
+            handleTimerExpiration() {
+                console.log("Handling timer expiration");
+                this.confirmTranscription(true, () => {
+                    this.yesButton.style.display = 'none';
+                    this.yesButton.disabled = true;
+                    this.noButton.style.display = 'none';
+                    this.noButton.disabled = true;
+                    this.processAnswer(() => {
+                        this.processResult();
+                    });
+                });
             }
 
             startClock() {
